@@ -1,0 +1,189 @@
+@keyframes overlayShow {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes contentShow {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.DialogOverlay {
+    background-color: rgba(0, 0, 0, 0.35);
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(4px);
+}
+
+.DialogContent {
+    background-color: white;
+    border-radius: 24px;
+    box-shadow: hsl(206 22% 7% / 20%) 0px 10px 38px -10px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 600px;
+    max-height: 90vh;
+    padding: 48px;
+    z-index: 50;
+    animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+}
+
+.DialogContent:focus {
+    outline: none;
+}
+
+.DialogTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: hsl(240, 6%, 10%);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+}
+
+.DialogDescription {
+    font-size: 1.17rem;
+    line-height: 1.6;
+    color: hsl(240, 4%, 26%);
+    margin-bottom: 2rem;
+}
+
+.DialogFeatureTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: hsl(240, 6%, 10%);
+    margin-bottom: 2rem;
+    letter-spacing: -0.02em;
+}
+
+.DialogFeatureList {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.DialogFeatureItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.DialogFeatureIcon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    color: hsl(248, 84%, 60%);
+    margin-top: 0.125rem;
+}
+
+.DialogFeatureContent h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: hsl(240, 6%, 10%);
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.01em;
+}
+
+.DialogFeatureContent p {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: hsl(240, 4%, 36%);
+}
+
+.DialogButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    margin-top: 1rem;
+    padding: 0 32px;
+    height: 48px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 200ms ease;
+    background-color: hsl(248, 84%, 60%);
+    color: white;
+    letter-spacing: -0.01em;
+}
+
+.DialogButton:hover {
+    background-color: hsl(248, 84%, 55%);
+    transform: translateY(-1px);
+}
+
+.DialogButton:focus {
+    box-shadow: 0 0 0 2px hsl(248, 84%, 90%);
+}
+
+.DialogButton:disabled {
+    background-color: hsl(248, 10%, 80%);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.DialogButton[data-loading='true'] {
+    position: relative;
+    color: transparent;
+}
+
+.DialogButton[data-loading='true']::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+.DialogContent .button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid hsl(0, 0%, 95%);
+}
+
+.button-container [role='alert'] {
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    background-color: hsl(0, 86%, 97%);
+    border: 1px solid hsl(0, 86%, 93%);
+    border-radius: 12px;
+    color: hsl(0, 86%, 35%);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}

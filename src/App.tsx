@@ -2,9 +2,11 @@ import { Menu, MessageSquare, Settings, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import './App.css';
+import { WelcomeGuide } from './components/WelcomeGuide';
 import { ChatInput } from './components/chat/ChatInput';
 import { ChatList } from './components/chat/ChatList';
 import { ChatMessage } from './components/chat/ChatMessage';
+import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { smashService } from './lib/smash-service';
 import { SmashConversation, SmashMessage } from './lib/types';
 
@@ -12,6 +14,7 @@ import { SmashConversation, SmashMessage } from './lib/types';
 const CURRENT_USER = 'You';
 
 function App() {
+    const { identity, setIdentity, error, isInitialized } = useSmashIdentity();
     const [conversations, setConversations] = useState<SmashConversation[]>([]);
     const [selectedChat, setSelectedChat] = useState<string | undefined>();
     const [messages, setMessages] = useState<SmashMessage[]>([]);
@@ -20,6 +23,7 @@ function App() {
 
     useEffect(() => {
         const loadConversations = async () => {
+            if (!identity) return;
             try {
                 const convos = await smashService.getConversations();
                 setConversations(convos);
@@ -43,27 +47,29 @@ function App() {
                 );
             },
         );
-    }, []);
+    }, [identity]);
 
     useEffect(() => {
         const loadMessages = async () => {
-            if (!selectedChat) return;
+            if (!selectedChat || !identity) return;
+
+            setIsLoading(true);
             try {
                 const msgs = await smashService.getMessages(selectedChat);
                 setMessages(msgs);
             } catch (error) {
                 console.error('Failed to load messages:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
         loadMessages();
-        // Close mobile menu when chat is selected
-        setIsMobileMenuOpen(false);
-    }, [selectedChat]);
+    }, [selectedChat, identity]);
 
     const handleSendMessage = async (content: string) => {
-        if (!selectedChat) return;
-        setIsLoading(true);
+        if (!selectedChat || !identity) return;
+
         try {
             const message = await smashService.sendMessage(
                 selectedChat,
@@ -72,10 +78,39 @@ function App() {
             setMessages((prev) => [...prev, message]);
         } catch (error) {
             console.error('Failed to send message:', error);
-        } finally {
-            setIsLoading(false);
         }
     };
+
+    // Show loading state while initializing
+    if (!isInitialized) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+            </div>
+        );
+    }
+
+    // If there's an error initializing Smash, show it
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen p-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md">
+                    <h2 className="text-red-800 font-semibold mb-2">
+                        Failed to Initialize
+                    </h2>
+                    <p className="text-red-600 text-sm">{error.message}</p>
+                    <p className="text-red-600 text-sm mt-2">
+                        Please refresh the page to try again.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Only show the main app if we have an identity
+    if (!identity) {
+        return <WelcomeGuide onIdentityCreated={setIdentity} />;
+    }
 
     // Helper function to get conversation name
     const getConversationName = (conversation: SmashConversation) => {

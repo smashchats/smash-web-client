@@ -1,11 +1,17 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+// Import EventEmitter polyfill first
+import 'events';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 
-import App from './App.tsx';
+import App from './App';
+import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import './index.css';
+import './polyfills';
 
-createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-        <App />
-    </StrictMode>,
+ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+        <ErrorBoundary>
+            <App />
+        </ErrorBoundary>
+    </React.StrictMode>,
 );

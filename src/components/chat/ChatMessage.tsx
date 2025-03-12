@@ -35,7 +35,9 @@ export function ChatMessage({
                     </span>
                     {isOutgoing && (
                         <span className="flex items-center">
-                            {status === 'sent' && <Check className="h-3 w-3 opacity-70" />}
+                            {status === 'sent' && (
+                                <Check className="h-3 w-3 opacity-70" />
+                            )}
                             {status === 'delivered' && (
                                 <CheckCheck className="h-3 w-3 opacity-70" />
                             )}
