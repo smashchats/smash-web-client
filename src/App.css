@@ -186,7 +186,7 @@
 }
 
 /* Main Chat Area */
-.chat-area {
+.main-area {
     flex: 1;
     display: flex;
     flex-direction: column;

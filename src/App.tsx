@@ -1,4 +1,4 @@
-import { Menu, MessageSquare, Settings, Users } from 'lucide-react';
+import { Menu, MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import './App.css';
@@ -6,6 +6,7 @@ import { WelcomeGuide } from './components/WelcomeGuide';
 import { ChatInput } from './components/chat/ChatInput';
 import { ChatList } from './components/chat/ChatList';
 import { ChatMessage } from './components/chat/ChatMessage';
+import { Settings } from './components/settings/Settings';
 import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { smashService } from './lib/smash-service';
 import { SmashConversation, SmashMessage } from './lib/types';
@@ -13,13 +14,24 @@ import { SmashConversation, SmashMessage } from './lib/types';
 // In a real app, this would come from authentication
 const CURRENT_USER = 'You';
 
+type View = 'messages' | 'contacts' | 'settings';
+
 function App() {
-    const { identity, setIdentity, error, isInitialized } = useSmashIdentity();
+    const { 
+        identity, 
+        setIdentity, 
+        clearIdentity, 
+        profile,
+        updateProfile,
+        error, 
+        isInitialized 
+    } = useSmashIdentity();
     const [conversations, setConversations] = useState<SmashConversation[]>([]);
     const [selectedChat, setSelectedChat] = useState<string | undefined>();
     const [messages, setMessages] = useState<SmashMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [currentView, setCurrentView] = useState<View>('messages');
 
     useEffect(() => {
         const loadConversations = async () => {
@@ -81,6 +93,14 @@ function App() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await clearIdentity();
+        } catch (error) {
+            console.error('Failed to logout:', error);
+        }
+    };
+
     // Show loading state while initializing
     if (!isInitialized) {
         return (
@@ -130,77 +150,101 @@ function App() {
         <div className="app-container">
             {/* Sidebar */}
             <nav className="sidebar">
-                <button className="sidebar-button active">
+                <button 
+                    className={`sidebar-button ${currentView === 'messages' ? 'active' : ''}`}
+                    onClick={() => setCurrentView('messages')}
+                >
                     <MessageSquare />
                 </button>
-                <button className="sidebar-button">
+                <button 
+                    className={`sidebar-button ${currentView === 'contacts' ? 'active' : ''}`}
+                    onClick={() => setCurrentView('contacts')}
+                >
                     <Users />
                 </button>
                 <div className="flex-grow" />
-                <button className="sidebar-button">
-                    <Settings />
+                <button 
+                    className={`sidebar-button ${currentView === 'settings' ? 'active' : ''}`}
+                    onClick={() => setCurrentView('settings')}
+                >
+                    <SettingsIcon />
                 </button>
             </nav>
 
-            {/* Chat list */}
-            <div className={`chat-list ${isMobileMenuOpen ? 'open' : ''}`}>
-                <div className="chat-list-header">
-                    <h2>Messages</h2>
-                </div>
-                <ChatList
-                    chats={conversations.map((conv) => ({
-                        id: conv.id,
-                        name: getConversationName(conv),
-                        lastMessage: conv.lastMessage?.content ?? '',
-                        timestamp: conv.lastMessage?.timestamp ?? new Date(),
-                        unreadCount: conv.unreadCount,
-                    }))}
-                    selectedChatId={selectedChat}
-                    onChatSelect={setSelectedChat}
-                />
-            </div>
-
-            {/* Main chat area */}
-            <main className="chat-area">
-                {/* Mobile header */}
-                <div className="md:hidden flex items-center p-4 border-b border-border">
-                    <button
-                        className="sidebar-button mr-2"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    >
-                        <Menu />
-                    </button>
-                    <h2 className="font-semibold">
-                        {selectedConversation
-                            ? getConversationName(selectedConversation)
-                            : 'Messages'}
-                    </h2>
-                </div>
-
-                {/* Messages */}
-                <div className="messages-container">
-                    {messages.map((message) => (
-                        <ChatMessage
-                            key={message.id}
-                            content={message.content}
-                            isOutgoing={message.sender === CURRENT_USER}
-                            timestamp={message.timestamp}
-                            sender={
-                                message.sender === CURRENT_USER
-                                    ? 'You'
-                                    : message.sender
-                            }
-                            status={message.status}
+            {/* Main content */}
+            {currentView === 'messages' && (
+                <>
+                    {/* Chat list */}
+                    <div className={`chat-list ${isMobileMenuOpen ? 'open' : ''}`}>
+                        <div className="chat-list-header">
+                            <h2>Messages</h2>
+                        </div>
+                        <ChatList
+                            chats={conversations.map((conv) => ({
+                                id: conv.id,
+                                name: getConversationName(conv),
+                                lastMessage: conv.lastMessage?.content ?? '',
+                                timestamp: conv.lastMessage?.timestamp ?? new Date(),
+                                unreadCount: conv.unreadCount,
+                            }))}
+                            selectedChatId={selectedChat}
+                            onChatSelect={setSelectedChat}
                         />
-                    ))}
-                </div>
+                    </div>
 
-                {/* Chat input */}
-                <ChatInput
-                    onSendMessage={handleSendMessage}
-                    isLoading={isLoading}
-                />
-            </main>
+                    {/* Main chat area */}
+                    <main className="main-area">
+                        {/* Mobile header */}
+                        <div className="md:hidden flex items-center p-4 border-b border-border">
+                            <button
+                                className="sidebar-button mr-2"
+                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            >
+                                <Menu />
+                            </button>
+                            <h2 className="font-semibold">
+                                {selectedConversation
+                                    ? getConversationName(selectedConversation)
+                                    : 'Messages'}
+                            </h2>
+                        </div>
+
+                        {/* Messages */}
+                        <div className="messages-container">
+                            {messages.map((message) => (
+                                <ChatMessage
+                                    key={message.id}
+                                    content={message.content}
+                                    isOutgoing={message.sender === CURRENT_USER}
+                                    timestamp={message.timestamp}
+                                    sender={
+                                        message.sender === CURRENT_USER
+                                            ? 'You'
+                                            : message.sender
+                                    }
+                                    status={message.status}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Chat input */}
+                        <ChatInput
+                            onSendMessage={handleSendMessage}
+                            isLoading={isLoading}
+                        />
+                    </main>
+                </>
+            )}
+
+            {currentView === 'settings' && (
+                <main className="main-area">
+                    <Settings 
+                        onLogout={handleLogout}
+                        profile={profile}
+                        onUpdateProfile={updateProfile}
+                    />
+                </main>
+            )}
 
             {/* Mobile overlay */}
             {isMobileMenuOpen && (
