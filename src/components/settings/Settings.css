@@ -104,7 +104,7 @@
     font-weight: 500;
     transition: all 0.2s ease;
     background: transparent;
-    color: #999;
+    color: var(--color-text-light);
     cursor: default;
 }
 
@@ -114,36 +114,39 @@
 }
 
 .save-button.unsaved {
-    color: #000;
+    color: var(--color-background);
+    background: var(--color-primary);
     cursor: pointer;
 }
 
 .save-button.unsaved:hover {
-    background: #f5f5f5;
+    background: var(--color-primary-light);
 }
 
 .save-button.saving {
-    background: #f5f5f5;
+    background: var(--color-primary-light);
+    color: var(--color-background);
     cursor: wait;
+    opacity: 0.8;
 }
 
 .save-button.success {
-    background: #e6f4ea;
-    color: #1a73e8;
+    background: var(--color-success);
+    color: var(--color-background);
 }
 
 .save-button.error {
-    background: #fce8e6;
-    color: #d93025;
+    background: var(--color-destructive);
+    color: var(--color-background);
     cursor: pointer;
 }
 
 .save-button.error:hover {
-    background: #fad1cd;
+    opacity: 0.9;
 }
 
 .save-button:disabled {
-    opacity: 0.7;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 

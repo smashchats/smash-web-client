@@ -1,16 +1,16 @@
 :root {
-    --color-primary: #2563eb;
-    --color-primary-light: #3b82f6;
-    --color-primary-dark: #1d4ed8;
+    --color-primary: #693a9d;
+    --color-primary-light: #7b4db8;
+    --color-primary-dark: #572c87;
     --color-background: #ffffff;
     --color-surface: #f8fafc;
-    --color-text: #1e293b;
-    --color-text-light: #64748b;
+    --color-text: #1a1a2e;
+    --color-text-light: #6b7280;
     --color-border: #e2e8f0;
     --color-success: #22c55e;
     --color-error: #ef4444;
-    --color-message-sent: #2563eb;
-    --color-message-received: #f1f5f9;
+    --color-message-sent: #693a9d;
+    --color-message-received: #f6f2fb;
 
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
