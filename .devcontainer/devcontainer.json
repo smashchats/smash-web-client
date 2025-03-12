@@ -1,0 +1,22 @@
+{
+    "name": "smash-web-client",
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+    "remoteUser": "node",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "rvest.vs-code-prettier-eslint",
+                "esbenp.prettier-vscode"
+            ]
+        }
+    },
+    "mounts": [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.radicle,target=/home/node/.radicle,type=bind",
+        "source=ubuntu-24.04-radicle,target=/home/node/.radicle/bin,type=volume",
+        "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+        "source=${localWorkspaceFolderBasename}-smash-node-lib-node_modules,target=${containerWorkspaceFolder}/smash-node-lib/node_modules,type=volume",
+        "source=${localWorkspaceFolderBasename}-dist,target=${containerWorkspaceFolder}/dist,type=volume"
+    ],
+    "postCreateCommand": "echo 'source <(npm completion)' >> /home/node/.bashrc && sudo chown -R node:node dist node_modules smash-node-lib/node_modules /home/node/.radicle/bin && npm install && curl -sSf https://radicle.xyz/install | sh && echo 'export PATH=$PATH:/home/node/.radicle/bin' >> /home/node/.bashrc"
+}
