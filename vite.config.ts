@@ -6,8 +6,8 @@ export default defineConfig({
     plugins: [
         react(),
         nodePolyfills({
-            include: ['crypto', 'buffer', 'stream', 'util', 'events']
-        })
+            include: ['crypto', 'buffer', 'stream', 'util', 'events'],
+        }),
     ],
     server: {
         host: true,

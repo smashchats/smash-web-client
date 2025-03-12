@@ -1,12 +1,13 @@
-import { Menu, MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
+import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import './App.css';
-import { WelcomeGuide } from './components/WelcomeGuide';
 import { ChatInput } from './components/chat/ChatInput';
 import { ChatList } from './components/chat/ChatList';
 import { ChatMessage } from './components/chat/ChatMessage';
 import { Settings } from './components/settings/Settings';
+import { WelcomeGuide } from './components/WelcomeGuide';
+import { initDB } from './lib/db';
 import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { smashService } from './lib/smash-service';
 import { SmashConversation, SmashMessage } from './lib/types';
@@ -14,156 +15,203 @@ import { SmashConversation, SmashMessage } from './lib/types';
 // In a real app, this would come from authentication
 const CURRENT_USER = 'You';
 
-type View = 'messages' | 'contacts' | 'settings';
+type View = 'messages' | 'explore' | 'settings';
 
 function App() {
-    const { 
-        identity, 
-        setIdentity, 
-        clearIdentity, 
+    const {
+        identity,
+        clearIdentity,
         profile,
         updateProfile,
-        error, 
-        isInitialized 
+        smeConfig,
+        updateSMEConfig,
+        isInitialized,
+        setIdentity,
     } = useSmashIdentity();
+
     const [conversations, setConversations] = useState<SmashConversation[]>([]);
-    const [selectedChat, setSelectedChat] = useState<string | undefined>();
+    const [selectedChat, setSelectedChat] = useState<string>();
     const [messages, setMessages] = useState<SmashMessage[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentView, setCurrentView] = useState<View>('messages');
+    const [error, setError] = useState<Error | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Initialize database on mount
+    useEffect(() => {
+        initDB().catch((err) => {
+            console.error('Failed to initialize database:', err);
+            setError(err instanceof Error ? err : new Error('Failed to initialize database'));
+        });
+    }, []);
+
+    // Add this console.log for debugging
+    console.log('App render:', { isInitialized, identity });
 
     useEffect(() => {
+        if (!identity) return;
+
         const loadConversations = async () => {
-            if (!identity) return;
             try {
+                setError(null);
+                // First ensure DB is initialized
+                await initDB();
                 const convos = await smashService.getConversations();
-                setConversations(convos);
-            } catch (error) {
-                console.error('Failed to load conversations:', error);
+                setConversations(
+                    convos.map((convo) => ({
+                        ...convo,
+                        lastMessage: convo.lastMessage
+                            ? {
+                                  ...convo.lastMessage,
+                                  timestamp: new Date(
+                                      convo.lastMessage.timestamp,
+                                  ),
+                              }
+                            : undefined,
+                    })),
+                );
+            } catch (err) {
+                console.error('Failed to load conversations:', err);
+                setError(
+                    err instanceof Error
+                        ? err
+                        : new Error('Failed to load conversations'),
+                );
             }
         };
 
         loadConversations();
 
-        smashService.onMessageReceived((message: SmashMessage) => {
-            setMessages((prev) => [...prev, message]);
+        smashService.onMessageReceived((message) => {
+            const smashMessage: SmashMessage = {
+                ...message,
+                timestamp: new Date(message.timestamp),
+            };
+            setMessages((prev) => [...prev, smashMessage]);
         });
 
-        smashService.onConversationUpdated(
-            (conversation: SmashConversation) => {
-                setConversations((prev) =>
-                    prev.map((conv) =>
-                        conv.id === conversation.id ? conversation : conv,
-                    ),
-                );
-            },
-        );
+        smashService.onConversationUpdated((conversation) => {
+            const smashConversation: SmashConversation = {
+                ...conversation,
+                lastMessage: conversation.lastMessage
+                    ? {
+                          ...conversation.lastMessage,
+                          timestamp: new Date(
+                              conversation.lastMessage.timestamp,
+                          ),
+                      }
+                    : undefined,
+            };
+            setConversations((prev) =>
+                prev.map((conv) =>
+                    conv.id === conversation.id ? smashConversation : conv,
+                ),
+            );
+        });
     }, [identity]);
 
     useEffect(() => {
-        const loadMessages = async () => {
-            if (!selectedChat || !identity) return;
+        if (!selectedChat) return;
 
-            setIsLoading(true);
+        const loadMessages = async () => {
             try {
+                setError(null);
+                // First ensure DB is initialized
+                await initDB();
                 const msgs = await smashService.getMessages(selectedChat);
-                setMessages(msgs);
-            } catch (error) {
-                console.error('Failed to load messages:', error);
-            } finally {
-                setIsLoading(false);
+                setMessages(
+                    msgs.map((msg) => ({
+                        ...msg,
+                        timestamp: new Date(msg.timestamp),
+                    })),
+                );
+            } catch (err) {
+                console.error('Failed to load messages:', err);
+                setError(
+                    err instanceof Error
+                        ? err
+                        : new Error('Failed to load messages'),
+                );
             }
         };
 
         loadMessages();
-    }, [selectedChat, identity]);
+    }, [selectedChat]);
+
+    const handleSelectChat = (chatId: string) => {
+        setSelectedChat(chatId);
+        setIsMobileMenuOpen(false);
+    };
 
     const handleSendMessage = async (content: string) => {
-        if (!selectedChat || !identity) return;
-
+        if (!selectedChat) return;
         try {
-            const message = await smashService.sendMessage(
-                selectedChat,
-                content,
+            setError(null);
+            await smashService.sendMessage(selectedChat, content);
+        } catch (err) {
+            console.error('Failed to send message:', err);
+            setError(
+                err instanceof Error
+                    ? err
+                    : new Error('Failed to send message'),
             );
-            setMessages((prev) => [...prev, message]);
-        } catch (error) {
-            console.error('Failed to send message:', error);
         }
     };
 
     const handleLogout = async () => {
-        try {
-            await clearIdentity();
-        } catch (error) {
-            console.error('Failed to logout:', error);
-        }
+        await clearIdentity();
     };
 
-    // Show loading state while initializing
+    // If not initialized, show loading state
     if (!isInitialized) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+                <p>Loading...</p>
             </div>
         );
     }
 
-    // If there's an error initializing Smash, show it
-    if (error) {
-        return (
-            <div className="flex items-center justify-center min-h-screen p-4">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md">
-                    <h2 className="text-red-800 font-semibold mb-2">
-                        Failed to Initialize
-                    </h2>
-                    <p className="text-red-600 text-sm">{error.message}</p>
-                    <p className="text-red-600 text-sm mt-2">
-                        Please refresh the page to try again.
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    // Only show the main app if we have an identity
+    // If no identity, show welcome guide
     if (!identity) {
-        return <WelcomeGuide onIdentityCreated={setIdentity} />;
-    }
-
-    // Helper function to get conversation name
-    const getConversationName = (conversation: SmashConversation) => {
-        const otherParticipants = conversation.participants.filter(
-            (p) => p !== CURRENT_USER,
+        return (
+            <WelcomeGuide
+                onCreateIdentity={async (newIdentity) => {
+                    setIsLoading(true);
+                    try {
+                        await setIdentity(newIdentity);
+                        // Set default SME config
+                        await updateSMEConfig({
+                            url: 'wss://sme.dev.smashchats.com/',
+                            smePublicKey: 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEW45b75uMszTovqQSUDhsofhJx78A4Ytm4KV+REh2RRxwwfXVzTOmApNGU+eSoS2kEeDIpgt5ymLj5XPkVuEx+Q==',
+                        });
+                    } finally {
+                        setIsLoading(false);
+                    }
+                }}
+                isLoading={isLoading}
+                error={error}
+            />
         );
-        return conversation.type === 'direct'
-            ? otherParticipants[0]
-            : otherParticipants.join(', ');
-    };
-
-    const selectedConversation = selectedChat
-        ? conversations.find((c) => c.id === selectedChat)
-        : undefined;
+    }
 
     return (
         <div className="app-container">
             {/* Sidebar */}
             <nav className="sidebar">
-                <button 
+                <button
                     className={`sidebar-button ${currentView === 'messages' ? 'active' : ''}`}
                     onClick={() => setCurrentView('messages')}
                 >
                     <MessageSquare />
                 </button>
-                <button 
-                    className={`sidebar-button ${currentView === 'contacts' ? 'active' : ''}`}
-                    onClick={() => setCurrentView('contacts')}
+                <button
+                    className={`sidebar-button ${currentView === 'explore' ? 'active' : ''}`}
+                    onClick={() => setCurrentView('explore')}
                 >
                     <Users />
                 </button>
                 <div className="flex-grow" />
-                <button 
+                <button
                     className={`sidebar-button ${currentView === 'settings' ? 'active' : ''}`}
                     onClick={() => setCurrentView('settings')}
                 >
@@ -173,75 +221,61 @@ function App() {
 
             {/* Main content */}
             {currentView === 'messages' && (
-                <>
-                    {/* Chat list */}
-                    <div className={`chat-list ${isMobileMenuOpen ? 'open' : ''}`}>
-                        <div className="chat-list-header">
-                            <h2>Messages</h2>
+                <main className="main-area">
+                    <div className="chat-container">
+                        <div
+                            className={`chat-list-container ${
+                                isMobileMenuOpen ? 'mobile-open' : ''
+                            }`}
+                        >
+                            <ChatList
+                                conversations={conversations}
+                                selectedChat={selectedChat}
+                                onSelectChat={handleSelectChat}
+                            />
                         </div>
-                        <ChatList
-                            chats={conversations.map((conv) => ({
-                                id: conv.id,
-                                name: getConversationName(conv),
-                                lastMessage: conv.lastMessage?.content ?? '',
-                                timestamp: conv.lastMessage?.timestamp ?? new Date(),
-                                unreadCount: conv.unreadCount,
-                            }))}
-                            selectedChatId={selectedChat}
-                            onChatSelect={setSelectedChat}
-                        />
+
+                        {selectedChat ? (
+                            <div className="chat-messages-container">
+                                <div className="messages-container">
+                                    {messages.map((message) => (
+                                        <ChatMessage
+                                            key={message.id}
+                                            message={message}
+                                            isOwnMessage={
+                                                message.sender === CURRENT_USER
+                                            }
+                                        />
+                                    ))}
+                                </div>
+                                <ChatInput onSendMessage={handleSendMessage} />
+                            </div>
+                        ) : (
+                            <div className="no-chat-selected">
+                                <p>Select a chat to start messaging</p>
+                            </div>
+                        )}
                     </div>
+                </main>
+            )}
 
-                    {/* Main chat area */}
-                    <main className="main-area">
-                        {/* Mobile header */}
-                        <div className="md:hidden flex items-center p-4 border-b border-border">
-                            <button
-                                className="sidebar-button mr-2"
-                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            >
-                                <Menu />
-                            </button>
-                            <h2 className="font-semibold">
-                                {selectedConversation
-                                    ? getConversationName(selectedConversation)
-                                    : 'Messages'}
-                            </h2>
-                        </div>
-
-                        {/* Messages */}
-                        <div className="messages-container">
-                            {messages.map((message) => (
-                                <ChatMessage
-                                    key={message.id}
-                                    content={message.content}
-                                    isOutgoing={message.sender === CURRENT_USER}
-                                    timestamp={message.timestamp}
-                                    sender={
-                                        message.sender === CURRENT_USER
-                                            ? 'You'
-                                            : message.sender
-                                    }
-                                    status={message.status}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Chat input */}
-                        <ChatInput
-                            onSendMessage={handleSendMessage}
-                            isLoading={isLoading}
-                        />
-                    </main>
-                </>
+            {currentView === 'explore' && (
+                <main className="main-area">
+                    <div className="explore-container">
+                        <h2>Explore your neighborhood</h2>
+                        <p>Coming soon...</p>
+                    </div>
+                </main>
             )}
 
             {currentView === 'settings' && (
                 <main className="main-area">
-                    <Settings 
+                    <Settings
                         onLogout={handleLogout}
                         profile={profile}
                         onUpdateProfile={updateProfile}
+                        smeConfig={smeConfig}
+                        onUpdateSME={updateSMEConfig}
                     />
                 </main>
             )}
@@ -252,6 +286,20 @@ function App() {
                     className="fixed inset-0 bg-background/80 backdrop-blur-sm z-20 md:hidden"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
+            )}
+
+            {/* Error toast */}
+            {error && (
+                <div className="error-toast" role="alert">
+                    <p>{error.message}</p>
+                    <button
+                        onClick={() => setError(null)}
+                        className="error-toast-close"
+                        aria-label="Close error message"
+                    >
+                        ×
+                    </button>
+                </div>
             )}
         </div>
     );

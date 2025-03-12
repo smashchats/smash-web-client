@@ -1,47 +1,40 @@
 import { Check, CheckCheck } from 'lucide-react';
 
+import { SmashMessage } from '../../lib/types';
+
 interface ChatMessageProps {
-    content: string;
-    isOutgoing: boolean;
-    timestamp: Date;
-    sender: string;
-    status?: 'sent' | 'delivered' | 'read' | 'failed';
+    message: SmashMessage;
+    isOwnMessage: boolean;
 }
 
-export function ChatMessage({
-    content,
-    isOutgoing,
-    timestamp,
-    sender,
-    status = 'sent',
-}: ChatMessageProps) {
+export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
     return (
         <div
-            className={`message ${isOutgoing ? 'outgoing ml-auto' : 'incoming'}`}
+            className={`message ${isOwnMessage ? 'outgoing ml-auto' : 'incoming'}`}
         >
-            {!isOutgoing && (
+            {!isOwnMessage && (
                 <div className="font-medium text-sm text-muted mb-1">
-                    {sender}
+                    {message.sender}
                 </div>
             )}
             <div className="flex flex-col">
-                <p className="text-sm whitespace-pre-wrap">{content}</p>
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 <div className="flex items-center gap-1 mt-1">
                     <span className="text-xs opacity-70">
-                        {timestamp.toLocaleTimeString([], {
+                        {new Date(message.timestamp).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                         })}
                     </span>
-                    {isOutgoing && (
+                    {isOwnMessage && (
                         <span className="flex items-center">
-                            {status === 'sent' && (
+                            {message.status === 'sent' && (
                                 <Check className="h-3 w-3 opacity-70" />
                             )}
-                            {status === 'delivered' && (
+                            {message.status === 'delivered' && (
                                 <CheckCheck className="h-3 w-3 opacity-70" />
                             )}
-                            {status === 'read' && (
+                            {message.status === 'read' && (
                                 <CheckCheck className="h-3 w-3 text-blue-400" />
                             )}
                         </span>

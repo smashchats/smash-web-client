@@ -1,27 +1,63 @@
-import { AlertCircle, CheckCircle2, Loader2, LogOut, Save } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import './Settings.css';
+import { useEffect, useState } from 'react';
 
-interface SettingsProps {
-    onLogout: () => void;
-    profile: {
-        title: string;
-        description: string;
-    };
-    onUpdateProfile: (profile: { title: string; description: string }) => Promise<void>;
+interface Profile {
+    title: string;
+    description: string;
+    avatar: string;
 }
 
-export function Settings({ onLogout, profile, onUpdateProfile }: SettingsProps) {
+interface SMEConfig {
+    url: string;
+    smePublicKey: string;
+}
+
+interface SettingsProps {
+    onLogout: () => Promise<void>;
+    profile: Profile | null;
+    onUpdateProfile: (profile: Profile) => Promise<void>;
+    smeConfig: SMEConfig | null;
+    onUpdateSME: (config: SMEConfig) => Promise<void>;
+}
+
+export function Settings({
+    onLogout,
+    profile,
+    onUpdateProfile,
+    smeConfig,
+    onUpdateSME,
+}: SettingsProps) {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [saveStatus, setSaveStatus] = useState<'success' | 'error' | 'unsaved' | null>(null);
-    const [formData, setFormData] = useState(profile);
+    const [saveStatus, setSaveStatus] = useState<
+        'success' | 'error' | 'unsaved' | 'saving' | null
+    >(null);
+    const [formData, setFormData] = useState<Profile>({
+        title: '',
+        description: '',
+        avatar: '',
+    });
+    const [smeFormData, setSmeFormData] = useState<SMEConfig>({
+        url: 'wss://sme.dev.smashchats.com/',
+        smePublicKey:
+            'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEW45b75uMszTovqQSUDhsofhJx78A4Ytm4KV+REh2RRxwwfXVzTOmApNGU+eSoS2kEeDIpgt5ymLj5XPkVuEx+Q==',
+    });
     const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout>();
     const [successTimeoutId, setSuccessTimeoutId] = useState<NodeJS.Timeout>();
+    const [isSavingSME, setIsSavingSME] = useState(false);
+    const [smeStatus, setSmeStatus] = useState<
+        'success' | 'error' | 'unsaved' | null
+    >(null);
 
     useEffect(() => {
-        setFormData(profile);
+        if (profile) {
+            setFormData(profile);
+        }
     }, [profile]);
+
+    useEffect(() => {
+        if (smeConfig) {
+            setSmeFormData(smeConfig);
+        }
+    }, [smeConfig]);
 
     useEffect(() => {
         return () => {
@@ -30,162 +66,209 @@ export function Settings({ onLogout, profile, onUpdateProfile }: SettingsProps) 
         };
     }, [timeoutId, successTimeoutId]);
 
-    const debouncedSave = useCallback((data: typeof profile) => {
-        if (timeoutId) clearTimeout(timeoutId);
-        if (successTimeoutId) clearTimeout(successTimeoutId);
-        
-        const newTimeoutId = setTimeout(async () => {
-            setIsSaving(true);
-            try {
-                await onUpdateProfile(data);
-                setSaveStatus('success');
-                
-                // Reset to default state after 2 seconds
-                const newSuccessTimeoutId = setTimeout(() => {
-                    setSaveStatus(null);
-                }, 2000);
-                setSuccessTimeoutId(newSuccessTimeoutId);
-            } catch (error) {
-                setSaveStatus('error');
-                console.error('Failed to save profile:', error);
-            } finally {
-                setIsSaving(false);
-            }
-        }, 500);
-        
-        setTimeoutId(newTimeoutId);
-    }, [onUpdateProfile, timeoutId, successTimeoutId]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        const newData = { ...formData, [name]: value };
-        setFormData(newData);
-        setSaveStatus('unsaved');
-        debouncedSave(newData);
+    const saveProfile = async (data: Profile) => {
+        try {
+            setSaveStatus('saving');
+            await onUpdateProfile(data);
+            setSaveStatus('success');
+            const successId = setTimeout(() => setSaveStatus(null), 2000);
+            setSuccessTimeoutId(successId);
+        } catch {
+            setSaveStatus('error');
+        }
     };
 
-    const handleManualSave = async () => {
-        if (saveStatus !== 'unsaved' || isSaving) return;
-        
+    const handleProfileChange =
+        (field: keyof Profile) => (e: React.ChangeEvent<HTMLInputElement>) => {
+            const newFormData = { ...formData, [field]: e.target.value };
+            setFormData(newFormData);
+            setSaveStatus('unsaved');
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            const id = setTimeout(() => saveProfile(newFormData), 1000);
+            setTimeoutId(id);
+        };
+
+    const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newFormData = { ...formData, description: e.target.value };
+        setFormData(newFormData);
+        setSaveStatus('unsaved');
         if (timeoutId) {
             clearTimeout(timeoutId);
-            setTimeoutId(undefined);
         }
-        
-        setIsSaving(true);
+        const id = setTimeout(() => saveProfile(newFormData), 1000);
+        setTimeoutId(id);
+    };
+
+    const handleManualSave = () => {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        saveProfile(formData);
+    };
+
+    const handleSMEChange =
+        (field: keyof SMEConfig) =>
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            setSmeFormData((prev) => ({ ...prev, [field]: e.target.value }));
+            setSmeStatus('unsaved');
+        };
+
+    const handleSaveSME = async () => {
         try {
-            await onUpdateProfile(formData);
-            setSaveStatus('success');
-            
-            const newSuccessTimeoutId = setTimeout(() => {
-                setSaveStatus(null);
-            }, 2000);
-            setSuccessTimeoutId(newSuccessTimeoutId);
-        } catch (error) {
-            setSaveStatus('error');
-            console.error('Failed to save profile:', error);
+            setIsSavingSME(true);
+            await onUpdateSME(smeFormData);
+            setSmeStatus('success');
+            setTimeout(() => setSmeStatus(null), 2000);
+        } catch {
+            setSmeStatus('error');
         } finally {
-            setIsSaving(false);
+            setIsSavingSME(false);
         }
     };
 
     const handleLogout = async () => {
-        setIsLoggingOut(true);
         try {
+            setIsLoggingOut(true);
             await onLogout();
         } finally {
             setIsLoggingOut(false);
         }
     };
 
-    const getSaveButtonContent = () => {
-        if (isSaving) {
-            return (
-                <>
-                    <Loader2 className="animate-spin" />
-                    <span>Saving...</span>
-                </>
-            );
-        }
-        if (saveStatus === 'success') {
-            return (
-                <>
-                    <CheckCircle2 />
-                    <span>Saved</span>
-                </>
-            );
-        }
-        if (saveStatus === 'error') {
-            return (
-                <>
-                    <AlertCircle />
-                    <span>Failed to save</span>
-                </>
-            );
-        }
-        return (
-            <>
-                <Save />
-                <span>Save Changes</span>
-            </>
-        );
-    };
-
     return (
         <div className="settings-container">
-            <h1 className="settings-title">Settings</h1>
-            
-            <div className="settings-content">
-                <div className="settings-section">
-                    <h2 className="settings-section-title">Profile</h2>
+            <div className="settings-section">
+                <h2 className="settings-section-title">Profile Settings</h2>
+                <div className="settings-card">
                     <div className="settings-form">
                         <div className="form-group">
-                            <label htmlFor="title">Title</label>
+                            <label>Title</label>
                             <input
                                 type="text"
-                                id="title"
-                                name="title"
                                 value={formData.title}
-                                onChange={handleChange}
-                                placeholder="Enter a short title"
-                                maxLength={50}
+                                onChange={handleProfileChange('title')}
+                                placeholder="Enter your title"
                             />
                         </div>
                         <div className="form-group">
-                            <label htmlFor="description">Description</label>
+                            <label>Description</label>
                             <textarea
-                                id="description"
-                                name="description"
                                 value={formData.description}
-                                onChange={handleChange}
-                                placeholder="Tell us about yourself"
-                                maxLength={500}
+                                onChange={handleTextAreaChange}
+                                placeholder="Enter your description"
                             />
                         </div>
                         <button
-                            className={`save-button ${saveStatus || ''}`}
+                            className={`button ${
+                                saveStatus === 'success'
+                                    ? 'button--success'
+                                    : 'button--primary'
+                            } ${saveStatus === null ? 'button--disabled' : ''}`}
                             onClick={handleManualSave}
-                            disabled={isSaving}
+                            disabled={saveStatus === 'saving' || saveStatus === 'success' || saveStatus === null}
                         >
-                            {getSaveButtonContent()}
+                            {saveStatus === 'saving' ? (
+                                <>
+                                    <div className="spinner" />
+                                    <span>Saving...</span>
+                                </>
+                            ) : saveStatus === 'success' ? (
+                                'Saved!'
+                            ) : saveStatus === 'unsaved' ? (
+                                'Save Changes'
+                            ) : saveStatus === 'error' ? (
+                                'Try Again'
+                            ) : (
+                                'No Changes'
+                            )}
                         </button>
+                        {saveStatus === 'error' && (
+                            <div className="status-message error">
+                                <span>Failed to save profile. Please try again.</span>
+                            </div>
+                        )}
                     </div>
                 </div>
+            </div>
 
-                <div className="settings-section">
-                    <h2 className="settings-section-title">Account</h2>
-                    <div className="logout-section">
+            <div className="settings-section">
+                <h2 className="settings-section-title">SME Configuration</h2>
+                <div className="settings-card">
+                    <div className="settings-form">
+                        <div className="form-group">
+                            <label>SME URL</label>
+                            <input
+                                type="text"
+                                value={smeFormData.url}
+                                onChange={handleSMEChange('url')}
+                                placeholder="Enter SME URL"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>SME Public Key</label>
+                            <input
+                                type="text"
+                                value={smeFormData.smePublicKey}
+                                onChange={handleSMEChange('smePublicKey')}
+                                placeholder="Enter SME public key"
+                            />
+                        </div>
                         <button
-                            onClick={handleLogout}
-                            disabled={isLoggingOut}
-                            className="logout-button"
+                            className={`button button--primary ${
+                                smeStatus === 'unsaved' ? '' : 'button--disabled'
+                            }`}
+                            onClick={handleSaveSME}
+                            disabled={isSavingSME || smeStatus !== 'unsaved'}
                         >
-                            <LogOut />
-                            <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+                            {isSavingSME ? (
+                                <>
+                                    <div className="spinner" />
+                                    <span>Saving...</span>
+                                </>
+                            ) : (
+                                'Save SME Configuration'
+                            )}
                         </button>
+                        {smeStatus === 'success' && (
+                            <div className="status-message success">
+                                <span>SME configuration saved successfully!</span>
+                            </div>
+                        )}
+                        {smeStatus === 'error' && (
+                            <div className="status-message error">
+                                <span>Failed to save SME configuration. Please try again.</span>
+                            </div>
+                        )}
+                        {smeStatus === 'unsaved' && (
+                            <div className="status-message info">
+                                <span>Unsaved changes</span>
+                            </div>
+                        )}
                     </div>
+                </div>
+            </div>
+
+            <div className="settings-section">
+                <h2 className="settings-section-title">Account</h2>
+                <div className="settings-card">
+                    <button
+                        className="button button--outline-destructive button--full"
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                    >
+                        {isLoggingOut ? (
+                            <>
+                                <div className="spinner" />
+                                <span>Logging out...</span>
+                            </>
+                        ) : (
+                            'Logout'
+                        )}
+                    </button>
                 </div>
             </div>
         </div>
     );
-} 
+}

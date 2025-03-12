@@ -1,229 +1,180 @@
 import { useEffect, useState } from 'react';
-import { IMPeerIdentity, IIMPeerIdentity } from 'smash-node-lib';
-import { getDidDocumentManager, importIdentity, initializeSmashMessaging } from '../smash-init';
+import { DIDDocManager, IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
-// IndexedDB configuration
-const DB_NAME = 'smash_db';
-const DB_VERSION = 1;
-const STORE_NAME = 'identities';
-const IDENTITY_KEY = 'current_identity';
-const PROFILE_KEY = 'user_profile';
+import { smashService } from '../smash-service';
 
-interface UserProfile {
+// Local storage keys
+const IDENTITY_KEY = 'smash_identity';
+const PROFILE_KEY = 'smash_profile';
+const SME_CONFIG_KEY = 'sme_config';
+
+interface Profile {
     title: string;
     description: string;
+    avatar: string;
 }
 
-// Helper function to initialize IndexedDB
-async function initializeDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-
-        request.onupgradeneeded = (event) => {
-            const db = (event.target as IDBOpenDBRequest).result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
-        };
-    });
+interface SMEConfig {
+    url: string;
+    smePublicKey: string;
 }
 
-// Helper function to store identity in IndexedDB
-async function storeIdentity(identity: IIMPeerIdentity): Promise<void> {
-    const db = await initializeDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.put(identity, IDENTITY_KEY);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
-    });
-}
-
-// Helper function to store profile in IndexedDB
-async function storeProfile(profile: UserProfile): Promise<void> {
-    const db = await initializeDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.put(profile, PROFILE_KEY);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
-    });
-}
-
-// Helper function to retrieve identity from IndexedDB
-async function getStoredIdentity(): Promise<IIMPeerIdentity | null> {
-    const db = await initializeDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(IDENTITY_KEY);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result || null);
-    });
-}
-
-// Helper function to retrieve profile from IndexedDB
-async function getStoredProfile(): Promise<UserProfile | null> {
-    const db = await initializeDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(PROFILE_KEY);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result || null);
-    });
-}
-
-// Helper function to clear identity from IndexedDB
-async function clearStoredIdentity(): Promise<void> {
-    const db = await initializeDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        const request1 = store.delete(IDENTITY_KEY);
-        const request2 = store.delete(PROFILE_KEY);
-
-        request1.onerror = () => reject(request1.error);
-        request2.onerror = () => reject(request2.error);
-        
-        Promise.all([
-            new Promise(resolve => request1.onsuccess = resolve),
-            new Promise(resolve => request2.onsuccess = resolve)
-        ]).then(() => resolve());
-    });
+interface SmashIdentityState {
+    identity: IMPeerIdentity | null;
+    profile: Profile | null;
+    smeConfig: SMEConfig | null;
+    error: Error | null;
+    isInitialized: boolean;
+    smashUser: SmashUser | null;
 }
 
 export function useSmashIdentity() {
-    console.log('useSmashIdentity hook called');
-    const [identity, setIdentity] = useState<IMPeerIdentity | null>(null);
-    const [profile, setProfile] = useState<UserProfile>({ title: '', description: '' });
-    const [error, setError] = useState<Error | null>(null);
-    const [isInitialized, setIsInitialized] = useState(false);
+    const [state, setState] = useState<SmashIdentityState>({
+        identity: null,
+        profile: null,
+        smeConfig: null,
+        error: null,
+        isInitialized: false,
+        smashUser: null,
+    });
 
-    // Initialize Smash messaging first
+    const [didManager] = useState(() => new DIDDocManager());
+
+    // Load stored identity and profile
     useEffect(() => {
         try {
-            initializeSmashMessaging();
-            setIsInitialized(true);
-        } catch (err) {
-            console.error('Failed to initialize Smash messaging:', err);
-            setError(err instanceof Error ? err : new Error(String(err)));
+            const storedIdentity = localStorage.getItem(IDENTITY_KEY);
+            const storedProfile = localStorage.getItem(PROFILE_KEY);
+            const storedSMEConfig = localStorage.getItem(SME_CONFIG_KEY);
+
+            setState((prev) => ({
+                ...prev,
+                identity: storedIdentity ? JSON.parse(storedIdentity) : null,
+                profile: storedProfile ? JSON.parse(storedProfile) : null,
+                smeConfig: storedSMEConfig ? JSON.parse(storedSMEConfig) : null,
+                isInitialized: true,
+            }));
+        } catch (error) {
+            setState((prev) => ({
+                ...prev,
+                error: error as Error,
+                isInitialized: true,
+            }));
         }
     }, []);
 
-    // Wrap setIdentity to also store in IndexedDB
-    const setIdentityWithStorage = async (newIdentity: IMPeerIdentity) => {
+    // Initialize Smash user when identity and SME config are available
+    useEffect(() => {
+        const initSmashUser = async () => {
+            if (!state.identity || !state.smeConfig || state.smashUser) return;
+
+            try {
+                // Generate new pre-key pair
+                await didManager.generateNewPreKeyPair(state.identity);
+
+                // Initialize Smash user
+                const smashUser = new SmashUser(state.identity);
+                const preKeyPair = await didManager.generateNewPreKeyPair(
+                    state.identity,
+                );
+                await smashUser.endpoints.connect(state.smeConfig, preKeyPair);
+
+                // Initialize smash service
+                await smashService.init(smashUser);
+
+                // Update profile metadata if available
+                if (state.profile) {
+                    await smashUser.updateMeta({
+                        title: state.profile.title,
+                        description: state.profile.description,
+                        avatar: state.profile.avatar,
+                    });
+                }
+
+                setState((prev) => ({ ...prev, smashUser, error: null }));
+            } catch (error) {
+                setState((prev) => ({ ...prev, error: error as Error }));
+            }
+        };
+
+        initSmashUser();
+    }, [
+        state.identity,
+        state.smeConfig,
+        state.smashUser,
+        state.profile,
+        didManager,
+    ]);
+
+    const setIdentity = async (identity: IMPeerIdentity) => {
         try {
-            const exportedIdentity = await newIdentity.serialize();
-            await storeIdentity(exportedIdentity);
-            setIdentity(newIdentity);
-        } catch (err) {
-            console.error('Failed to store identity:', err);
-            setError(err instanceof Error ? err : new Error(String(err)));
+            localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
+            setState((prev) => ({ ...prev, identity, error: null }));
+        } catch (error) {
+            setState((prev) => ({ ...prev, error: error as Error }));
         }
     };
 
-    // Function to update profile
-    const updateProfile = async (newProfile: UserProfile) => {
+    const updateProfile = async (profile: Profile) => {
         try {
-            await storeProfile(newProfile);
-            setProfile(newProfile);
-        } catch (err) {
-            console.error('Failed to store profile:', err);
-            setError(err instanceof Error ? err : new Error(String(err)));
-            throw err;
+            localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+            setState((prev) => ({ ...prev, profile, error: null }));
+
+            if (state.smashUser) {
+                await state.smashUser.updateMeta({
+                    title: profile.title,
+                    description: profile.description,
+                    avatar: profile.avatar,
+                });
+            }
+        } catch (error) {
+            setState((prev) => ({ ...prev, error: error as Error }));
         }
     };
 
-    // Function to clear identity
+    const updateSMEConfig = async (config: SMEConfig) => {
+        try {
+            localStorage.setItem(SME_CONFIG_KEY, JSON.stringify(config));
+            setState((prev) => ({ ...prev, smeConfig: config, error: null }));
+        } catch (error) {
+            setState((prev) => ({ ...prev, error: error as Error }));
+        }
+    };
+
     const clearIdentity = async () => {
         try {
-            await clearStoredIdentity();
-            setIdentity(null);
-            setProfile({ title: '', description: '' });
-        } catch (err) {
-            console.error('Failed to clear identity:', err);
-            setError(err instanceof Error ? err : new Error(String(err)));
-            throw err;
+            if (state.smashUser) {
+                await state.smashUser.close();
+                await smashService.close();
+            }
+
+            localStorage.removeItem(IDENTITY_KEY);
+            localStorage.removeItem(PROFILE_KEY);
+            localStorage.removeItem(SME_CONFIG_KEY);
+
+            setState({
+                identity: null,
+                profile: null,
+                smeConfig: null,
+                error: null,
+                isInitialized: true,
+                smashUser: null,
+            });
+        } catch (error) {
+            setState((prev) => ({ ...prev, error: error as Error }));
         }
     };
 
-    // Load identity and profile after initialization
-    useEffect(() => {
-        if (!isInitialized) return;
-
-        let mounted = true;
-        console.log('Loading identity and profile...');
-
-        async function initialize() {
-            try {
-                // Try to load existing identity from IndexedDB
-                const [storedIdentity, storedProfile] = await Promise.all([
-                    getStoredIdentity(),
-                    getStoredProfile()
-                ]);
-
-                console.log('Stored identity found:', !!storedIdentity);
-                console.log('Stored profile found:', !!storedProfile);
-
-                if (mounted) {
-                    if (storedProfile) {
-                        setProfile(storedProfile);
-                    }
-
-                    if (storedIdentity) {
-                        try {
-                            console.log('Attempting to import stored identity...');
-                            const importedIdentity = await importIdentity(storedIdentity);
-                            console.log('Identity imported successfully');
-                            setIdentity(importedIdentity);
-                        } catch (err) {
-                            console.error('Failed to import identity:', err);
-                            setError(err instanceof Error ? err : new Error(String(err)));
-                        }
-                    } else {
-                        console.log('No stored identity found, waiting for user to create one');
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to initialize:', err);
-                if (mounted) {
-                    setError(err instanceof Error ? err : new Error(String(err)));
-                }
-            }
-        }
-
-        initialize();
-
-        return () => {
-            mounted = false;
-        };
-    }, [isInitialized]);
-
-    let manager = null;
-    try {
-        manager = isInitialized ? getDidDocumentManager() : null;
-    } catch (err) {
-        console.error('Failed to get DID document manager:', err);
-    }
-
     return {
-        identity,
-        setIdentity: setIdentityWithStorage,
-        profile,
+        identity: state.identity,
+        profile: state.profile,
+        smeConfig: state.smeConfig,
+        error: state.error,
+        isInitialized: state.isInitialized,
+        smashUser: state.smashUser,
+        setIdentity,
         updateProfile,
+        updateSMEConfig,
         clearIdentity,
-        error,
-        didDocumentManager: manager,
-        isInitialized,
     };
 }

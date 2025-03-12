@@ -1,9 +1,6 @@
-import { Slot } from '@radix-ui/react-slot';
-import * as React from 'react';
+import { ButtonHTMLAttributes, forwardRef } from 'react';
 
-export interface ButtonProps
-    extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    asChild?: boolean;
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?:
         | 'default'
         | 'destructive'
@@ -14,26 +11,19 @@ export interface ButtonProps
     size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     (
-        {
-            className = '',
-            variant = 'default',
-            size = 'default',
-            asChild = false,
-            ...props
-        },
+        { className = '', variant = 'default', size = 'default', ...props },
         ref,
     ) => {
-        const Comp = asChild ? Slot : 'button';
-        const baseClass = 'button';
-        const variantClass = `button--${variant}`;
-        const sizeClass = `button--${size}`;
-        const classes = [baseClass, variantClass, sizeClass, className]
+        const baseClasses = 'button';
+        const variantClasses = `button--${variant}`;
+        const sizeClasses = `button--${size}`;
+        const classes = [baseClasses, variantClasses, sizeClasses, className]
             .filter(Boolean)
             .join(' ');
 
-        return <Comp className={classes} ref={ref} {...props} />;
+        return <button className={classes} ref={ref} {...props} />;
     },
 );
 

@@ -3,28 +3,36 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Database, Lock, Shield, Users } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { IMPeerIdentity } from 'smash-node-lib';
-import { generateIdentity } from '../lib/smash-init';
 
+import { generateIdentity } from '../lib/smash-init';
 import './WelcomeGuide.css';
 
 interface WelcomeGuideProps {
-    onIdentityCreated: (identity: IMPeerIdentity) => void;
+    onCreateIdentity: (identity: IMPeerIdentity) => void;
+    isLoading: boolean;
+    error: Error | null;
 }
 
-export function WelcomeGuide({ onIdentityCreated }: WelcomeGuideProps) {
+export function WelcomeGuide({
+    onCreateIdentity,
+    isLoading,
+    error,
+}: WelcomeGuideProps) {
     const [isGenerating, setIsGenerating] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [errorState, setErrorState] = useState<string | null>(null);
 
     const handleGenerateIdentity = useCallback(async () => {
         setIsGenerating(true);
-        setError(null);
+        setErrorState(null);
 
         try {
             // Generate new identity
             const identity = await generateIdentity();
 
             if (!identity) {
-                throw new Error('Failed to generate identity - no identity returned');
+                throw new Error(
+                    'Failed to generate identity - no identity returned',
+                );
             }
 
             // Export identity to JSON for storage
@@ -35,10 +43,10 @@ export function WelcomeGuide({ onIdentityCreated }: WelcomeGuideProps) {
             }
 
             // Notify parent component
-            onIdentityCreated(identity);
+            onCreateIdentity(identity);
         } catch (err) {
             console.error('Failed to generate identity:', err);
-            setError(
+            setErrorState(
                 err instanceof Error
                     ? err.message
                     : 'Failed to generate your identity. Please try again.',
@@ -46,7 +54,7 @@ export function WelcomeGuide({ onIdentityCreated }: WelcomeGuideProps) {
         } finally {
             setIsGenerating(false);
         }
-    }, [onIdentityCreated]);
+    }, [onCreateIdentity]);
 
     return (
         <Dialog.Root open defaultOpen modal>
@@ -113,22 +121,22 @@ export function WelcomeGuide({ onIdentityCreated }: WelcomeGuideProps) {
                     </div>
 
                     <div className="button-container">
-                        {error && (
+                        {(error || errorState) && (
                             <div
                                 className="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
                                 role="alert"
                             >
-                                {error}
+                                {error?.message || errorState}
                             </div>
                         )}
 
                         <button
                             className="DialogButton"
                             onClick={handleGenerateIdentity}
-                            disabled={isGenerating}
-                            data-loading={isGenerating}
+                            disabled={isGenerating || isLoading}
+                            data-loading={isGenerating || isLoading}
                         >
-                            {isGenerating
+                            {isGenerating || isLoading
                                 ? 'Generating Identity...'
                                 : 'Generate My Identity'}
                         </button>

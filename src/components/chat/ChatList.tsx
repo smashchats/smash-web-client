@@ -1,47 +1,54 @@
-interface ChatPreview {
-    id: string;
-    name: string;
-    lastMessage: string;
-    timestamp: Date;
-    unreadCount?: number;
-}
+import { SmashConversation } from '../../lib/types';
 
 interface ChatListProps {
-    chats: ChatPreview[];
-    selectedChatId?: string;
-    onChatSelect: (chatId: string) => void;
+    conversations: SmashConversation[];
+    selectedChat?: string;
+    onSelectChat: (chatId: string) => void;
 }
 
 export function ChatList({
-    chats,
-    selectedChatId,
-    onChatSelect,
+    conversations,
+    selectedChat,
+    onSelectChat,
 }: ChatListProps) {
     return (
         <div className="overflow-y-auto flex-1">
-            {chats.map((chat) => (
+            {conversations.map((chat) => (
                 <button
                     key={chat.id}
-                    onClick={() => onChatSelect(chat.id)}
-                    className={`chat-item ${selectedChatId === chat.id ? 'selected' : ''}`}
+                    onClick={() => onSelectChat(chat.id)}
+                    className={`chat-item ${selectedChat === chat.id ? 'selected' : ''}`}
                 >
                     <div className="chat-item-header">
-                        <span className="chat-item-name">{chat.name}</span>
+                        <span className="chat-item-name">
+                            {chat.type === 'direct'
+                                ? chat.participants.find((p) => p !== 'You') ||
+                                  'Unknown'
+                                : chat.participants
+                                      .filter((p) => p !== 'You')
+                                      .join(', ')}
+                        </span>
                         <div className="chat-item-meta">
-                            {chat.unreadCount ? (
+                            {chat.unreadCount > 0 && (
                                 <span className="chat-badge">
                                     {chat.unreadCount}
                                 </span>
-                            ) : null}
-                            <span className="chat-item-time">
-                                {chat.timestamp.toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                })}
-                            </span>
+                            )}
+                            {chat.lastMessage && (
+                                <span className="chat-item-time">
+                                    {new Date(
+                                        chat.lastMessage.timestamp,
+                                    ).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })}
+                                </span>
+                            )}
                         </div>
                     </div>
-                    <p className="chat-item-preview">{chat.lastMessage}</p>
+                    <p className="chat-item-preview">
+                        {chat.lastMessage?.content || 'No messages yet'}
+                    </p>
                 </button>
             ))}
         </div>

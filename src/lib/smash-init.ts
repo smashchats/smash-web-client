@@ -1,5 +1,10 @@
 import { Crypto } from '@peculiar/webcrypto';
-import { DIDDocManager, IMPeerIdentity, IIMPeerIdentity, SmashMessaging } from 'smash-node-lib';
+import {
+    DIDDocManager,
+    IIMPeerIdentity,
+    IMPeerIdentity,
+    SmashMessaging,
+} from 'smash-node-lib';
 
 // Initialize DID document manager globally
 let didDocumentManager: DIDDocManager | null = null;
@@ -38,7 +43,9 @@ export async function generateIdentity(): Promise<IMPeerIdentity> {
     return manager.generate();
 }
 
-export async function importIdentity(serializedIdentity: IIMPeerIdentity): Promise<IMPeerIdentity> {
+export async function importIdentity(
+    serializedIdentity: IIMPeerIdentity,
+): Promise<IMPeerIdentity> {
     initializeSmashMessaging();
     return SmashMessaging.importIdentity(serializedIdentity);
 }
@@ -48,4 +55,4 @@ export function getDidDocumentManager(): DIDDocManager {
         throw new Error('Smash messaging not initialized');
     }
     return didDocumentManager;
-} 
+}

@@ -21,21 +21,25 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 ## Getting Started
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Start development server:
+
 ```bash
 npm run dev
 ```
 
 3. Build for production:
+
 ```bash
 npm run build
 ```
 
 4. Preview production build:
+
 ```bash
 npm run preview
 ```
@@ -55,16 +59,19 @@ We welcome contributions to the Smash Web Client! All code you contribute is own
 We use Radicle—a decentralized Git collaboration network—for code management and contributions:
 
 1. Install Radicle:
+
 ```bash
 curl -sSf https://radicle.xyz/install | sh
 ```
 
 2. Create a Radicle identity:
+
 ```bash
 rad auth
 ```
 
 3. Clone the repository:
+
 ```bash
 rad clone rad:z2F3vmWnoazdMPmrdfEw3ANT6r1py
 ```
@@ -74,17 +81,20 @@ rad clone rad:z2F3vmWnoazdMPmrdfEw3ANT6r1py
 We use Radicle Patches instead of GitHub Pull Requests:
 
 1. Create a branch:
+
 ```bash
 git checkout -b feat/my-feature
 ```
 
 2. Make your changes and commit:
+
 ```bash
 git add .
 git commit -m "Description of changes"
 ```
 
 3. Propose a patch:
+
 ```bash
 git push rad HEAD:refs/patches
 ```

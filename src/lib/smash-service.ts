@@ -1,108 +1,24 @@
-import { SmashConversation, SmashMessage } from './types';
+import {
+    DID,
+    DIDString,
+    IMProtoMessage,
+    IMText,
+    IM_CHAT_TEXT,
+    MessageStatus,
+    SmashUser,
+    sha256,
+} from 'smash-node-lib';
 
-// Mock data
-const MOCK_CONVERSATIONS: SmashConversation[] = [
-    {
-        id: '1',
-        participants: ['Alice', 'You'],
-        type: 'direct',
-        unreadCount: 2,
-        lastMessage: {
-            id: 'msg1',
-            content: 'Hey, how are you?',
-            sender: 'Alice',
-            timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-            status: 'delivered',
-        },
-    },
-    {
-        id: '2',
-        participants: ['Bob', 'You'],
-        type: 'direct',
-        unreadCount: 0,
-        lastMessage: {
-            id: 'msg2',
-            content: 'See you tomorrow!',
-            sender: 'You',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
-            status: 'read',
-        },
-    },
-    {
-        id: '3',
-        participants: ['Alice', 'Bob', 'Charlie', 'You'],
-        type: 'group',
-        unreadCount: 5,
-        lastMessage: {
-            id: 'msg3',
-            content: "Who's up for lunch?",
-            sender: 'Charlie',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-            status: 'delivered',
-        },
-    },
-];
+import { StoredConversation, StoredMessage, db } from './db';
 
-const MOCK_MESSAGES: Record<string, SmashMessage[]> = {
-    '1': [
-        {
-            id: 'msg1-1',
-            content: 'Hi there!',
-            sender: 'You',
-            timestamp: new Date(Date.now() - 1000 * 60 * 10),
-            status: 'read',
-        },
-        {
-            id: 'msg1-2',
-            content: 'Hey, how are you?',
-            sender: 'Alice',
-            timestamp: new Date(Date.now() - 1000 * 60 * 5),
-            status: 'delivered',
-        },
-    ],
-    '2': [
-        {
-            id: 'msg2-1',
-            content: 'Are we still on for tomorrow?',
-            sender: 'Bob',
-            timestamp: new Date(Date.now() - 1000 * 60 * 65),
-            status: 'read',
-        },
-        {
-            id: 'msg2-2',
-            content: 'Yes, absolutely!',
-            sender: 'You',
-            timestamp: new Date(Date.now() - 1000 * 60 * 62),
-            status: 'read',
-        },
-        {
-            id: 'msg2-3',
-            content: 'See you tomorrow!',
-            sender: 'You',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60),
-            status: 'read',
-        },
-    ],
-    '3': [
-        {
-            id: 'msg3-1',
-            content: "Who's up for lunch?",
-            sender: 'Charlie',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30),
-            status: 'delivered',
-        },
-    ],
-};
-
-type MessageCallback = (message: SmashMessage) => void;
-type ConversationCallback = (conversation: SmashConversation) => void;
+export type MessageCallback = (message: StoredMessage) => void;
+export type ConversationCallback = (conversation: StoredConversation) => void;
 
 class SmashService {
     private static instance: SmashService;
-    private messageCallbacks: MessageCallback[] = [];
-    private conversationCallbacks: ConversationCallback[] = [];
-    private conversations: SmashConversation[] = MOCK_CONVERSATIONS;
-    private messages: Record<string, SmashMessage[]> = MOCK_MESSAGES;
+    private messageCallbacks: Set<MessageCallback> = new Set();
+    private conversationCallbacks: Set<ConversationCallback> = new Set();
+    private smashUser: SmashUser | null = null;
 
     private constructor() {}
 
@@ -113,98 +29,115 @@ class SmashService {
         return SmashService.instance;
     }
 
-    async getConversations(): Promise<SmashConversation[]> {
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return this.conversations;
+    async init(smashUser: SmashUser): Promise<void> {
+        this.smashUser = smashUser;
+        await db.init();
+
+        // Set up message listeners
+        this.smashUser.on(IM_CHAT_TEXT, this.handleIncomingMessage.bind(this));
+        this.smashUser.on('status', this.handleMessageStatus.bind(this));
     }
 
-    async getMessages(conversationId: string): Promise<SmashMessage[]> {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        return this.messages[conversationId] || [];
-    }
-
-    async sendMessage(
-        conversationId: string,
-        content: string,
-    ): Promise<SmashMessage> {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        const newMessage: SmashMessage = {
-            id: `msg-${Date.now()}`,
-            content,
-            sender: 'You',
-            timestamp: new Date(),
-            status: 'sent',
-        };
-
-        // Update messages
-        this.messages[conversationId] = [
-            ...(this.messages[conversationId] || []),
-            newMessage,
-        ];
-
-        // Update conversation last message
-        const conversation = this.conversations.find(
-            (c) => c.id === conversationId,
-        );
-        if (conversation) {
-            conversation.lastMessage = newMessage;
-            // Notify conversation update
-            this.conversationCallbacks.forEach((cb) => cb(conversation));
-        }
-
-        // Simulate message status updates
-        setTimeout(() => {
-            newMessage.status = 'delivered';
-            this.messageCallbacks.forEach((cb) => cb(newMessage));
-        }, 1000);
-
-        setTimeout(() => {
-            newMessage.status = 'read';
-            this.messageCallbacks.forEach((cb) => cb(newMessage));
-        }, 2000);
-
-        return newMessage;
-    }
-
-    onMessageReceived(callback: MessageCallback): void {
-        this.messageCallbacks.push(callback);
-    }
-
-    onConversationUpdated(callback: ConversationCallback): void {
-        this.conversationCallbacks.push(callback);
-    }
-
-    // Simulate receiving a message (for testing)
-    async simulateIncomingMessage(
-        conversationId: string,
-        content: string,
-        sender: string,
+    private async handleIncomingMessage(
+        senderId: DIDString,
+        message: IMProtoMessage,
     ): Promise<void> {
-        const newMessage: SmashMessage = {
-            id: `msg-${Date.now()}`,
-            content,
-            sender,
-            timestamp: new Date(),
+        if (!this.smashUser) throw new Error('SmashService not initialized');
+
+        const storedMessage: StoredMessage = {
+            id: message.sha256 || crypto.randomUUID(),
+            content: message.data as string,
+            sender: senderId,
+            conversationId: senderId,
+            timestamp: message.timestamp || new Date().toISOString(),
             status: 'delivered',
         };
 
-        this.messages[conversationId] = [
-            ...(this.messages[conversationId] || []),
-            newMessage,
-        ];
+        await db.addMessage(storedMessage);
+        this.messageCallbacks.forEach((cb) => cb(storedMessage));
+    }
 
-        const conversation = this.conversations.find(
-            (c) => c.id === conversationId,
-        );
-        if (conversation) {
-            conversation.lastMessage = newMessage;
-            conversation.unreadCount += 1;
-            this.conversationCallbacks.forEach((cb) => cb(conversation));
+    private async handleMessageStatus(
+        status: MessageStatus,
+        messageIds: sha256[],
+    ): Promise<void> {
+        for (const messageId of messageIds) {
+            if (status === 'received') {
+                status = 'delivered';
+            }
+            await db.updateMessageStatus(messageId, status);
         }
+    }
 
-        this.messageCallbacks.forEach((cb) => cb(newMessage));
+    async sendMessage(recipientDid: string, content: string): Promise<void> {
+        if (!this.smashUser) throw new Error('SmashService not initialized');
+
+        const recipientDoc = await SmashUser.resolve(recipientDid as DID);
+        const message = new IMText(content);
+        const sent = await this.smashUser.send(recipientDoc, message);
+
+        const storedMessage: StoredMessage = {
+            id: sent.sha256,
+            content: content,
+            sender: this.smashUser.did,
+            conversationId: recipientDid,
+            timestamp: sent.timestamp,
+            status: 'sent',
+        };
+
+        await db.addMessage(storedMessage);
+        this.messageCallbacks.forEach((cb) => cb(storedMessage));
+    }
+
+    async getMessages(conversationId: string): Promise<StoredMessage[]> {
+        return db.getMessages(conversationId);
+    }
+
+    async getConversations(): Promise<StoredConversation[]> {
+        return db.getConversations();
+    }
+
+    async markConversationAsRead(conversationId: string): Promise<void> {
+        await db.markConversationAsRead(conversationId);
+        const messages = await db.getMessages(conversationId);
+
+        if (!this.smashUser) throw new Error('SmashService not initialized');
+
+        // Send read receipts for all messages
+        const messageIds = messages
+            .filter((m) => m.sender !== this.smashUser?.did)
+            .map((m) => m.id);
+
+        if (messageIds.length > 0) {
+            await this.smashUser.ackMessagesRead(
+                conversationId as DID,
+                messageIds as sha256[],
+            );
+        }
+    }
+
+    onMessageReceived(callback: MessageCallback): void {
+        this.messageCallbacks.add(callback);
+    }
+
+    onConversationUpdated(callback: ConversationCallback): void {
+        this.conversationCallbacks.add(callback);
+    }
+
+    removeMessageCallback(callback: MessageCallback): void {
+        this.messageCallbacks.delete(callback);
+    }
+
+    removeConversationCallback(callback: ConversationCallback): void {
+        this.conversationCallbacks.delete(callback);
+    }
+
+    async close(): Promise<void> {
+        if (this.smashUser) {
+            await this.smashUser.close();
+            this.smashUser = null;
+        }
+        await db.close();
     }
 }
 
