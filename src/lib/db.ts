@@ -222,21 +222,30 @@ class SmashDB {
     ): Promise<StoredMessage[]> {
         if (!this.db) throw new Error('Database not initialized');
 
-        return this.db.getAllFromIndex(
+        console.log('🔍 Getting messages for conversation:', conversationId);
+
+        const messages = await this.db.getAllFromIndex(
             'messages',
             'by-conversation',
-            IDBKeyRange.bound(
-                [conversationId, ''],
-                [conversationId + '\uffff', ''],
-            ),
-            limit,
+            conversationId
         );
+
+        console.log('📚 Retrieved messages:', messages);
+
+        // Sort by timestamp
+        return messages
+            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+            .slice(0, limit);
     }
 
     async getConversations(): Promise<StoredConversation[]> {
         if (!this.db) throw new Error('Database not initialized');
-
         return this.db.getAllFromIndex('conversations', 'by-updated');
+    }
+
+    async getConversation(id: string): Promise<StoredConversation | undefined> {
+        if (!this.db) throw new Error('Database not initialized');
+        return this.db.get('conversations', id);
     }
 
     async markConversationAsRead(conversationId: string): Promise<void> {

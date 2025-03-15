@@ -78,6 +78,8 @@ class SmashService {
     ): Promise<void> {
         if (!this.smashUser) throw new Error('SmashService not initialized');
 
+        console.log('📨 Handling incoming message:', { senderId, message });
+
         const storedMessage: StoredMessage = {
             id: message.sha256 || crypto.randomUUID(),
             content: message.data as string,
@@ -87,13 +89,30 @@ class SmashService {
             status: 'delivered',
         };
 
+        console.log('💾 Storing message:', storedMessage);
+
+        // Add message to database - this will also create a conversation if it doesn't exist
         await db.addMessage(storedMessage);
+
+        // Get the conversation to notify UI about potential new conversation
+        const conversation = await db.getConversation(senderId);
+        if (conversation) {
+            console.log('📬 Notifying about conversation:', conversation);
+            this.conversationCallbacks.forEach((callback) => callback(conversation));
+        }
 
         const smashMessage: SmashMessage = {
             ...storedMessage,
             timestamp: new Date(storedMessage.timestamp),
         };
+        console.log('📲 Notifying about message:', smashMessage);
         this.messageCallbacks.forEach((cb) => cb(smashMessage));
+
+        // Mark message as received if it has a hash
+        if (message.sha256) {
+            console.log('✅ Acknowledging message:', message.sha256);
+            await this.smashUser.ackMessagesRead(senderId, [message.sha256]);
+        }
     }
 
     async sendMessage(
@@ -101,6 +120,8 @@ class SmashService {
         content: string,
     ): Promise<SmashMessage> {
         if (!this.smashUser) throw new Error('SmashService not initialized');
+
+        console.log('📤 Sending message:', { conversationId, content });
 
         // Create message
         const message = new IMText(content);
@@ -114,6 +135,8 @@ class SmashService {
             timestamp: new Date(sent.timestamp),
             status: 'sent',
         };
+
+        console.log('💾 Storing sent message:', smashMessage);
 
         // Store in database
         await db.addMessage({

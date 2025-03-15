@@ -125,6 +125,33 @@ function App() {
             );
         });
 
+        // Handle conversation updates (new or updated conversations)
+        smashService.onConversationUpdated((conversation) => {
+            setConversations((prev) => {
+                // Convert StoredConversation to SmashConversation
+                const smashConversation: SmashConversation = {
+                    ...conversation,
+                    lastMessage: conversation.lastMessage
+                        ? {
+                              ...conversation.lastMessage,
+                              timestamp: new Date(conversation.lastMessage.timestamp),
+                          }
+                        : undefined,
+                };
+
+                const existing = prev.find((c) => c.id === conversation.id);
+                if (existing) {
+                    // Update existing conversation
+                    return prev.map((c) =>
+                        c.id === conversation.id ? smashConversation : c
+                    );
+                } else {
+                    // Add new conversation
+                    return [...prev, smashConversation];
+                }
+            });
+        });
+
         // Handle message status updates
         smashService.onMessageStatusUpdated((messageId, status) => {
             setMessages((prev) =>
