@@ -1,4 +1,6 @@
+import { Check, Copy } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
 interface Profile {
     title: string;
@@ -17,6 +19,8 @@ interface SettingsProps {
     onUpdateProfile: (profile: Profile) => Promise<void>;
     smeConfig: SMEConfig | null;
     onUpdateSME: (config: SMEConfig) => Promise<void>;
+    identity: IMPeerIdentity | null;
+    smashUser: SmashUser | null;
 }
 
 export function Settings({
@@ -25,6 +29,8 @@ export function Settings({
     onUpdateProfile,
     smeConfig,
     onUpdateSME,
+    identity,
+    smashUser,
 }: SettingsProps) {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [saveStatus, setSaveStatus] = useState<
@@ -46,6 +52,8 @@ export function Settings({
     const [smeStatus, setSmeStatus] = useState<
         'success' | 'error' | 'unsaved' | null
     >(null);
+    const [didCopied, setDidCopied] = useState(false);
+    const [copyError, setCopyError] = useState<string | null>(null);
 
     useEffect(() => {
         if (profile) {
@@ -90,7 +98,9 @@ export function Settings({
             setTimeoutId(id);
         };
 
-    const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const handleTextAreaChange = (
+        e: React.ChangeEvent<HTMLTextAreaElement>,
+    ) => {
         const newFormData = { ...formData, description: e.target.value };
         setFormData(newFormData);
         setSaveStatus('unsaved');
@@ -137,8 +147,66 @@ export function Settings({
         }
     };
 
+    const handleCopyDID = async () => {
+        if (!identity || !smashUser) {
+            setCopyError('No identity available');
+            return;
+        }
+
+        try {
+            setCopyError(null);
+            const didDoc = await smashUser.getDIDDocument();
+            const didDocString = JSON.stringify(didDoc, null, 2);
+            await navigator.clipboard.writeText(didDocString);
+            setDidCopied(true);
+            setTimeout(() => setDidCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy DID document:', err);
+            setCopyError('Failed to copy DID document');
+        }
+    };
+
     return (
         <div className="settings-container">
+            <div className="settings-section">
+                <h2 className="settings-section-title">Your Identity</h2>
+                <div className="settings-card">
+                    <div className="settings-form">
+                        <div className="form-group">
+                            <label>Your DID Document</label>
+                            <div className="did-document-container">
+                                <button
+                                    className="button button--primary did-copy-button"
+                                    onClick={handleCopyDID}
+                                    disabled={!identity}
+                                >
+                                    {didCopied ? (
+                                        <>
+                                            <Check size={16} />
+                                            Copied!
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy size={16} />
+                                            Copy DID Document
+                                        </>
+                                    )}
+                                </button>
+                                {copyError && (
+                                    <div className="status-message error">
+                                        <span>{copyError}</span>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="did-help-text">
+                                Click the button above to copy your DID document to share with peers.
+                                The copied document will include your current endpoints configuration.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div className="settings-section">
                 <h2 className="settings-section-title">Profile Settings</h2>
                 <div className="settings-card">
@@ -167,7 +235,11 @@ export function Settings({
                                     : 'button--primary'
                             } ${saveStatus === null ? 'button--disabled' : ''}`}
                             onClick={handleManualSave}
-                            disabled={saveStatus === 'saving' || saveStatus === 'success' || saveStatus === null}
+                            disabled={
+                                saveStatus === 'saving' ||
+                                saveStatus === 'success' ||
+                                saveStatus === null
+                            }
                         >
                             {saveStatus === 'saving' ? (
                                 <>
@@ -186,7 +258,9 @@ export function Settings({
                         </button>
                         {saveStatus === 'error' && (
                             <div className="status-message error">
-                                <span>Failed to save profile. Please try again.</span>
+                                <span>
+                                    Failed to save profile. Please try again.
+                                </span>
                             </div>
                         )}
                     </div>
@@ -217,7 +291,9 @@ export function Settings({
                         </div>
                         <button
                             className={`button button--primary ${
-                                smeStatus === 'unsaved' ? '' : 'button--disabled'
+                                smeStatus === 'unsaved'
+                                    ? ''
+                                    : 'button--disabled'
                             }`}
                             onClick={handleSaveSME}
                             disabled={isSavingSME || smeStatus !== 'unsaved'}
@@ -233,12 +309,17 @@ export function Settings({
                         </button>
                         {smeStatus === 'success' && (
                             <div className="status-message success">
-                                <span>SME configuration saved successfully!</span>
+                                <span>
+                                    SME configuration saved successfully!
+                                </span>
                             </div>
                         )}
                         {smeStatus === 'error' && (
                             <div className="status-message error">
-                                <span>Failed to save SME configuration. Please try again.</span>
+                                <span>
+                                    Failed to save SME configuration. Please try
+                                    again.
+                                </span>
                             </div>
                         )}
                         {smeStatus === 'unsaved' && (

@@ -1,4 +1,5 @@
 import { DBSchema, IDBPDatabase, openDB } from 'idb';
+import { IIMPeerIdentity } from 'smash-node-lib';
 
 interface SmashDBSchema extends DBSchema {
     messages: {
@@ -16,6 +17,14 @@ interface SmashDBSchema extends DBSchema {
             'by-updated': string;
         };
     };
+    identity: {
+        key: 'current';
+        value: {
+            serializedIdentity: IIMPeerIdentity;
+            profile: StoredProfile | null;
+            smeConfig: SMEConfig | null;
+        };
+    };
 }
 
 export interface StoredMessage {
@@ -25,6 +34,17 @@ export interface StoredMessage {
     sender: string;
     timestamp: string;
     status: 'sent' | 'delivered' | 'read' | 'error';
+}
+
+export interface StoredProfile {
+    title: string;
+    description: string;
+    avatar: string;
+}
+
+export interface SMEConfig {
+    url: string;
+    smePublicKey: string;
 }
 
 export interface StoredConversation {
@@ -45,7 +65,7 @@ class SmashDB {
     private static instance: SmashDB;
     private db: IDBPDatabase<SmashDBSchema> | null = null;
     private dbName = 'smash-db';
-    private version = 1;
+    private version = 1; // Simplified versioning
 
     private constructor() {}
 
@@ -61,14 +81,13 @@ class SmashDB {
 
         this.db = await openDB<SmashDBSchema>(this.dbName, this.version, {
             upgrade(db) {
-                // Create messages store
+                // Create all stores in one go
                 const messageStore = db.createObjectStore('messages', {
                     keyPath: 'id',
                 });
                 messageStore.createIndex('by-conversation', 'conversationId');
                 messageStore.createIndex('by-timestamp', 'timestamp');
 
-                // Create conversations store
                 const conversationsStore = db.createObjectStore(
                     'conversations',
                     {
@@ -76,8 +95,69 @@ class SmashDB {
                     },
                 );
                 conversationsStore.createIndex('by-updated', 'updatedAt');
+
+                db.createObjectStore('identity');
             },
         });
+    }
+
+    // Identity management
+    async getIdentity(): Promise<{
+        serializedIdentity: IIMPeerIdentity;
+        profile: StoredProfile | null;
+        smeConfig: SMEConfig | null;
+    } | null> {
+        if (!this.db) throw new Error('Database not initialized');
+        const result = await this.db.get('identity', 'current');
+        return result || null;
+    }
+
+    async setIdentity(
+        serializedIdentity: IIMPeerIdentity,
+        profile: StoredProfile | null = null,
+        smeConfig: SMEConfig | null = null,
+    ): Promise<void> {
+        if (!this.db) throw new Error('Database not initialized');
+        await this.db.put(
+            'identity',
+            { serializedIdentity, profile, smeConfig },
+            'current',
+        );
+    }
+
+    async updateProfile(profile: StoredProfile): Promise<void> {
+        if (!this.db) throw new Error('Database not initialized');
+        const current = await this.getIdentity();
+        if (!current) throw new Error('No identity found');
+        await this.setIdentity(
+            current.serializedIdentity,
+            profile,
+            current.smeConfig,
+        );
+    }
+
+    async updateSMEConfig(smeConfig: SMEConfig): Promise<void> {
+        if (!this.db) throw new Error('Database not initialized');
+        const current = await this.getIdentity();
+        if (!current) throw new Error('No identity found');
+        await this.setIdentity(
+            current.serializedIdentity,
+            current.profile,
+            smeConfig,
+        );
+    }
+
+    async clearIdentity(): Promise<void> {
+        if (!this.db) throw new Error('Database not initialized');
+        
+        // Clear all stores
+        const tx = this.db.transaction(['identity', 'conversations', 'messages'], 'readwrite');
+        await Promise.all([
+            tx.objectStore('identity').clear(),
+            tx.objectStore('conversations').clear(),
+            tx.objectStore('messages').clear(),
+        ]);
+        await tx.done;
     }
 
     async addMessage(message: StoredMessage): Promise<void> {
@@ -105,6 +185,11 @@ class SmashDB {
             conversation.unreadCount++;
         }
 
+        await this.db.put('conversations', conversation);
+    }
+
+    async addConversation(conversation: StoredConversation): Promise<void> {
+        if (!this.db) throw new Error('Database not initialized');
         await this.db.put('conversations', conversation);
     }
 

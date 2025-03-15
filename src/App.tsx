@@ -1,17 +1,17 @@
 import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { DIDDocument, SmashMessaging } from 'smash-node-lib';
 
 import './App.css';
+import { WelcomeGuide } from './components/WelcomeGuide';
 import { ChatInput } from './components/chat/ChatInput';
 import { ChatList } from './components/chat/ChatList';
 import { ChatMessage } from './components/chat/ChatMessage';
 import { Settings } from './components/settings/Settings';
-import { WelcomeGuide } from './components/WelcomeGuide';
-import { initDB } from './lib/db';
+import { StoredConversation, db, initDB } from './lib/db';
 import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { smashService } from './lib/smash-service';
 import { SmashConversation, SmashMessage } from './lib/types';
-import { mockConversations, mockMessages } from './lib/mockData';
 
 // In a real app, this would come from authentication
 const CURRENT_USER = 'You';
@@ -28,9 +28,10 @@ function App() {
         updateSMEConfig,
         isInitialized,
         setIdentity,
+        smashUser,
     } = useSmashIdentity();
 
-    const [conversations, setConversations] = useState<SmashConversation[]>(mockConversations);
+    const [conversations, setConversations] = useState<SmashConversation[]>([]);
     const [selectedChat, setSelectedChat] = useState<string>();
     const [messages, setMessages] = useState<SmashMessage[]>([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,62 +63,135 @@ function App() {
     useEffect(() => {
         initDB().catch((err) => {
             console.error('Failed to initialize database:', err);
-            setError(err instanceof Error ? err : new Error('Failed to initialize database'));
+            setError(
+                err instanceof Error
+                    ? err
+                    : new Error('Failed to initialize database'),
+            );
         });
     }, []);
 
-    // Commented out since we're using mock data
-    // const loadConversations = async () => {
-    //     try {
-    //         setError(null);
-    //         // First ensure DB is initialized
-    //         await initDB();
-    //         const convos = await smashService.getConversations();
-    //         setConversations(
-    //             convos.map((convo) => ({
-    //                 ...convo,
-    //                 lastMessage: convo.lastMessage
-    //                     ? {
-    //                           ...convo.lastMessage,
-    //                           timestamp: new Date(
-    //                               convo.lastMessage.timestamp,
-    //                           ),
-    //                       }
-    //                     : undefined,
-    //             })),
-    //         );
-    //     } catch (err) {
-    //         console.error('Failed to load conversations:', err);
-    //         setError(
-    //             err instanceof Error
-    //                 ? err
-    //                 : new Error('Failed to load conversations'),
-    //         );
-    //     }
-    // };
-
-    // Add this console.log for debugging
-    console.log('App render:', { isInitialized, identity });
+    const loadConversations = async () => {
+        try {
+            setError(null);
+            // First ensure DB is initialized
+            await initDB();
+            const convos = await smashService.getConversations();
+            setConversations(
+                convos.map((convo) => ({
+                    ...convo,
+                    lastMessage: convo.lastMessage
+                        ? {
+                              ...convo.lastMessage,
+                              timestamp: new Date(convo.lastMessage.timestamp),
+                          }
+                        : undefined,
+                })),
+            );
+        } catch (err) {
+            console.error('Failed to load conversations:', err);
+            setError(
+                err instanceof Error
+                    ? err
+                    : new Error('Failed to load conversations'),
+            );
+        }
+    };
 
     useEffect(() => {
         if (!identity) return;
 
-        // Comment out or remove the loadConversations call since we're using mock data
-        // useEffect(() => {
-        //     loadConversations();
-        // }, []);
+        loadConversations();
 
+        // Set up message handling
         smashService.onMessageReceived((message) => {
             const smashMessage: SmashMessage = {
                 ...message,
                 timestamp: new Date(message.timestamp),
             };
             setMessages((prev) => [...prev, smashMessage]);
+
+            // Update conversation's last message
+            setConversations((prev) =>
+                prev.map((conv) =>
+                    conv.id === message.conversationId
+                        ? {
+                              ...conv,
+                              lastMessage: smashMessage,
+                              unreadCount: conv.unreadCount + 1,
+                          }
+                        : conv,
+                ),
+            );
         });
 
-        smashService.onConversationUpdated((conversation) => {
-            const smashConversation: SmashConversation = {
+        // Handle message status updates
+        smashService.onMessageStatusUpdated((messageId, status) => {
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === messageId ? { ...msg, status } : msg,
+                ),
+            );
+        });
+    }, [identity]);
+
+    useEffect(() => {
+        if (!selectedChat) return;
+
+        const loadMessages = async () => {
+            try {
+                setError(null);
+                await initDB();
+                const msgs = await smashService.getMessages(selectedChat);
+                setMessages(
+                    msgs.map((msg) => ({
+                        ...msg,
+                        timestamp: new Date(msg.timestamp),
+                    })),
+                );
+            } catch (err) {
+                console.error('Failed to load messages:', err);
+                setError(
+                    err instanceof Error
+                        ? err
+                        : new Error('Failed to load messages'),
+                );
+            }
+        };
+
+        loadMessages();
+    }, [selectedChat]);
+
+    const handleCreateConversation = async (didDoc: DIDDocument) => {
+        console.log('🔄 App: Starting conversation creation process...', {
+            didId: didDoc.id,
+            currentUser: CURRENT_USER,
+        });
+
+        try {
+            setError(null);
+            console.log('🗑️ Cleared previous errors');
+
+            // Create a new conversation in the database
+            const conversation: StoredConversation = {
+                id: didDoc.id,
+                title: `Chat with ${didDoc.id.slice(0, 8)}...`,
+                participants: [CURRENT_USER, didDoc.id],
+                type: 'direct',
+                unreadCount: 0,
+                updatedAt: new Date().toISOString(),
+                lastMessage: undefined,
+            };
+            console.log('📝 Created conversation object:', conversation);
+
+            console.log('💾 Adding conversation to database...');
+            await db.addConversation(conversation);
+            console.log('✅ Conversation added to database successfully');
+
+            // Update the UI
+            const uiConversation: SmashConversation = {
                 ...conversation,
+                type: 'direct',
                 lastMessage: conversation.lastMessage
                     ? {
                           ...conversation.lastMessage,
@@ -127,45 +201,30 @@ function App() {
                       }
                     : undefined,
             };
-            setConversations((prev) =>
-                prev.map((conv) =>
-                    conv.id === conversation.id ? smashConversation : conv,
-                ),
+            console.log('🎨 Created UI conversation object:', uiConversation);
+
+            console.log('🔄 Updating conversations state...');
+            setConversations((prev) => [...prev, uiConversation]);
+            console.log('🎯 Setting selected chat to:', conversation.id);
+            setSelectedChat(conversation.id);
+
+            // Store the DID document for future message sending
+            console.log('📨 Resolving DID document in SmashMessaging...');
+            SmashMessaging.resolve(didDoc);
+            console.log('✨ Conversation creation completed successfully');
+        } catch (err) {
+            console.error('❌ Error in handleCreateConversation:', err);
+            console.error(
+                'Stack trace:',
+                err instanceof Error ? err.stack : 'No stack trace available',
             );
-        });
-    }, [identity]);
-
-    useEffect(() => {
-        if (!selectedChat) return;
-
-        // Use mock messages instead of loading from service
-        setMessages(mockMessages[selectedChat] || []);
-
-        // Commented out since we're using mock data
-        // const loadMessages = async () => {
-        //     try {
-        //         setError(null);
-        //         // First ensure DB is initialized
-        //         await initDB();
-        //         const msgs = await smashService.getMessages(selectedChat);
-        //         setMessages(
-        //             msgs.map((msg) => ({
-        //                 ...msg,
-        //                 timestamp: new Date(msg.timestamp),
-        //             })),
-        //         );
-        //     } catch (err) {
-        //         console.error('Failed to load messages:', err);
-        //         setError(
-        //             err instanceof Error
-        //                 ? err
-        //                 : new Error('Failed to load messages'),
-        //         );
-        //     }
-        // };
-
-        // loadMessages();
-    }, [selectedChat]);
+            setError(
+                err instanceof Error
+                    ? err
+                    : new Error('Failed to create conversation'),
+            );
+        }
+    };
 
     const handleSelectChat = (chatId: string) => {
         setSelectedChat(chatId);
@@ -174,40 +233,57 @@ function App() {
 
     const handleSendMessage = async (content: string) => {
         if (!selectedChat) return;
-        
-        // Create a new mock message instead of sending to service
-        const newMessage: SmashMessage = {
-            id: `msg_${Date.now()}`,
-            conversationId: selectedChat,
-            content,
-            sender: CURRENT_USER,
-            timestamp: new Date(),
-            status: 'delivered'
-        };
-        
-        setMessages(prev => [...prev, newMessage]);
-        
-        // Update the conversation's last message
-        setConversations(prev => 
-            prev.map(conv => 
-                conv.id === selectedChat 
-                    ? { ...conv, lastMessage: newMessage }
-                    : conv
-            )
-        );
 
-        // Commented out since we're using mock data
-        // try {
-        //     setError(null);
-        //     await smashService.sendMessage(selectedChat, content);
-        // } catch (err) {
-        //     console.error('Failed to send message:', err);
-        //     setError(
-        //         err instanceof Error
-        //             ? err
-        //             : new Error('Failed to send message'),
-        //     );
-        // }
+        try {
+            setError(null);
+            // Find the conversation to get the recipient's DID
+            const conversation = conversations.find(
+                (c) => c.id === selectedChat,
+            );
+            if (!conversation) return;
+
+            // Get the recipient's DID (the participant that isn't the current user)
+            const recipientDID = conversation.participants.find(
+                (p) => p !== CURRENT_USER,
+            );
+            if (!recipientDID) return;
+
+            const message = await smashService.sendMessage(
+                recipientDID as
+                    | `did:key:${string}`
+                    | `did:web:${string}`
+                    | `did:plc:${string}`
+                    | `did:doc:${string}`,
+                content,
+            );
+
+            const smashMessage: SmashMessage = {
+                ...message,
+                timestamp: new Date(message.timestamp),
+            };
+
+            // Update messages
+            setMessages((prev) => [...prev, smashMessage]);
+
+            // Update conversation
+            setConversations((prev) =>
+                prev.map((conv) =>
+                    conv.id === selectedChat
+                        ? {
+                              ...conv,
+                              lastMessage: smashMessage,
+                          }
+                        : conv,
+                ),
+            );
+        } catch (err) {
+            console.error('Failed to send message:', err);
+            setError(
+                err instanceof Error
+                    ? err
+                    : new Error('Failed to send message'),
+            );
+        }
     };
 
     const handleLogout = async () => {
@@ -223,18 +299,17 @@ function App() {
         );
     }
 
-    // If no identity, show welcome guide
-    if (!identity) {
+    // If no identity AND we're initialized, show welcome guide
+    if (!identity && isInitialized) {
         return (
             <WelcomeGuide
                 onCreateIdentity={async (newIdentity) => {
                     setIsLoading(true);
                     try {
-                        await setIdentity(newIdentity);
-                        // Set default SME config
-                        await updateSMEConfig({
+                        await setIdentity(newIdentity, {
                             url: 'wss://sme.dev.smashchats.com/',
-                            smePublicKey: 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEW45b75uMszTovqQSUDhsofhJx78A4Ytm4KV+REh2RRxwwfXVzTOmApNGU+eSoS2kEeDIpgt5ymLj5XPkVuEx+Q==',
+                            smePublicKey:
+                                'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEW45b75uMszTovqQSUDhsofhJx78A4Ytm4KV+REh2RRxwwfXVzTOmApNGU+eSoS2kEeDIpgt5ymLj5XPkVuEx+Q==',
                         });
                     } finally {
                         setIsLoading(false);
@@ -251,42 +326,48 @@ function App() {
             {/* Sidebar */}
             <nav className="sidebar">
                 <button
-                    className={`sidebar-button ${currentView === 'messages' ? 'active' : ''}`}
+                    className={`sidebar-button ${
+                        currentView === 'messages' ? 'active' : ''
+                    }`}
                     onClick={() => setCurrentView('messages')}
                 >
-                    <MessageSquare />
+                    <MessageSquare size={24} />
                 </button>
                 <button
-                    className={`sidebar-button ${currentView === 'explore' ? 'active' : ''}`}
+                    className={`sidebar-button ${
+                        currentView === 'explore' ? 'active' : ''
+                    }`}
                     onClick={() => setCurrentView('explore')}
                 >
-                    <Users />
+                    <Users size={24} />
                 </button>
-                <div className="flex-grow" />
                 <button
-                    className={`sidebar-button ${currentView === 'settings' ? 'active' : ''}`}
+                    className={`sidebar-button ${
+                        currentView === 'settings' ? 'active' : ''
+                    }`}
                     onClick={() => setCurrentView('settings')}
                 >
-                    <SettingsIcon />
+                    <SettingsIcon size={24} />
                 </button>
             </nav>
 
             {/* Main content */}
             {currentView === 'messages' && (
-                <main className="main-area">
-                    <div className="chat-container">
-                        <div
-                            className={`chat-list-container ${
-                                isMobileMenuOpen ? 'mobile-open' : ''
-                            }`}
-                        >
-                            <ChatList
-                                conversations={conversations}
-                                selectedChat={selectedChat}
-                                onSelectChat={handleSelectChat}
-                            />
-                        </div>
+                <main className="chat-container">
+                    <div
+                        className={`chat-list-container ${
+                            isMobileMenuOpen ? 'mobile-open' : ''
+                        }`}
+                    >
+                        <ChatList
+                            conversations={conversations}
+                            selectedChat={selectedChat}
+                            onSelectChat={handleSelectChat}
+                            onCreateConversation={handleCreateConversation}
+                        />
+                    </div>
 
+                    <div className="flex-1 flex flex-col">
                         {selectedChat ? (
                             <div className="chat-messages-container">
                                 <div className="messages-container">
@@ -329,6 +410,8 @@ function App() {
                         onUpdateProfile={updateProfile}
                         smeConfig={smeConfig}
                         onUpdateSME={updateSMEConfig}
+                        identity={identity}
+                        smashUser={smashUser}
                     />
                 </main>
             )}
@@ -343,12 +426,11 @@ function App() {
 
             {/* Error toast */}
             {error && (
-                <div className="error-toast" role="alert">
+                <div className="error-toast">
                     <p>{error.message}</p>
                     <button
                         onClick={() => setError(null)}
                         className="error-toast-close"
-                        aria-label="Close error message"
                     >
                         ×
                     </button>

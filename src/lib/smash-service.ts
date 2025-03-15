@@ -10,17 +10,26 @@ import {
 } from 'smash-node-lib';
 
 import { StoredConversation, StoredMessage, db } from './db';
+import { SmashMessage } from './types';
 
-export type MessageCallback = (message: StoredMessage) => void;
+export type MessageCallback = (message: SmashMessage) => void;
 export type ConversationCallback = (conversation: StoredConversation) => void;
+export type StatusCallback = (
+    messageId: string,
+    status: SmashMessage['status'],
+) => void;
 
 class SmashService {
     private static instance: SmashService;
     private messageCallbacks: Set<MessageCallback> = new Set();
     private conversationCallbacks: Set<ConversationCallback> = new Set();
+    private statusCallbacks: Set<StatusCallback> = new Set();
     private smashUser: SmashUser | null = null;
 
-    private constructor() {}
+    private constructor() {
+        // We don't need to set up event listeners in constructor
+        // They will be set up when a user is initialized
+    }
 
     static getInstance(): SmashService {
         if (!SmashService.instance) {
@@ -35,7 +44,32 @@ class SmashService {
 
         // Set up message listeners
         this.smashUser.on(IM_CHAT_TEXT, this.handleIncomingMessage.bind(this));
-        this.smashUser.on('status', this.handleMessageStatus.bind(this));
+
+        // Set up status listener
+        this.smashUser.on(
+            'status',
+            (status: MessageStatus, messageIds: sha256[]) => {
+                messageIds.forEach((messageId) => {
+                    const mappedStatus = this.mapMessageStatus(status);
+                    void db.updateMessageStatus(messageId, mappedStatus);
+                    this.statusCallbacks.forEach((callback) =>
+                        callback(messageId, mappedStatus),
+                    );
+                });
+            },
+        );
+    }
+
+    private mapMessageStatus(status: MessageStatus): StoredMessage['status'] {
+        switch (status) {
+            case 'received':
+            case 'delivered':
+                return 'delivered';
+            case 'read':
+                return 'read';
+            default:
+                return 'error';
+        }
     }
 
     private async handleIncomingMessage(
@@ -54,66 +88,53 @@ class SmashService {
         };
 
         await db.addMessage(storedMessage);
-        this.messageCallbacks.forEach((cb) => cb(storedMessage));
+
+        const smashMessage: SmashMessage = {
+            ...storedMessage,
+            timestamp: new Date(storedMessage.timestamp),
+        };
+        this.messageCallbacks.forEach((cb) => cb(smashMessage));
     }
 
-    private async handleMessageStatus(
-        status: MessageStatus,
-        messageIds: sha256[],
-    ): Promise<void> {
-        for (const messageId of messageIds) {
-            if (status === 'received') {
-                status = 'delivered';
-            }
-            await db.updateMessageStatus(messageId, status);
-        }
-    }
-
-    async sendMessage(recipientDid: string, content: string): Promise<void> {
+    async sendMessage(
+        conversationId: DIDString,
+        content: string,
+    ): Promise<SmashMessage> {
         if (!this.smashUser) throw new Error('SmashService not initialized');
 
-        const recipientDoc = await SmashUser.resolve(recipientDid as DID);
+        // Create message
         const message = new IMText(content);
-        const sent = await this.smashUser.send(recipientDoc, message);
+        const sent = await this.smashUser.send(conversationId as DID, message);
 
-        const storedMessage: StoredMessage = {
-            id: sent.sha256,
-            content: content,
-            sender: this.smashUser.did,
-            conversationId: recipientDid,
-            timestamp: sent.timestamp,
+        const smashMessage: SmashMessage = {
+            id: sent.sha256!,
+            conversationId,
+            content,
+            sender: 'You',
+            timestamp: new Date(sent.timestamp),
             status: 'sent',
         };
 
-        await db.addMessage(storedMessage);
-        this.messageCallbacks.forEach((cb) => cb(storedMessage));
+        // Store in database
+        await db.addMessage({
+            ...smashMessage,
+            timestamp: smashMessage.timestamp.toISOString(),
+            status: 'sent',
+        });
+
+        return smashMessage;
     }
 
-    async getMessages(conversationId: string): Promise<StoredMessage[]> {
-        return db.getMessages(conversationId);
+    async getMessages(conversationId: string): Promise<SmashMessage[]> {
+        const messages = await db.getMessages(conversationId);
+        return messages.map((msg) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+        }));
     }
 
     async getConversations(): Promise<StoredConversation[]> {
         return db.getConversations();
-    }
-
-    async markConversationAsRead(conversationId: string): Promise<void> {
-        await db.markConversationAsRead(conversationId);
-        const messages = await db.getMessages(conversationId);
-
-        if (!this.smashUser) throw new Error('SmashService not initialized');
-
-        // Send read receipts for all messages
-        const messageIds = messages
-            .filter((m) => m.sender !== this.smashUser?.did)
-            .map((m) => m.id);
-
-        if (messageIds.length > 0) {
-            await this.smashUser.ackMessagesRead(
-                conversationId as DID,
-                messageIds as sha256[],
-            );
-        }
     }
 
     onMessageReceived(callback: MessageCallback): void {
@@ -124,12 +145,8 @@ class SmashService {
         this.conversationCallbacks.add(callback);
     }
 
-    removeMessageCallback(callback: MessageCallback): void {
-        this.messageCallbacks.delete(callback);
-    }
-
-    removeConversationCallback(callback: ConversationCallback): void {
-        this.conversationCallbacks.delete(callback);
+    onMessageStatusUpdated(callback: StatusCallback): void {
+        this.statusCallbacks.add(callback);
     }
 
     async close(): Promise<void> {

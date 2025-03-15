@@ -1,27 +1,13 @@
 import { useEffect, useState } from 'react';
 import { DIDDocManager, IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
+import { SMEConfig, StoredProfile, db } from '../db';
+import { initializeSmashMessaging } from '../smash-init';
 import { smashService } from '../smash-service';
-
-// Local storage keys
-const IDENTITY_KEY = 'smash_identity';
-const PROFILE_KEY = 'smash_profile';
-const SME_CONFIG_KEY = 'sme_config';
-
-interface Profile {
-    title: string;
-    description: string;
-    avatar: string;
-}
-
-interface SMEConfig {
-    url: string;
-    smePublicKey: string;
-}
 
 interface SmashIdentityState {
     identity: IMPeerIdentity | null;
-    profile: Profile | null;
+    profile: StoredProfile | null;
     smeConfig: SMEConfig | null;
     error: Error | null;
     isInitialized: boolean;
@@ -40,92 +26,159 @@ export function useSmashIdentity() {
 
     const [didManager] = useState(() => new DIDDocManager());
 
-    // Load stored identity and profile
+    // Load stored identity and profile from IndexedDB
     useEffect(() => {
-        try {
-            const storedIdentity = localStorage.getItem(IDENTITY_KEY);
-            const storedProfile = localStorage.getItem(PROFILE_KEY);
-            const storedSMEConfig = localStorage.getItem(SME_CONFIG_KEY);
-
-            setState((prev) => ({
-                ...prev,
-                identity: storedIdentity ? JSON.parse(storedIdentity) : null,
-                profile: storedProfile ? JSON.parse(storedProfile) : null,
-                smeConfig: storedSMEConfig ? JSON.parse(storedSMEConfig) : null,
-                isInitialized: true,
-            }));
-        } catch (error) {
-            setState((prev) => ({
-                ...prev,
-                error: error as Error,
-                isInitialized: true,
-            }));
-        }
-    }, []);
-
-    // Initialize Smash user when identity and SME config are available
-    useEffect(() => {
-        const initSmashUser = async () => {
-            if (!state.identity || !state.smeConfig || state.smashUser) return;
-
+        const loadIdentity = async () => {
             try {
-                // Generate new pre-key pair
-                await didManager.generateNewPreKeyPair(state.identity);
+                console.log('Initializing database...');
+                await db.init();
+                console.log('Loading stored identity...');
+                const stored = await db.getIdentity();
 
-                // Initialize Smash user
-                const smashUser = new SmashUser(state.identity);
-                const preKeyPair = await didManager.generateNewPreKeyPair(
-                    state.identity,
-                );
-                await smashUser.endpoints.connect(state.smeConfig, preKeyPair);
+                if (stored) {
+                    console.log('Found stored identity, importing...');
+                    try {
+                        // Initialize SmashMessaging first
+                        console.log('Initializing SmashMessaging...');
+                        initializeSmashMessaging();
 
-                // Initialize smash service
-                await smashService.init(smashUser);
+                        // Import the identity
+                        const identity = await SmashUser.importIdentity(
+                            stored.serializedIdentity,
+                        );
+                        console.log(
+                            'Successfully imported identity:',
+                            identity.did,
+                        );
 
-                // Update profile metadata if available
-                if (state.profile) {
-                    await smashUser.updateMeta({
-                        title: state.profile.title,
-                        description: state.profile.description,
-                        avatar: state.profile.avatar,
-                    });
+                        // Register the DID document
+                        didManager.set(await identity.getDIDDocument());
+
+                        // Create SmashUser instance
+                        const smashUser = new SmashUser(identity);
+
+                        // If we have SME config, configure endpoints
+                        if (stored.smeConfig) {
+                            console.log('Configuring endpoints...');
+                            const preKeyPair =
+                                await didManager.generateNewPreKeyPair(
+                                    identity,
+                                );
+                            await smashUser.endpoints.connect(
+                                stored.smeConfig,
+                                preKeyPair,
+                            );
+
+                            // Register the updated DID document with endpoints
+                            didManager.set(await smashUser.getDIDDocument());
+                        }
+
+                        // Initialize smash service
+                        await smashService.init(smashUser);
+
+                        // Update profile metadata if available
+                        if (stored.profile) {
+                            await smashUser.updateMeta(stored.profile);
+                        }
+
+                        setState((prev) => ({
+                            ...prev,
+                            identity,
+                            profile: stored.profile,
+                            smeConfig: stored.smeConfig,
+                            smashUser,
+                            isInitialized: true,
+                            error: null,
+                        }));
+                    } catch (importError) {
+                        console.error(
+                            'Failed to import identity:',
+                            importError,
+                        );
+                        // If import fails, clear the stored identity as it might be corrupted
+                        await db.clearIdentity();
+                        setState((prev) => ({
+                            ...prev,
+                            isInitialized: true,
+                            error: importError as Error,
+                        }));
+                    }
+                } else {
+                    console.log('No stored identity found');
+                    setState((prev) => ({
+                        ...prev,
+                        isInitialized: true,
+                    }));
                 }
-
-                setState((prev) => ({ ...prev, smashUser, error: null }));
             } catch (error) {
-                setState((prev) => ({ ...prev, error: error as Error }));
+                console.error('Error loading identity:', error);
+                setState((prev) => ({
+                    ...prev,
+                    error: error as Error,
+                    isInitialized: true,
+                }));
             }
         };
 
-        initSmashUser();
-    }, [
-        state.identity,
-        state.smeConfig,
-        state.smashUser,
-        state.profile,
-        didManager,
-    ]);
+        loadIdentity();
+    }, []);
 
-    const setIdentity = async (identity: IMPeerIdentity) => {
+    const setIdentity = async (
+        identity: IMPeerIdentity,
+        initialSMEConfig?: SMEConfig,
+    ) => {
         try {
-            localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
-            setState((prev) => ({ ...prev, identity, error: null }));
+            console.log('Setting up new identity...');
+
+            // First register the DID document
+            didManager.set(await identity.getDIDDocument());
+
+            // Create SmashUser instance
+            const smashUser = new SmashUser(identity);
+
+            // Configure endpoints with either initial config or existing state config
+            const smeConfig = initialSMEConfig || state.smeConfig;
+            if (smeConfig) {
+                console.log('Configuring endpoints...');
+                const preKeyPair =
+                    await didManager.generateNewPreKeyPair(identity);
+                await smashUser.endpoints.connect(smeConfig, preKeyPair);
+
+                // Register the updated DID document with endpoints
+                didManager.set(await smashUser.getDIDDocument());
+            }
+
+            // Initialize smash service
+            await smashService.init(smashUser);
+
+            // Only serialize after everything is configured
+            console.log('Serializing identity...');
+            const serializedIdentity = await identity.serialize();
+
+            console.log('Storing identity in database...');
+            await db.setIdentity(serializedIdentity, state.profile, smeConfig);
+
+            setState((prev) => ({
+                ...prev,
+                identity,
+                smashUser,
+                smeConfig,
+                error: null,
+            }));
+            console.log('Identity stored successfully');
         } catch (error) {
+            console.error('Failed to set identity:', error);
             setState((prev) => ({ ...prev, error: error as Error }));
         }
     };
 
-    const updateProfile = async (profile: Profile) => {
+    const updateProfile = async (profile: StoredProfile) => {
         try {
-            localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+            await db.updateProfile(profile);
             setState((prev) => ({ ...prev, profile, error: null }));
 
             if (state.smashUser) {
-                await state.smashUser.updateMeta({
-                    title: profile.title,
-                    description: profile.description,
-                    avatar: profile.avatar,
-                });
+                await state.smashUser.updateMeta(profile);
             }
         } catch (error) {
             setState((prev) => ({ ...prev, error: error as Error }));
@@ -134,24 +187,69 @@ export function useSmashIdentity() {
 
     const updateSMEConfig = async (config: SMEConfig) => {
         try {
-            localStorage.setItem(SME_CONFIG_KEY, JSON.stringify(config));
-            setState((prev) => ({ ...prev, smeConfig: config, error: null }));
+            if (!state.identity) {
+                throw new Error('No identity available');
+            }
+
+            // Create new SmashUser instance with fresh endpoints
+            const smashUser = new SmashUser(state.identity);
+
+            // Configure endpoints
+            console.log('Configuring endpoints with new SME config...');
+            const preKeyPair = await didManager.generateNewPreKeyPair(
+                state.identity,
+            );
+            await smashUser.endpoints.connect(config, preKeyPair);
+
+            // Register the updated DID document
+            const updatedDIDDoc = await smashUser.getDIDDocument();
+            console.log('Updated DID document with endpoints:', updatedDIDDoc);
+            didManager.set(updatedDIDDoc);
+
+            // Initialize smash service with new instance
+            await smashService.init(smashUser);
+
+            // Serialize and store after configuration
+            const serializedIdentity = await state.identity.serialize();
+            await db.setIdentity(serializedIdentity, state.profile, config);
+
+            setState((prev) => ({
+                ...prev,
+                smeConfig: config,
+                smashUser,
+                error: null,
+            }));
         } catch (error) {
+            console.error('Failed to update SME config:', error);
             setState((prev) => ({ ...prev, error: error as Error }));
         }
     };
 
     const clearIdentity = async () => {
         try {
+            console.log('Cleaning up before logout...');
+            
+            // Close all connections and cleanup smash service
             if (state.smashUser) {
+                console.log('Closing SmashUser connections...');
                 await state.smashUser.close();
+                console.log('Closing smash service...');
                 await smashService.close();
             }
 
-            localStorage.removeItem(IDENTITY_KEY);
-            localStorage.removeItem(PROFILE_KEY);
-            localStorage.removeItem(SME_CONFIG_KEY);
+            // Make sure database is initialized before clearing
+            console.log('Initializing database for cleanup...');
+            await db.init();
+            
+            // Clear the database
+            console.log('Clearing database...');
+            await db.clearIdentity();
+            
+            // Close database connection
+            console.log('Closing database connection...');
+            await db.close();
 
+            // Reset state
             setState({
                 identity: null,
                 profile: null,
@@ -160,8 +258,15 @@ export function useSmashIdentity() {
                 isInitialized: true,
                 smashUser: null,
             });
+
+            // Force a page refresh to ensure clean slate
+            console.log('Refreshing page...');
+            window.location.reload();
         } catch (error) {
+            console.error('Error during logout:', error);
             setState((prev) => ({ ...prev, error: error as Error }));
+            // Still try to refresh the page even if there was an error
+            window.location.reload();
         }
     };
 

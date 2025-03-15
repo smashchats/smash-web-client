@@ -48,6 +48,53 @@
     background-color: var(--color-background);
 }
 
+/* Utility Classes */
+.flex {
+    display: flex;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.flex-row {
+    flex-direction: row;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.gap-4 {
+    gap: var(--spacing-md);
+}
+
+/* Explore Container */
+.explore-container {
+    flex: 1;
+    padding: var(--spacing-lg);
+    background-color: var(--color-surface);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
 /* Sidebar */
 .sidebar {
     width: var(--sidebar-width);
@@ -86,6 +133,7 @@
 .chat-container {
     display: flex;
     height: 100%;
+    width: 100%;
     position: relative;
 }
 
@@ -732,5 +780,169 @@
     }
     to {
         transform: rotate(360deg);
+    }
+}
+
+/* Dialog Styles */
+.dialog-overlay {
+    background-color: rgba(0, 0, 0, 0.4);
+    position: fixed;
+    inset: 0;
+    animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(4px);
+    z-index: 40;
+}
+
+.dialog-content {
+    background-color: var(--color-background);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 600px;
+    max-height: 85vh;
+    padding: var(--spacing-lg);
+    animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 50;
+}
+
+.dialog-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-sm);
+}
+
+.dialog-description {
+    font-size: 0.9375rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-lg);
+}
+
+.dialog-input {
+    width: 100%;
+    min-height: 200px;
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    font-family: monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    resize: vertical;
+    margin-bottom: var(--spacing-md);
+}
+
+.dialog-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(105, 58, 157, 0.1);
+}
+
+.dialog-error {
+    color: var(--color-error);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.dialog-button {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.dialog-button.primary {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+}
+
+.dialog-button.primary:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
+}
+
+.dialog-button.primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dialog-button.secondary {
+    background-color: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.dialog-button.secondary:hover {
+    background-color: var(--color-surface);
+}
+
+.dialog-close {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-light);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.dialog-close:hover {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+}
+
+.new-conversation-button {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-primary);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.new-conversation-button:hover {
+    background-color: var(--color-background);
+    border-color: var(--color-primary);
+}
+
+@keyframes overlayShow {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes contentShow {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
     }
 }
