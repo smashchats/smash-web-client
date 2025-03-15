@@ -1,5 +1,5 @@
 import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import './App.css';
 import { ChatInput } from './components/chat/ChatInput';
@@ -11,6 +11,7 @@ import { initDB } from './lib/db';
 import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { smashService } from './lib/smash-service';
 import { SmashConversation, SmashMessage } from './lib/types';
+import { mockConversations, mockMessages } from './lib/mockData';
 
 // In a real app, this would come from authentication
 const CURRENT_USER = 'You';
@@ -29,13 +30,33 @@ function App() {
         setIdentity,
     } = useSmashIdentity();
 
-    const [conversations, setConversations] = useState<SmashConversation[]>([]);
+    const [conversations, setConversations] = useState<SmashConversation[]>(mockConversations);
     const [selectedChat, setSelectedChat] = useState<string>();
     const [messages, setMessages] = useState<SmashMessage[]>([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentView, setCurrentView] = useState<View>('messages');
     const [error, setError] = useState<Error | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Add ref for messages container
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Add scroll to bottom function
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // Scroll to bottom when messages change
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    // Scroll to bottom when selected chat changes
+    useEffect(() => {
+        if (selectedChat) {
+            scrollToBottom();
+        }
+    }, [selectedChat]);
 
     // Initialize database on mount
     useEffect(() => {
@@ -45,42 +66,46 @@ function App() {
         });
     }, []);
 
+    // Commented out since we're using mock data
+    // const loadConversations = async () => {
+    //     try {
+    //         setError(null);
+    //         // First ensure DB is initialized
+    //         await initDB();
+    //         const convos = await smashService.getConversations();
+    //         setConversations(
+    //             convos.map((convo) => ({
+    //                 ...convo,
+    //                 lastMessage: convo.lastMessage
+    //                     ? {
+    //                           ...convo.lastMessage,
+    //                           timestamp: new Date(
+    //                               convo.lastMessage.timestamp,
+    //                           ),
+    //                       }
+    //                     : undefined,
+    //             })),
+    //         );
+    //     } catch (err) {
+    //         console.error('Failed to load conversations:', err);
+    //         setError(
+    //             err instanceof Error
+    //                 ? err
+    //                 : new Error('Failed to load conversations'),
+    //         );
+    //     }
+    // };
+
     // Add this console.log for debugging
     console.log('App render:', { isInitialized, identity });
 
     useEffect(() => {
         if (!identity) return;
 
-        const loadConversations = async () => {
-            try {
-                setError(null);
-                // First ensure DB is initialized
-                await initDB();
-                const convos = await smashService.getConversations();
-                setConversations(
-                    convos.map((convo) => ({
-                        ...convo,
-                        lastMessage: convo.lastMessage
-                            ? {
-                                  ...convo.lastMessage,
-                                  timestamp: new Date(
-                                      convo.lastMessage.timestamp,
-                                  ),
-                              }
-                            : undefined,
-                    })),
-                );
-            } catch (err) {
-                console.error('Failed to load conversations:', err);
-                setError(
-                    err instanceof Error
-                        ? err
-                        : new Error('Failed to load conversations'),
-                );
-            }
-        };
-
-        loadConversations();
+        // Comment out or remove the loadConversations call since we're using mock data
+        // useEffect(() => {
+        //     loadConversations();
+        // }, []);
 
         smashService.onMessageReceived((message) => {
             const smashMessage: SmashMessage = {
@@ -113,29 +138,33 @@ function App() {
     useEffect(() => {
         if (!selectedChat) return;
 
-        const loadMessages = async () => {
-            try {
-                setError(null);
-                // First ensure DB is initialized
-                await initDB();
-                const msgs = await smashService.getMessages(selectedChat);
-                setMessages(
-                    msgs.map((msg) => ({
-                        ...msg,
-                        timestamp: new Date(msg.timestamp),
-                    })),
-                );
-            } catch (err) {
-                console.error('Failed to load messages:', err);
-                setError(
-                    err instanceof Error
-                        ? err
-                        : new Error('Failed to load messages'),
-                );
-            }
-        };
+        // Use mock messages instead of loading from service
+        setMessages(mockMessages[selectedChat] || []);
 
-        loadMessages();
+        // Commented out since we're using mock data
+        // const loadMessages = async () => {
+        //     try {
+        //         setError(null);
+        //         // First ensure DB is initialized
+        //         await initDB();
+        //         const msgs = await smashService.getMessages(selectedChat);
+        //         setMessages(
+        //             msgs.map((msg) => ({
+        //                 ...msg,
+        //                 timestamp: new Date(msg.timestamp),
+        //             })),
+        //         );
+        //     } catch (err) {
+        //         console.error('Failed to load messages:', err);
+        //         setError(
+        //             err instanceof Error
+        //                 ? err
+        //                 : new Error('Failed to load messages'),
+        //         );
+        //     }
+        // };
+
+        // loadMessages();
     }, [selectedChat]);
 
     const handleSelectChat = (chatId: string) => {
@@ -145,17 +174,40 @@ function App() {
 
     const handleSendMessage = async (content: string) => {
         if (!selectedChat) return;
-        try {
-            setError(null);
-            await smashService.sendMessage(selectedChat, content);
-        } catch (err) {
-            console.error('Failed to send message:', err);
-            setError(
-                err instanceof Error
-                    ? err
-                    : new Error('Failed to send message'),
-            );
-        }
+        
+        // Create a new mock message instead of sending to service
+        const newMessage: SmashMessage = {
+            id: `msg_${Date.now()}`,
+            conversationId: selectedChat,
+            content,
+            sender: CURRENT_USER,
+            timestamp: new Date(),
+            status: 'delivered'
+        };
+        
+        setMessages(prev => [...prev, newMessage]);
+        
+        // Update the conversation's last message
+        setConversations(prev => 
+            prev.map(conv => 
+                conv.id === selectedChat 
+                    ? { ...conv, lastMessage: newMessage }
+                    : conv
+            )
+        );
+
+        // Commented out since we're using mock data
+        // try {
+        //     setError(null);
+        //     await smashService.sendMessage(selectedChat, content);
+        // } catch (err) {
+        //     console.error('Failed to send message:', err);
+        //     setError(
+        //         err instanceof Error
+        //             ? err
+        //             : new Error('Failed to send message'),
+        //     );
+        // }
     };
 
     const handleLogout = async () => {
@@ -247,6 +299,7 @@ function App() {
                                             }
                                         />
                                     ))}
+                                    <div ref={messagesEndRef} />
                                 </div>
                                 <ChatInput onSendMessage={handleSendMessage} />
                             </div>
