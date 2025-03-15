@@ -228,7 +228,7 @@ export function useSmashIdentity() {
     const clearIdentity = async () => {
         try {
             console.log('Cleaning up before logout...');
-            
+
             // Close all connections and cleanup smash service
             if (state.smashUser) {
                 console.log('Closing SmashUser connections...');
@@ -240,11 +240,11 @@ export function useSmashIdentity() {
             // Make sure database is initialized before clearing
             console.log('Initializing database for cleanup...');
             await db.init();
-            
+
             // Clear the database
             console.log('Clearing database...');
             await db.clearIdentity();
-            
+
             // Close database connection
             console.log('Closing database connection...');
             await db.close();

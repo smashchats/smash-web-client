@@ -41,6 +41,7 @@ function App() {
 
     // Add ref for messages container
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const markReadTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
     // Add scroll to bottom function
     const scrollToBottom = () => {
@@ -52,11 +53,56 @@ function App() {
         scrollToBottom();
     }, [messages]);
 
-    // Scroll to bottom when selected chat changes
-    useEffect(() => {
-        if (selectedChat) {
-            scrollToBottom();
+    // Handle marking messages as read when conversation is focused
+    const handleConversationFocus = async (conversationId: string) => {
+        // Clear any existing timeout
+        if (markReadTimeoutRef.current) {
+            clearTimeout(markReadTimeoutRef.current);
         }
+
+        // Set a new timeout to mark as read after 1 second
+        markReadTimeoutRef.current = setTimeout(async () => {
+            try {
+                await smashService.markConversationAsRead(conversationId);
+            } catch (err) {
+                console.error('Failed to mark conversation as read:', err);
+            }
+        }, 1000);
+    };
+
+    // Clean up timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (markReadTimeoutRef.current) {
+                clearTimeout(markReadTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Handle conversation focus when selected chat changes or tab becomes visible
+    useEffect(() => {
+        if (!selectedChat) return;
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                handleConversationFocus(selectedChat);
+            }
+        };
+
+        // Mark as read when initially selecting and visible
+        if (document.visibilityState === 'visible') {
+            handleConversationFocus(selectedChat);
+        }
+
+        // Add visibility change listener
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener(
+                'visibilitychange',
+                handleVisibilityChange,
+            );
+        };
     }, [selectedChat]);
 
     // Initialize database on mount
@@ -105,24 +151,47 @@ function App() {
 
         // Set up message handling
         smashService.onMessageReceived((message) => {
+            // Only handle incoming messages (not our own)
+            if (message.sender === CURRENT_USER) return;
+
             const smashMessage: SmashMessage = {
                 ...message,
                 timestamp: new Date(message.timestamp),
             };
             setMessages((prev) => [...prev, smashMessage]);
 
-            // Update conversation's last message
-            setConversations((prev) =>
-                prev.map((conv) =>
+            // Update conversation's last message in UI
+            setConversations((prevConversations) => {
+                const existingConv = prevConversations.find(
+                    (c) => c.id === message.conversationId,
+                );
+
+                if (!existingConv) {
+                    // New conversation - don't set unread count, it will come from the database
+                    return [
+                        ...prevConversations,
+                        {
+                            id: message.conversationId,
+                            title: `Chat with ${message.sender.slice(0, 8)}...`,
+                            participants: ['You', message.sender],
+                            type: 'direct',
+                            lastMessage: smashMessage,
+                            unreadCount: 0, // Will be updated by conversation update handler
+                            updatedAt: message.timestamp,
+                        },
+                    ];
+                }
+
+                // Existing conversation - only update last message
+                return prevConversations.map((conv) =>
                     conv.id === message.conversationId
                         ? {
                               ...conv,
                               lastMessage: smashMessage,
-                              unreadCount: conv.unreadCount + 1,
                           }
                         : conv,
-                ),
-            );
+                );
+            });
         });
 
         // Handle conversation updates (new or updated conversations)
@@ -134,7 +203,9 @@ function App() {
                     lastMessage: conversation.lastMessage
                         ? {
                               ...conversation.lastMessage,
-                              timestamp: new Date(conversation.lastMessage.timestamp),
+                              timestamp: new Date(
+                                  conversation.lastMessage.timestamp,
+                              ),
                           }
                         : undefined,
                 };
@@ -143,7 +214,7 @@ function App() {
                 if (existing) {
                     // Update existing conversation
                     return prev.map((c) =>
-                        c.id === conversation.id ? smashConversation : c
+                        c.id === conversation.id ? smashConversation : c,
                     );
                 } else {
                     // Add new conversation
@@ -160,7 +231,7 @@ function App() {
                 ),
             );
         });
-    }, [identity]);
+    }, [identity, selectedChat]);
 
     useEffect(() => {
         if (!selectedChat) return;
@@ -253,7 +324,7 @@ function App() {
         }
     };
 
-    const handleSelectChat = (chatId: string) => {
+    const handleSelectChat = async (chatId: string) => {
         setSelectedChat(chatId);
         setIsMobileMenuOpen(false);
     };

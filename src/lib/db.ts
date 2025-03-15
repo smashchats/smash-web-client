@@ -149,9 +149,12 @@ class SmashDB {
 
     async clearIdentity(): Promise<void> {
         if (!this.db) throw new Error('Database not initialized');
-        
+
         // Clear all stores
-        const tx = this.db.transaction(['identity', 'conversations', 'messages'], 'readwrite');
+        const tx = this.db.transaction(
+            ['identity', 'conversations', 'messages'],
+            'readwrite',
+        );
         await Promise.all([
             tx.objectStore('identity').clear(),
             tx.objectStore('conversations').clear(),
@@ -181,16 +184,24 @@ class SmashDB {
 
         conversation.lastMessage = message;
         conversation.updatedAt = message.timestamp;
-        if (message.sender !== message.conversationId) {
-            conversation.unreadCount++;
-        }
 
         await this.db.put('conversations', conversation);
     }
 
     async addConversation(conversation: StoredConversation): Promise<void> {
+        await this.init();
         if (!this.db) throw new Error('Database not initialized');
-        await this.db.put('conversations', conversation);
+        const tx = this.db.transaction('conversations', 'readwrite');
+        await tx.store.put(conversation);
+        await tx.done;
+    }
+
+    async updateConversation(conversation: StoredConversation): Promise<void> {
+        await this.init();
+        if (!this.db) throw new Error('Database not initialized');
+        const tx = this.db.transaction('conversations', 'readwrite');
+        await tx.store.put(conversation);
+        await tx.done;
     }
 
     async updateMessageStatus(
@@ -227,14 +238,18 @@ class SmashDB {
         const messages = await this.db.getAllFromIndex(
             'messages',
             'by-conversation',
-            conversationId
+            conversationId,
         );
 
         console.log('📚 Retrieved messages:', messages);
 
         // Sort by timestamp
         return messages
-            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+            .sort(
+                (a, b) =>
+                    new Date(a.timestamp).getTime() -
+                    new Date(b.timestamp).getTime(),
+            )
             .slice(0, limit);
     }
 
@@ -244,6 +259,7 @@ class SmashDB {
     }
 
     async getConversation(id: string): Promise<StoredConversation | undefined> {
+        await this.init();
         if (!this.db) throw new Error('Database not initialized');
         return this.db.get('conversations', id);
     }

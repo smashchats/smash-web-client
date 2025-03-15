@@ -199,8 +199,9 @@ export function Settings({
                                 )}
                             </div>
                             <p className="did-help-text">
-                                Click the button above to copy your DID document to share with peers.
-                                The copied document will include your current endpoints configuration.
+                                Click the button above to copy your DID document
+                                to share with peers. The copied document will
+                                include your current endpoints configuration.
                             </p>
                         </div>
                     </div>

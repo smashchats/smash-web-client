@@ -94,12 +94,35 @@ class SmashService {
         // Add message to database - this will also create a conversation if it doesn't exist
         await db.addMessage(storedMessage);
 
-        // Get the conversation to notify UI about potential new conversation
-        const conversation = await db.getConversation(senderId);
-        if (conversation) {
-            console.log('📬 Notifying about conversation:', conversation);
-            this.conversationCallbacks.forEach((callback) => callback(conversation));
+        // Get or create conversation with incremented unread count
+        let conversation = await db.getConversation(senderId);
+        if (!conversation) {
+            // Create new conversation with unread count 1
+            conversation = {
+                id: senderId,
+                title: `Chat with ${senderId.slice(0, 8)}...`,
+                participants: ['You', senderId],
+                type: 'direct',
+                unreadCount: 1,
+                updatedAt: storedMessage.timestamp,
+                lastMessage: storedMessage,
+            };
+            await db.addConversation(conversation);
+        } else {
+            // Update existing conversation with incremented unread count
+            conversation = {
+                ...conversation,
+                unreadCount: (conversation.unreadCount || 0) + 1,
+                lastMessage: storedMessage,
+                updatedAt: storedMessage.timestamp,
+            };
+            await db.updateConversation(conversation);
         }
+
+        console.log('📬 Notifying about conversation:', conversation);
+        this.conversationCallbacks.forEach((callback) =>
+            callback(conversation),
+        );
 
         const smashMessage: SmashMessage = {
             ...storedMessage,
@@ -158,6 +181,20 @@ class SmashService {
 
     async getConversations(): Promise<StoredConversation[]> {
         return db.getConversations();
+    }
+
+    async markConversationAsRead(conversationId: string): Promise<void> {
+        // Update conversation in database
+        const conversation = await db.getConversation(conversationId);
+        if (conversation) {
+            conversation.unreadCount = 0;
+            await db.updateConversation(conversation);
+
+            // Notify UI about the update
+            this.conversationCallbacks.forEach((callback) =>
+                callback(conversation),
+            );
+        }
     }
 
     onMessageReceived(callback: MessageCallback): void {
