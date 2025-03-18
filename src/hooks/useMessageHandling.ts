@@ -80,8 +80,10 @@ export const useMessageHandling = ({
         smashService.onMessageStatusUpdated(handleMessageStatusUpdate);
 
         return () => {
-            // Cleanup listeners if needed
+            // Cleanup listeners
             logger.debug('Cleaning up message handlers');
+            smashService.offMessageReceived(handleNewMessage);
+            smashService.offMessageStatusUpdated(handleMessageStatusUpdate);
         };
     }, [onConversationUpdate]);
 

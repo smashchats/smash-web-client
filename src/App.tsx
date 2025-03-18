@@ -101,8 +101,10 @@ function App() {
     useEffect(() => {
         if (!selectedChat) return;
 
+        let isSubscribed = true;
+
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === 'visible' && isSubscribed) {
                 handleConversationFocus(selectedChat);
             }
         };
@@ -116,12 +118,13 @@ function App() {
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         return () => {
+            isSubscribed = false;
             document.removeEventListener(
                 'visibilitychange',
                 handleVisibilityChange,
             );
         };
-    }, [handleConversationFocus, selectedChat]);
+    }, [selectedChat]);
 
     // Initialize database on mount
     useEffect(() => {

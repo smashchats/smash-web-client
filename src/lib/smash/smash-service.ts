@@ -242,6 +242,10 @@ class SmashService {
         });
     }
 
+    offMessageReceived(callback: MessageCallback): void {
+        this.messageCallbacks.delete(callback);
+    }
+
     onConversationUpdated(callback: ConversationCallback): void {
         this.conversationCallbacks.add(callback);
         logger.debug('Added conversation updated callback', {
@@ -249,11 +253,19 @@ class SmashService {
         });
     }
 
+    offConversationUpdated(callback: ConversationCallback): void {
+        this.conversationCallbacks.delete(callback);
+    }
+
     onMessageStatusUpdated(callback: StatusCallback): void {
         this.statusCallbacks.add(callback);
         logger.debug('Added message status updated callback', {
             callbackCount: this.statusCallbacks.size,
         });
+    }
+
+    offMessageStatusUpdated(callback: StatusCallback): void {
+        this.statusCallbacks.delete(callback);
     }
 
     async close(): Promise<void> {
