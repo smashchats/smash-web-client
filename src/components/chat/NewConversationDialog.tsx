@@ -3,8 +3,66 @@ import { X } from 'lucide-react';
 import { useState } from 'react';
 import { DIDDocument } from 'smash-node-lib';
 
+import { logger } from '../../lib/logger';
+
 interface NewConversationDialogProps {
     onCreateConversation: (didDoc: DIDDocument) => void;
+}
+
+interface DialogContentProps {
+    didInput: string;
+    onDidInputChange: (value: string) => void;
+    error?: string;
+    onSubmit: () => void;
+}
+
+function DialogContent({
+    didInput,
+    onDidInputChange,
+    error,
+    onSubmit,
+}: DialogContentProps) {
+    return (
+        <>
+            <Dialog.Title className="dialog-title">
+                Start New Conversation
+            </Dialog.Title>
+            <Dialog.Description className="dialog-description">
+                Enter the DID document of the peer you want to chat with.
+            </Dialog.Description>
+
+            <textarea
+                className="dialog-input"
+                value={didInput}
+                onChange={(e) => onDidInputChange(e.target.value)}
+                placeholder="Paste DID document JSON here..."
+                rows={10}
+            />
+
+            {error && <p className="dialog-error">{error}</p>}
+
+            <div className="dialog-footer">
+                <Dialog.Close asChild>
+                    <button className="dialog-button secondary">Cancel</button>
+                </Dialog.Close>
+                <Dialog.Close asChild>
+                    <button
+                        className="dialog-button primary"
+                        onClick={onSubmit}
+                        disabled={!didInput.trim()}
+                    >
+                        Create Conversation
+                    </button>
+                </Dialog.Close>
+            </div>
+
+            <Dialog.Close asChild>
+                <button className="dialog-close" aria-label="Close">
+                    <X size={16} />
+                </button>
+            </Dialog.Close>
+        </>
+    );
 }
 
 export function NewConversationDialog({
@@ -13,44 +71,50 @@ export function NewConversationDialog({
     const [didInput, setDidInput] = useState('');
     const [error, setError] = useState<string>();
 
+    const validateDIDDocument = (didDoc: DIDDocument): void => {
+        if (!didDoc.id || !didDoc.ik || !didDoc.ek || !didDoc.endpoints) {
+            logger.warn('Invalid DID document: missing required fields', {
+                hasId: !!didDoc.id,
+                hasIK: !!didDoc.ik,
+                hasEK: !!didDoc.ek,
+                hasEndpoints: !!didDoc.endpoints,
+            });
+            throw new Error('Invalid DID document: missing required fields');
+        }
+    };
+
     const handleSubmit = () => {
-        console.log(
-            '🔄 NewConversationDialog: Starting conversation creation...',
-        );
-        console.log('📝 Input DID document:', didInput);
+        logger.debug('Starting conversation creation', {
+            inputLength: didInput.length,
+        });
 
         try {
             const didDoc = JSON.parse(didInput) as DIDDocument;
-            console.log('✅ DID document parsed successfully:', {
-                id: didDoc.id,
+            logger.debug('DID document parsed successfully', {
+                didId: didDoc.id,
                 hasIK: !!didDoc.ik,
                 hasEK: !!didDoc.ek,
                 hasEndpoints: !!didDoc.endpoints,
             });
 
-            // Basic validation of DID document
-            if (!didDoc.id || !didDoc.ik || !didDoc.ek || !didDoc.endpoints) {
-                console.error(
-                    '❌ DID document validation failed: Missing required fields',
-                );
-                throw new Error(
-                    'Invalid DID document: missing required fields',
-                );
-            }
+            validateDIDDocument(didDoc);
 
-            console.log(
-                '🚀 Calling onCreateConversation with validated DID document',
-            );
+            logger.info('Creating new conversation', { didId: didDoc.id });
             onCreateConversation(didDoc);
             setDidInput('');
             setError(undefined);
-            console.log('✨ Dialog state reset successfully');
+            logger.debug('Dialog state reset successfully');
         } catch (err) {
-            console.error('❌ Error in conversation creation:', err);
+            logger.error('Error in conversation creation', err);
             setError(
                 err instanceof Error ? err.message : 'Invalid JSON format',
             );
         }
+    };
+
+    const handleDidInputChange = (value: string) => {
+        logger.debug('DID input changed', { length: value.length });
+        setDidInput(value);
     };
 
     return (
@@ -63,52 +127,12 @@ export function NewConversationDialog({
             <Dialog.Portal>
                 <Dialog.Overlay className="dialog-overlay" />
                 <Dialog.Content className="dialog-content">
-                    <Dialog.Title className="dialog-title">
-                        Start New Conversation
-                    </Dialog.Title>
-                    <Dialog.Description className="dialog-description">
-                        Enter the DID document of the peer you want to chat
-                        with.
-                    </Dialog.Description>
-
-                    <textarea
-                        className="dialog-input"
-                        value={didInput}
-                        onChange={(e) => {
-                            console.log(
-                                '📝 DID input changed, length:',
-                                e.target.value.length,
-                            );
-                            setDidInput(e.target.value);
-                        }}
-                        placeholder="Paste DID document JSON here..."
-                        rows={10}
+                    <DialogContent
+                        didInput={didInput}
+                        onDidInputChange={handleDidInputChange}
+                        error={error}
+                        onSubmit={handleSubmit}
                     />
-
-                    {error && <p className="dialog-error">{error}</p>}
-
-                    <div className="dialog-footer">
-                        <Dialog.Close asChild>
-                            <button className="dialog-button secondary">
-                                Cancel
-                            </button>
-                        </Dialog.Close>
-                        <Dialog.Close asChild>
-                            <button
-                                className="dialog-button primary"
-                                onClick={handleSubmit}
-                                disabled={!didInput.trim()}
-                            >
-                                Create Conversation
-                            </button>
-                        </Dialog.Close>
-                    </div>
-
-                    <Dialog.Close asChild>
-                        <button className="dialog-close" aria-label="Close">
-                            <X size={16} />
-                        </button>
-                    </Dialog.Close>
                 </Dialog.Content>
             </Dialog.Portal>
         </Dialog.Root>

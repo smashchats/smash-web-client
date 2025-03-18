@@ -1,5 +1,5 @@
 import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DIDDocument, SmashMessaging } from 'smash-node-lib';
 
 import './App.css';
@@ -9,10 +9,11 @@ import { ChatList } from './components/chat/ChatList';
 import { ChatMessage } from './components/chat/ChatMessage';
 import { Settings } from './components/settings/Settings';
 import { CURRENT_USER, DEFAULT_SME_CONFIG, View } from './config/constants';
+import { useConversationHandling } from './hooks/useConversationHandling';
+import { useMessageHandling } from './hooks/useMessageHandling';
 import { StoredConversation, db, initDB } from './lib/db';
 import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
-import { smashService } from './lib/smash-service';
-import { SmashConversation, SmashMessage } from './lib/types';
+import { logger } from './lib/logger';
 
 function App() {
     const {
@@ -27,17 +28,31 @@ function App() {
         smashUser,
     } = useSmashIdentity();
 
-    const [conversations, setConversations] = useState<SmashConversation[]>([]);
     const [selectedChat, setSelectedChat] = useState<string>();
-    const [messages, setMessages] = useState<SmashMessage[]>([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentView, setCurrentView] = useState<View>('messages');
-    const [error, setError] = useState<Error | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     // Add ref for messages container
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const markReadTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+    const {
+        conversations,
+        error: conversationError,
+        updateConversationWithMessage,
+        markConversationAsRead,
+        refreshConversations,
+    } = useConversationHandling();
+
+    const {
+        messages,
+        error: messageError,
+        sendMessage,
+    } = useMessageHandling({
+        selectedChat,
+        onConversationUpdate: updateConversationWithMessage,
+    });
 
     // Add scroll to bottom function
     const scrollToBottom = () => {
@@ -50,21 +65,28 @@ function App() {
     }, [messages]);
 
     // Handle marking messages as read when conversation is focused
-    const handleConversationFocus = async (conversationId: string) => {
-        // Clear any existing timeout
-        if (markReadTimeoutRef.current) {
-            clearTimeout(markReadTimeoutRef.current);
-        }
-
-        // Set a new timeout to mark as read after 1 second
-        markReadTimeoutRef.current = setTimeout(async () => {
-            try {
-                await smashService.markConversationAsRead(conversationId);
-            } catch (err) {
-                console.error('Failed to mark conversation as read:', err);
+    const handleConversationFocus = useCallback(
+        async (conversationId: string) => {
+            logger.debug('Handling conversation focus', { conversationId });
+            // Clear any existing timeout
+            if (markReadTimeoutRef.current) {
+                clearTimeout(markReadTimeoutRef.current);
             }
-        }, 1000);
-    };
+
+            // Set a new timeout to mark as read after 1 second
+            markReadTimeoutRef.current = setTimeout(async () => {
+                try {
+                    await markConversationAsRead(conversationId);
+                    logger.debug('Conversation marked as read', {
+                        conversationId,
+                    });
+                } catch (err) {
+                    logger.error('Failed to mark conversation as read', err);
+                }
+            }, 1000);
+        },
+        [markConversationAsRead],
+    );
 
     // Clean up timeout on unmount
     useEffect(() => {
@@ -99,173 +121,22 @@ function App() {
                 handleVisibilityChange,
             );
         };
-    }, [selectedChat]);
+    }, [handleConversationFocus, selectedChat]);
 
     // Initialize database on mount
     useEffect(() => {
+        logger.debug('Initializing database');
         initDB().catch((err) => {
-            console.error('Failed to initialize database:', err);
-            setError(
-                err instanceof Error
-                    ? err
-                    : new Error('Failed to initialize database'),
-            );
+            logger.error('Failed to initialize database', err);
         });
     }, []);
 
-    const loadConversations = async () => {
-        try {
-            setError(null);
-            // First ensure DB is initialized
-            await initDB();
-            const convos = await smashService.getConversations();
-            setConversations(
-                convos.map((convo) => ({
-                    ...convo,
-                    lastMessage: convo.lastMessage
-                        ? {
-                              ...convo.lastMessage,
-                              timestamp: new Date(convo.lastMessage.timestamp),
-                          }
-                        : undefined,
-                })),
-            );
-        } catch (err) {
-            console.error('Failed to load conversations:', err);
-            setError(
-                err instanceof Error
-                    ? err
-                    : new Error('Failed to load conversations'),
-            );
-        }
-    };
-
-    useEffect(() => {
-        if (!identity) return;
-
-        loadConversations();
-
-        // Set up message handling
-        smashService.onMessageReceived((message) => {
-            // Only handle incoming messages (not our own)
-            if (message.sender === CURRENT_USER) return;
-
-            const smashMessage: SmashMessage = {
-                ...message,
-                timestamp: new Date(message.timestamp),
-            };
-            setMessages((prev) => [...prev, smashMessage]);
-
-            // Update conversation's last message in UI
-            setConversations((prevConversations) => {
-                const existingConv = prevConversations.find(
-                    (c) => c.id === message.conversationId,
-                );
-
-                if (!existingConv) {
-                    // New conversation - don't set unread count, it will come from the database
-                    return [
-                        ...prevConversations,
-                        {
-                            id: message.conversationId,
-                            title: `Chat with ${message.sender.slice(0, 8)}...`,
-                            participants: ['You', message.sender],
-                            type: 'direct',
-                            lastMessage: smashMessage,
-                            unreadCount: 0, // Will be updated by conversation update handler
-                            updatedAt: message.timestamp,
-                        },
-                    ];
-                }
-
-                // Existing conversation - only update last message
-                return prevConversations.map((conv) =>
-                    conv.id === message.conversationId
-                        ? {
-                              ...conv,
-                              lastMessage: smashMessage,
-                          }
-                        : conv,
-                );
-            });
-        });
-
-        // Handle conversation updates (new or updated conversations)
-        smashService.onConversationUpdated((conversation) => {
-            setConversations((prev) => {
-                // Convert StoredConversation to SmashConversation
-                const smashConversation: SmashConversation = {
-                    ...conversation,
-                    lastMessage: conversation.lastMessage
-                        ? {
-                              ...conversation.lastMessage,
-                              timestamp: new Date(
-                                  conversation.lastMessage.timestamp,
-                              ),
-                          }
-                        : undefined,
-                };
-
-                const existing = prev.find((c) => c.id === conversation.id);
-                if (existing) {
-                    // Update existing conversation
-                    return prev.map((c) =>
-                        c.id === conversation.id ? smashConversation : c,
-                    );
-                } else {
-                    // Add new conversation
-                    return [...prev, smashConversation];
-                }
-            });
-        });
-
-        // Handle message status updates
-        smashService.onMessageStatusUpdated((messageId, status) => {
-            setMessages((prev) =>
-                prev.map((msg) =>
-                    msg.id === messageId ? { ...msg, status } : msg,
-                ),
-            );
-        });
-    }, [identity, selectedChat]);
-
-    useEffect(() => {
-        if (!selectedChat) return;
-
-        const loadMessages = async () => {
-            try {
-                setError(null);
-                await initDB();
-                const msgs = await smashService.getMessages(selectedChat);
-                setMessages(
-                    msgs.map((msg) => ({
-                        ...msg,
-                        timestamp: new Date(msg.timestamp),
-                    })),
-                );
-            } catch (err) {
-                console.error('Failed to load messages:', err);
-                setError(
-                    err instanceof Error
-                        ? err
-                        : new Error('Failed to load messages'),
-                );
-            }
-        };
-
-        loadMessages();
-    }, [selectedChat]);
-
     const handleCreateConversation = async (didDoc: DIDDocument) => {
-        console.log('🔄 App: Starting conversation creation process...', {
+        logger.info('Starting conversation creation process', {
             didId: didDoc.id,
-            currentUser: CURRENT_USER,
         });
 
         try {
-            setError(null);
-            console.log('🗑️ Cleared previous errors');
-
             // Create a new conversation in the database
             const conversation: StoredConversation = {
                 id: didDoc.id,
@@ -276,116 +147,42 @@ function App() {
                 updatedAt: new Date().toISOString(),
                 lastMessage: undefined,
             };
-            console.log('📝 Created conversation object:', conversation);
 
-            console.log('💾 Adding conversation to database...');
+            logger.debug('Adding conversation to database', {
+                conversationId: conversation.id,
+            });
             await db.addConversation(conversation);
-            console.log('✅ Conversation added to database successfully');
 
-            // Update the UI
-            const uiConversation: SmashConversation = {
-                ...conversation,
-                type: 'direct',
-                lastMessage: conversation.lastMessage
-                    ? {
-                          ...conversation.lastMessage,
-                          timestamp: new Date(
-                              conversation.lastMessage.timestamp,
-                          ),
-                      }
-                    : undefined,
-            };
-            console.log('🎨 Created UI conversation object:', uiConversation);
-
-            console.log('🔄 Updating conversations state...');
-            setConversations((prev) => [...prev, uiConversation]);
-            console.log('🎯 Setting selected chat to:', conversation.id);
             setSelectedChat(conversation.id);
 
             // Store the DID document for future message sending
-            console.log('📨 Resolving DID document in SmashMessaging...');
+            logger.debug('Resolving DID document in SmashMessaging', {
+                didId: didDoc.id,
+            });
             SmashMessaging.resolve(didDoc);
-            console.log('✨ Conversation creation completed successfully');
+            logger.info('Conversation creation completed successfully', {
+                conversationId: conversation.id,
+            });
         } catch (err) {
-            console.error('❌ Error in handleCreateConversation:', err);
-            console.error(
-                'Stack trace:',
-                err instanceof Error ? err.stack : 'No stack trace available',
-            );
-            setError(
-                err instanceof Error
-                    ? err
-                    : new Error('Failed to create conversation'),
-            );
+            logger.error('Failed to create conversation', err);
+            throw err;
         }
     };
 
     const handleSelectChat = async (chatId: string) => {
+        logger.debug('Selecting chat', { chatId });
         setSelectedChat(chatId);
         setIsMobileMenuOpen(false);
     };
 
-    const handleSendMessage = async (content: string) => {
-        if (!selectedChat) return;
-
-        try {
-            setError(null);
-            // Find the conversation to get the recipient's DID
-            const conversation = conversations.find(
-                (c) => c.id === selectedChat,
-            );
-            if (!conversation) return;
-
-            // Get the recipient's DID (the participant that isn't the current user)
-            const recipientDID = conversation.participants.find(
-                (p) => p !== CURRENT_USER,
-            );
-            if (!recipientDID) return;
-
-            const message = await smashService.sendMessage(
-                recipientDID as
-                    | `did:key:${string}`
-                    | `did:web:${string}`
-                    | `did:plc:${string}`
-                    | `did:doc:${string}`,
-                content,
-            );
-
-            const smashMessage: SmashMessage = {
-                ...message,
-                timestamp: new Date(message.timestamp),
-            };
-
-            // Update messages
-            setMessages((prev) => [...prev, smashMessage]);
-
-            // Update conversation
-            setConversations((prev) =>
-                prev.map((conv) =>
-                    conv.id === selectedChat
-                        ? {
-                              ...conv,
-                              lastMessage: smashMessage,
-                          }
-                        : conv,
-                ),
-            );
-        } catch (err) {
-            console.error('Failed to send message:', err);
-            setError(
-                err instanceof Error
-                    ? err
-                    : new Error('Failed to send message'),
-            );
-        }
-    };
-
     const handleLogout = async () => {
+        logger.info('Logging out user');
         await clearIdentity();
     };
 
     // If not initialized, show loading state
     if (!isInitialized) {
+        logger.debug('Application not initialized, showing loading state');
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <p>Loading...</p>
@@ -395,47 +192,60 @@ function App() {
 
     // If no identity AND we're initialized, show welcome guide
     if (!identity && isInitialized) {
+        logger.debug('No identity found, showing welcome guide');
         return (
             <WelcomeGuide
                 onCreateIdentity={async (newIdentity) => {
                     setIsLoading(true);
                     try {
                         await setIdentity(newIdentity, DEFAULT_SME_CONFIG);
+                        logger.info(
+                            'New identity created and set successfully',
+                        );
                     } finally {
                         setIsLoading(false);
                     }
                 }}
                 isLoading={isLoading}
-                error={error}
+                error={conversationError || messageError}
             />
         );
     }
+
+    logger.debug('Rendering main application view', {
+        currentView,
+        selectedChat,
+        conversationCount: conversations.length,
+    });
 
     return (
         <div className="app-container">
             {/* Sidebar */}
             <nav className="sidebar">
                 <button
-                    className={`sidebar-button ${
-                        currentView === 'messages' ? 'active' : ''
-                    }`}
-                    onClick={() => setCurrentView('messages')}
+                    className={`sidebar-button ${currentView === 'messages' ? 'active' : ''}`}
+                    onClick={() => {
+                        logger.debug('Switching to messages view');
+                        setCurrentView('messages');
+                    }}
                 >
                     <MessageSquare size={24} />
                 </button>
                 <button
-                    className={`sidebar-button ${
-                        currentView === 'explore' ? 'active' : ''
-                    }`}
-                    onClick={() => setCurrentView('explore')}
+                    className={`sidebar-button ${currentView === 'explore' ? 'active' : ''}`}
+                    onClick={() => {
+                        logger.debug('Switching to explore view');
+                        setCurrentView('explore');
+                    }}
                 >
                     <Users size={24} />
                 </button>
                 <button
-                    className={`sidebar-button ${
-                        currentView === 'settings' ? 'active' : ''
-                    }`}
-                    onClick={() => setCurrentView('settings')}
+                    className={`sidebar-button ${currentView === 'settings' ? 'active' : ''}`}
+                    onClick={() => {
+                        logger.debug('Switching to settings view');
+                        setCurrentView('settings');
+                    }}
                 >
                     <SettingsIcon size={24} />
                 </button>
@@ -445,9 +255,7 @@ function App() {
             {currentView === 'messages' && (
                 <main className="chat-container">
                     <div
-                        className={`chat-list-container ${
-                            isMobileMenuOpen ? 'mobile-open' : ''
-                        }`}
+                        className={`chat-list-container ${isMobileMenuOpen ? 'mobile-open' : ''}`}
                     >
                         <ChatList
                             conversations={conversations}
@@ -472,7 +280,7 @@ function App() {
                                     ))}
                                     <div ref={messagesEndRef} />
                                 </div>
-                                <ChatInput onSendMessage={handleSendMessage} />
+                                <ChatInput onSendMessage={sendMessage} />
                             </div>
                         ) : (
                             <div className="no-chat-selected">
@@ -510,16 +318,24 @@ function App() {
             {isMobileMenuOpen && (
                 <div
                     className="fixed inset-0 bg-background/80 backdrop-blur-sm z-20 md:hidden"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => {
+                        logger.debug('Closing mobile menu');
+                        setIsMobileMenuOpen(false);
+                    }}
                 />
             )}
 
             {/* Error toast */}
-            {error && (
+            {(conversationError || messageError) && (
                 <div className="error-toast">
-                    <p>{error.message}</p>
+                    <p>{(conversationError || messageError)?.message}</p>
                     <button
-                        onClick={() => setError(null)}
+                        onClick={() => {
+                            logger.debug(
+                                'Refreshing conversations to clear errors',
+                            );
+                            refreshConversations();
+                        }}
                         className="error-toast-close"
                     >
                         ×

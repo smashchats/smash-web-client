@@ -7,7 +7,10 @@ import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './contexts/toast';
 import './index.css';
+import { logger } from './lib/logger';
 import './polyfills';
+
+logger.info('Initializing application');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
@@ -18,3 +21,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </ErrorBoundary>
     </React.StrictMode>,
 );
+
+logger.debug('Application rendered successfully');

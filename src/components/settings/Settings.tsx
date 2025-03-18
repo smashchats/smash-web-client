@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
 import { DEFAULT_SME_CONFIG } from '../../config/constants';
+import { logger } from '../../lib/logger';
 
 interface Profile {
     title: string;
@@ -25,6 +26,9 @@ interface SettingsProps {
     smashUser: SmashUser | null;
 }
 
+type SaveStatus = 'success' | 'error' | 'unsaved' | 'saving' | null;
+type SMEStatus = 'success' | 'error' | 'unsaved' | null;
+
 export function Settings({
     onLogout,
     profile,
@@ -35,9 +39,7 @@ export function Settings({
     smashUser,
 }: SettingsProps) {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const [saveStatus, setSaveStatus] = useState<
-        'success' | 'error' | 'unsaved' | 'saving' | null
-    >(null);
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>(null);
     const [formData, setFormData] = useState<Profile>({
         title: '',
         description: '',
@@ -48,9 +50,7 @@ export function Settings({
     const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout>();
     const [successTimeoutId, setSuccessTimeoutId] = useState<NodeJS.Timeout>();
     const [isSavingSME, setIsSavingSME] = useState(false);
-    const [smeStatus, setSmeStatus] = useState<
-        'success' | 'error' | 'unsaved' | null
-    >(null);
+    const [smeStatus, setSmeStatus] = useState<SMEStatus>(null);
     const [didCopied, setDidCopied] = useState(false);
     const [copyError, setCopyError] = useState<string | null>(null);
 
@@ -75,12 +75,15 @@ export function Settings({
 
     const saveProfile = async (data: Profile) => {
         try {
+            logger.debug('Saving profile', { data });
             setSaveStatus('saving');
             await onUpdateProfile(data);
             setSaveStatus('success');
             const successId = setTimeout(() => setSaveStatus(null), 2000);
             setSuccessTimeoutId(successId);
-        } catch {
+            logger.info('Profile saved successfully');
+        } catch (error) {
+            logger.error('Failed to save profile', error);
             setSaveStatus('error');
         }
     };
@@ -126,11 +129,14 @@ export function Settings({
 
     const handleSaveSME = async () => {
         try {
+            logger.debug('Saving SME configuration', { config: smeFormData });
             setIsSavingSME(true);
             await onUpdateSME(smeFormData);
             setSmeStatus('success');
             setTimeout(() => setSmeStatus(null), 2000);
-        } catch {
+            logger.info('SME configuration saved successfully');
+        } catch (error) {
+            logger.error('Failed to save SME configuration', error);
             setSmeStatus('error');
         } finally {
             setIsSavingSME(false);
@@ -139,8 +145,12 @@ export function Settings({
 
     const handleLogout = async () => {
         try {
+            logger.info('Initiating logout');
             setIsLoggingOut(true);
             await onLogout();
+            logger.info('Logout completed successfully');
+        } catch (error) {
+            logger.error('Logout failed', error);
         } finally {
             setIsLoggingOut(false);
         }
@@ -148,19 +158,22 @@ export function Settings({
 
     const handleCopyDID = async () => {
         if (!identity || !smashUser) {
+            logger.warn('Attempted to copy DID without identity or smashUser');
             setCopyError('No identity available');
             return;
         }
 
         try {
+            logger.debug('Copying DID document');
             setCopyError(null);
             const didDoc = await smashUser.getDIDDocument();
             const didDocString = JSON.stringify(didDoc, null, 2);
             await navigator.clipboard.writeText(didDocString);
             setDidCopied(true);
             setTimeout(() => setDidCopied(false), 2000);
+            logger.info('DID document copied successfully');
         } catch (err) {
-            console.error('Failed to copy DID document:', err);
+            logger.error('Failed to copy DID document', err);
             setCopyError('Failed to copy DID document');
         }
     };

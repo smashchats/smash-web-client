@@ -4,7 +4,7 @@ import { Database, Lock, Shield, Users } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { IMPeerIdentity } from 'smash-node-lib';
 
-import { generateIdentity } from '../lib/smash-init';
+import { generateIdentity } from '../lib/smash/smash-init';
 import './WelcomeGuide.css';
 
 interface WelcomeGuideProps {

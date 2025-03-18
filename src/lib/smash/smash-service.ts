@@ -9,8 +9,9 @@ import {
     sha256,
 } from 'smash-node-lib';
 
-import { StoredConversation, StoredMessage, db } from './db';
-import { SmashMessage } from './types';
+import { StoredConversation, StoredMessage, db } from '../db';
+import { logger } from '../logger';
+import { SmashMessage } from '../types';
 
 export type MessageCallback = (message: SmashMessage) => void;
 export type ConversationCallback = (conversation: StoredConversation) => void;
@@ -78,7 +79,10 @@ class SmashService {
     ): Promise<void> {
         if (!this.smashUser) throw new Error('SmashService not initialized');
 
-        console.log('📨 Handling incoming message:', { senderId, message });
+        logger.info('Handling incoming message', {
+            senderId,
+            messageId: message.sha256,
+        });
 
         const storedMessage: StoredMessage = {
             id: message.sha256 || crypto.randomUUID(),
@@ -89,7 +93,9 @@ class SmashService {
             status: 'delivered',
         };
 
-        console.log('💾 Storing message:', storedMessage);
+        logger.debug('Storing incoming message', {
+            messageId: storedMessage.id,
+        });
 
         // Add message to database - this will also create a conversation if it doesn't exist
         await db.addMessage(storedMessage);
@@ -107,6 +113,9 @@ class SmashService {
                 updatedAt: storedMessage.timestamp,
                 lastMessage: storedMessage,
             };
+            logger.debug('Creating new conversation', {
+                conversationId: conversation.id,
+            });
             await db.addConversation(conversation);
         } else {
             // Update existing conversation with incremented unread count
@@ -116,10 +125,16 @@ class SmashService {
                 lastMessage: storedMessage,
                 updatedAt: storedMessage.timestamp,
             };
+            logger.debug('Updating existing conversation', {
+                conversationId: conversation.id,
+                unreadCount: conversation.unreadCount,
+            });
             await db.updateConversation(conversation);
         }
 
-        console.log('📬 Notifying about conversation:', conversation);
+        logger.debug('Notifying conversation update', {
+            conversationId: conversation.id,
+        });
         this.conversationCallbacks.forEach((callback) =>
             callback(conversation),
         );
@@ -128,12 +143,16 @@ class SmashService {
             ...storedMessage,
             timestamp: new Date(storedMessage.timestamp),
         };
-        console.log('📲 Notifying about message:', smashMessage);
+        logger.debug('Notifying message received', {
+            messageId: smashMessage.id,
+        });
         this.messageCallbacks.forEach((cb) => cb(smashMessage));
 
         // Mark message as received if it has a hash
         if (message.sha256) {
-            console.log('✅ Acknowledging message:', message.sha256);
+            logger.debug('Acknowledging message', {
+                messageId: message.sha256,
+            });
             await this.smashUser.ackMessagesRead(senderId, [message.sha256]);
         }
     }
@@ -144,7 +163,10 @@ class SmashService {
     ): Promise<SmashMessage> {
         if (!this.smashUser) throw new Error('SmashService not initialized');
 
-        console.log('📤 Sending message:', { conversationId, content });
+        logger.info('Sending message', {
+            conversationId,
+            contentLength: content.length,
+        });
 
         // Create message
         const message = new IMText(content);
@@ -159,7 +181,7 @@ class SmashService {
             status: 'sent',
         };
 
-        console.log('💾 Storing sent message:', smashMessage);
+        logger.debug('Storing sent message', { messageId: smashMessage.id });
 
         // Store in database
         await db.addMessage({
@@ -172,7 +194,12 @@ class SmashService {
     }
 
     async getMessages(conversationId: string): Promise<SmashMessage[]> {
+        logger.debug('Getting messages', { conversationId });
         const messages = await db.getMessages(conversationId);
+        logger.debug('Retrieved messages', {
+            conversationId,
+            count: messages.length,
+        });
         return messages.map((msg) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
@@ -180,10 +207,16 @@ class SmashService {
     }
 
     async getConversations(): Promise<StoredConversation[]> {
-        return db.getConversations();
+        logger.debug('Getting conversations');
+        const conversations = await db.getConversations();
+        logger.debug('Retrieved conversations', {
+            count: conversations.length,
+        });
+        return conversations;
     }
 
     async markConversationAsRead(conversationId: string): Promise<void> {
+        logger.info('Marking conversation as read', { conversationId });
         // Update conversation in database
         const conversation = await db.getConversation(conversationId);
         if (conversation) {
@@ -194,27 +227,43 @@ class SmashService {
             this.conversationCallbacks.forEach((callback) =>
                 callback(conversation),
             );
+            logger.debug('Conversation marked as read', { conversationId });
+        } else {
+            logger.warn('Conversation not found for marking as read', {
+                conversationId,
+            });
         }
     }
 
     onMessageReceived(callback: MessageCallback): void {
         this.messageCallbacks.add(callback);
+        logger.debug('Added message received callback', {
+            callbackCount: this.messageCallbacks.size,
+        });
     }
 
     onConversationUpdated(callback: ConversationCallback): void {
         this.conversationCallbacks.add(callback);
+        logger.debug('Added conversation updated callback', {
+            callbackCount: this.conversationCallbacks.size,
+        });
     }
 
     onMessageStatusUpdated(callback: StatusCallback): void {
         this.statusCallbacks.add(callback);
+        logger.debug('Added message status updated callback', {
+            callbackCount: this.statusCallbacks.size,
+        });
     }
 
     async close(): Promise<void> {
+        logger.info('Closing SmashService');
         if (this.smashUser) {
             await this.smashUser.close();
             this.smashUser = null;
         }
         await db.close();
+        logger.debug('SmashService closed successfully');
     }
 }
 

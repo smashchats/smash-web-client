@@ -1,4 +1,4 @@
-import { MessageStatus, SmashConversation, SmashMessage } from './types';
+import { MessageStatus, SmashConversation, SmashMessage } from '../types';
 
 // Helper function to create a timestamp within the last 24 hours
 const getRecentTimestamp = (hoursAgo: number) => {

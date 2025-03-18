@@ -6,52 +6,61 @@ import {
     SmashMessaging,
 } from 'smash-node-lib';
 
+import { logger } from '../logger';
+
 // Initialize DID document manager globally
 let didDocumentManager: DIDDocManager | null = null;
 
 export function initializeSmashMessaging() {
-    console.log('Initializing Smash messaging...');
+    logger.info('Initializing Smash messaging');
     if (!didDocumentManager) {
         try {
             // Use native WebCrypto if available, otherwise use polyfill
             const crypto = window.crypto || new Crypto();
-            console.log('Setting up WebCrypto...');
+            logger.debug('Setting up WebCrypto');
             SmashMessaging.setCrypto(crypto);
-            console.log('WebCrypto initialized successfully');
+            logger.debug('WebCrypto initialized successfully');
 
-            console.log('Creating DID document manager...');
+            logger.debug('Creating DID document manager');
             didDocumentManager = new DIDDocManager();
-            console.log('DID document manager created successfully');
+            logger.debug('DID document manager created successfully');
 
-            console.log('Configuring Smash messaging with DID manager...');
+            logger.debug('Configuring Smash messaging with DID manager');
             // This is not actually a React Hook, it's just a method name
             // eslint-disable-next-line react-hooks/rules-of-hooks
             SmashMessaging.use(didDocumentManager);
-            console.log('Smash messaging configured successfully');
+            logger.info('Smash messaging initialized successfully');
         } catch (err) {
-            console.error('Error during Smash initialization:', err);
+            logger.error('Error during Smash initialization', err);
             throw err;
         }
     } else {
-        console.log('Smash messaging already initialized');
+        logger.debug('Smash messaging already initialized');
     }
     return didDocumentManager;
 }
 
 export async function generateIdentity(): Promise<IMPeerIdentity> {
+    logger.info('Generating new identity');
     const manager = initializeSmashMessaging();
-    return manager.generate();
+    const identity = await manager.generate();
+    logger.info('Identity generated successfully', { did: identity.did });
+    return identity;
 }
 
 export async function importIdentity(
     serializedIdentity: IIMPeerIdentity,
 ): Promise<IMPeerIdentity> {
+    logger.info('Importing identity');
     initializeSmashMessaging();
-    return SmashMessaging.importIdentity(serializedIdentity);
+    const identity = await SmashMessaging.importIdentity(serializedIdentity);
+    logger.info('Identity imported successfully', { did: identity.did });
+    return identity;
 }
 
 export function getDidDocumentManager(): DIDDocManager {
     if (!didDocumentManager) {
+        logger.error('Smash messaging not initialized');
         throw new Error('Smash messaging not initialized');
     }
     return didDocumentManager;

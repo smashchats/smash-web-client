@@ -1,6 +1,8 @@
 import { DBSchema, IDBPDatabase, openDB } from 'idb';
 import { IIMPeerIdentity } from 'smash-node-lib';
 
+import { logger } from './logger';
+
 interface SmashDBSchema extends DBSchema {
     messages: {
         key: string;
@@ -233,7 +235,7 @@ class SmashDB {
     ): Promise<StoredMessage[]> {
         if (!this.db) throw new Error('Database not initialized');
 
-        console.log('🔍 Getting messages for conversation:', conversationId);
+        logger.debug('Getting messages for conversation', { conversationId });
 
         const messages = await this.db.getAllFromIndex(
             'messages',
@@ -241,7 +243,10 @@ class SmashDB {
             conversationId,
         );
 
-        console.log('📚 Retrieved messages:', messages);
+        logger.debug('Retrieved messages', {
+            conversationId,
+            count: messages.length,
+        });
 
         // Sort by timestamp
         return messages
@@ -255,29 +260,53 @@ class SmashDB {
 
     async getConversations(): Promise<StoredConversation[]> {
         if (!this.db) throw new Error('Database not initialized');
-        return this.db.getAllFromIndex('conversations', 'by-updated');
+        logger.debug('Getting all conversations');
+        const conversations = await this.db.getAllFromIndex(
+            'conversations',
+            'by-updated',
+        );
+        logger.debug('Retrieved conversations', {
+            count: conversations.length,
+        });
+        return conversations;
     }
 
     async getConversation(id: string): Promise<StoredConversation | undefined> {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
-        return this.db.get('conversations', id);
+        logger.debug('Getting conversation', { conversationId: id });
+        const conversation = await this.db.get('conversations', id);
+        if (conversation) {
+            logger.debug('Found conversation', { conversationId: id });
+        } else {
+            logger.debug('Conversation not found', { conversationId: id });
+        }
+        return conversation;
     }
 
     async markConversationAsRead(conversationId: string): Promise<void> {
         if (!this.db) throw new Error('Database not initialized');
 
+        logger.debug('Marking conversation as read', { conversationId });
         const conversation = await this.db.get('conversations', conversationId);
-        if (!conversation) return;
+        if (!conversation) {
+            logger.warn('Conversation not found for marking as read', {
+                conversationId,
+            });
+            return;
+        }
 
         conversation.unreadCount = 0;
         await this.db.put('conversations', conversation);
+        logger.debug('Conversation marked as read', { conversationId });
     }
 
     async close(): Promise<void> {
         if (!this.db) return;
+        logger.info('Closing database connection');
         this.db.close();
         this.db = null;
+        logger.debug('Database connection closed');
     }
 }
 

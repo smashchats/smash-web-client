@@ -1,5 +1,6 @@
 import { Check, CheckCheck } from 'lucide-react';
 
+import { logger } from '../../lib/logger';
 import { SmashMessage } from '../../lib/types';
 
 interface ChatMessageProps {
@@ -7,7 +8,40 @@ interface ChatMessageProps {
     isOwnMessage: boolean;
 }
 
+interface MessageStatusIndicatorProps {
+    status: SmashMessage['status'];
+}
+
+function MessageStatusIndicator({ status }: MessageStatusIndicatorProps) {
+    return (
+        <span className="flex items-center">
+            {status === 'sent' && <Check className="h-3 w-3 opacity-70" />}
+            {status === 'delivered' && (
+                <CheckCheck className="h-3 w-3 opacity-70" />
+            )}
+            {status === 'read' && (
+                <CheckCheck className="h-3 w-3 text-blue-400" />
+            )}
+        </span>
+    );
+}
+
 export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
+    const formatTime = (timestamp: Date | string) => {
+        const date =
+            timestamp instanceof Date ? timestamp : new Date(timestamp);
+        return date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+
+    logger.debug('Rendering chat message', {
+        messageId: message.id,
+        isOwnMessage,
+        status: message.status,
+    });
+
     return (
         <div
             className={`message ${isOwnMessage ? 'outgoing ml-auto' : 'incoming'}`}
@@ -21,23 +55,10 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 <div className="flex items-center gap-1 mt-1">
                     <span className="text-xs opacity-70">
-                        {new Date(message.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                        })}
+                        {formatTime(message.timestamp)}
                     </span>
                     {isOwnMessage && (
-                        <span className="flex items-center">
-                            {message.status === 'sent' && (
-                                <Check className="h-3 w-3 opacity-70" />
-                            )}
-                            {message.status === 'delivered' && (
-                                <CheckCheck className="h-3 w-3 opacity-70" />
-                            )}
-                            {message.status === 'read' && (
-                                <CheckCheck className="h-3 w-3 text-blue-400" />
-                            )}
-                        </span>
+                        <MessageStatusIndicator status={message.status} />
                     )}
                 </div>
             </div>
