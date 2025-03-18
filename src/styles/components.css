@@ -51,13 +51,13 @@
 }
 
 .button--secondary {
-    background-color: var(--color-secondary);
-    color: var(--color-foreground);
-    border: var(--border-width) solid transparent;
+    background-color: var(--color-surface);
+    color: var(--color-text-light);
+    border-bottom: var(--border-width) solid var(--color-border);
 }
 
 .button--secondary:hover:not(:disabled) {
-    background-color: var(--color-muted);
+    background-color: var(--color-accent);
     color: var(--color-background);
 }
 

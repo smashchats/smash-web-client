@@ -34,7 +34,7 @@
 
 .sidebar-button.active {
     background-color: var(--color-primary);
-    color: var(--color-background);
+    color: white;
 }
 
 /* Main Area */

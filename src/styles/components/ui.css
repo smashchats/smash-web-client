@@ -22,7 +22,7 @@
 
 .button--primary {
     background-color: var(--color-primary);
-    color: var(--color-background);
+    color: white;
 }
 
 .button--primary:hover:not(:disabled):not(.button--success) {
@@ -68,15 +68,6 @@
 .button--outline-destructive:hover:not(:disabled) {
     background-color: var(--color-error);
     color: var(--color-background);
-}
-
-.button--secondary {
-    background-color: var(--color-surface);
-    color: var(--color-text);
-}
-
-.button--secondary:hover:not(:disabled) {
-    background-color: var(--color-accent);
 }
 
 .button--ghost {
@@ -236,15 +227,27 @@ textarea:disabled {
 
 .toast {
     background-color: var(--color-background);
+    border: var(--border-width) solid var(--color-border);
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-lg);
     padding: var(--spacing-md);
     display: grid;
-    grid-template-areas: 'content actions';
+    grid-template-areas: 'content action';
     grid-template-columns: auto max-content;
     column-gap: var(--spacing-md);
     align-items: center;
-    border: var(--border-width) solid var(--color-border);
+    cursor: pointer;
+    user-select: none;
+    touch-action: pan-y;
+}
+
+.toast:hover {
+    background-color: var(--color-surface);
+}
+
+.toast:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
 .toast__content {
@@ -263,39 +266,16 @@ textarea:disabled {
 
 .toast__description {
     color: var(--color-text-light);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     line-height: var(--line-height-normal);
 }
 
-.toast__actions {
-    grid-area: actions;
-    display: flex;
-    gap: var(--spacing-sm);
-    align-items: center;
-}
-
 .toast__action {
-    padding: 0;
+    grid-area: action;
+    z-index: 1;
 }
 
-.toast__close {
-    padding: 0;
-    height: 25px;
-    width: 25px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--border-radius-sm);
-    color: var(--color-text-light);
-    transition: all var(--transition-fast);
-}
-
-.toast__close:hover {
-    color: var(--color-text);
-    background-color: var(--color-surface);
-}
-
-/* Toast Animations */
+/* Toast animations */
 @keyframes toast-slide-in {
     from {
         transform: translateX(100%);
@@ -314,22 +294,16 @@ textarea:disabled {
     }
 }
 
-@keyframes toast-swipe-out {
-    from {
-        transform: translateX(var(--radix-toast-swipe-end-x));
-    }
-    to {
-        transform: translateX(100%);
-    }
-}
-
 .toast[data-state='open'] {
-    animation: toast-slide-in var(--transition-fast)
-        cubic-bezier(0.16, 1, 0.3, 1);
+    animation: toast-slide-in 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toast[data-state='closed'] {
-    animation: toast-slide-out var(--transition-fast) ease-out;
+    animation: toast-slide-out 100ms ease-out forwards;
+}
+
+.toast[data-swipe='end'] {
+    animation: toast-slide-out 100ms ease-out forwards;
 }
 
 .toast[data-swipe='move'] {
@@ -338,9 +312,5 @@ textarea:disabled {
 
 .toast[data-swipe='cancel'] {
     transform: translateX(0);
-    transition: transform var(--transition-normal) ease-out;
-}
-
-.toast[data-swipe='end'] {
-    animation: toast-swipe-out var(--transition-fast) ease-out;
+    transition: transform 200ms ease-out;
 }
