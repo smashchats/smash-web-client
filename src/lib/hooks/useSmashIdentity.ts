@@ -121,7 +121,7 @@ export function useSmashIdentity() {
         };
 
         loadIdentity();
-    }, []);
+    }, [didManager]);
 
     const setIdentity = async (
         identity: IMPeerIdentity,

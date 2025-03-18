@@ -8,15 +8,11 @@ import { ChatInput } from './components/chat/ChatInput';
 import { ChatList } from './components/chat/ChatList';
 import { ChatMessage } from './components/chat/ChatMessage';
 import { Settings } from './components/settings/Settings';
+import { CURRENT_USER, DEFAULT_SME_CONFIG, View } from './config/constants';
 import { StoredConversation, db, initDB } from './lib/db';
 import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { smashService } from './lib/smash-service';
 import { SmashConversation, SmashMessage } from './lib/types';
-
-// In a real app, this would come from authentication
-const CURRENT_USER = 'You';
-
-type View = 'messages' | 'explore' | 'settings';
 
 function App() {
     const {
@@ -404,11 +400,7 @@ function App() {
                 onCreateIdentity={async (newIdentity) => {
                     setIsLoading(true);
                     try {
-                        await setIdentity(newIdentity, {
-                            url: 'wss://sme.dev.smashchats.com/',
-                            smePublicKey:
-                                'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEW45b75uMszTovqQSUDhsofhJx78A4Ytm4KV+REh2RRxwwfXVzTOmApNGU+eSoS2kEeDIpgt5ymLj5XPkVuEx+Q==',
-                        });
+                        await setIdentity(newIdentity, DEFAULT_SME_CONFIG);
                     } finally {
                         setIsLoading(false);
                     }

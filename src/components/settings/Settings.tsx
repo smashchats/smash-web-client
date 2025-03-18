@@ -2,6 +2,8 @@ import { Check, Copy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
+import { DEFAULT_SME_CONFIG } from '../../config/constants';
+
 interface Profile {
     title: string;
     description: string;
@@ -41,11 +43,8 @@ export function Settings({
         description: '',
         avatar: '',
     });
-    const [smeFormData, setSmeFormData] = useState<SMEConfig>({
-        url: 'wss://sme.dev.smashchats.com/',
-        smePublicKey:
-            'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEW45b75uMszTovqQSUDhsofhJx78A4Ytm4KV+REh2RRxwwfXVzTOmApNGU+eSoS2kEeDIpgt5ymLj5XPkVuEx+Q==',
-    });
+    const [smeFormData, setSmeFormData] =
+        useState<SMEConfig>(DEFAULT_SME_CONFIG);
     const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout>();
     const [successTimeoutId, setSuccessTimeoutId] = useState<NodeJS.Timeout>();
     const [isSavingSME, setIsSavingSME] = useState(false);
