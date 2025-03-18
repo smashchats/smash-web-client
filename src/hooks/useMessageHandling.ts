@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DIDString } from 'smash-node-lib';
 
 import { CURRENT_USER } from '../config/constants';
@@ -20,6 +20,12 @@ export const useMessageHandling = ({
 }: UseMessageHandlingProps) => {
     const [messages, setMessages] = useState<SmashMessage[]>([]);
     const [error, setError] = useState<Error | null>(null);
+    const conversationUpdateRef = useRef(onConversationUpdate);
+
+    // Update the ref when the callback changes
+    useEffect(() => {
+        conversationUpdateRef.current = onConversationUpdate;
+    }, [onConversationUpdate]);
 
     useEffect(() => {
         if (!selectedChat) return;
@@ -60,7 +66,7 @@ export const useMessageHandling = ({
 
             logger.info('Received new message', { message });
             setMessages((prev) => [...prev, message]);
-            onConversationUpdate(message.conversationId, message);
+            conversationUpdateRef.current(message.conversationId, message);
         };
 
         const handleMessageStatusUpdate = (
@@ -85,7 +91,7 @@ export const useMessageHandling = ({
             smashService.offMessageReceived(handleNewMessage);
             smashService.offMessageStatusUpdated(handleMessageStatusUpdate);
         };
-    }, [onConversationUpdate]);
+    }, []); // Remove onConversationUpdate from dependencies
 
     const sendMessage = async (content: string) => {
         if (!selectedChat) return;
@@ -110,7 +116,7 @@ export const useMessageHandling = ({
                 messageId: smashMessage.id,
             });
             setMessages((prev) => [...prev, smashMessage]);
-            onConversationUpdate(selectedChat, smashMessage);
+            conversationUpdateRef.current(selectedChat, smashMessage);
         } catch (err) {
             const error =
                 err instanceof Error

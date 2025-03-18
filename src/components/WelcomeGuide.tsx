@@ -5,7 +5,6 @@ import { useCallback, useState } from 'react';
 import { IMPeerIdentity } from 'smash-node-lib';
 
 import { generateIdentity } from '../lib/smash/smash-init';
-import './WelcomeGuide.css';
 
 interface WelcomeGuideProps {
     onCreateIdentity: (identity: IMPeerIdentity) => void;
@@ -59,28 +58,28 @@ export function WelcomeGuide({
     return (
         <Dialog.Root open defaultOpen modal>
             <Dialog.Portal>
-                <Dialog.Overlay className="DialogOverlay" />
+                <Dialog.Overlay className="dialog-overlay" />
                 <Dialog.Content
-                    className="DialogContent"
+                    className="dialog-content"
                     onEscapeKeyDown={(e) => e.preventDefault()}
                     onPointerDownOutside={(e) => e.preventDefault()}
                 >
                     <VisuallyHidden>
-                        <Dialog.Title className="DialogTitle">
+                        <Dialog.Title className="dialog-title">
                             Welcome to Smash
                         </Dialog.Title>
                     </VisuallyHidden>
 
-                    <Dialog.Description className="DialogDescription">
+                    <Dialog.Description className="dialog-description">
                         <b>Welcome to Smash</b>, a decentralized messaging
                         protocol that puts you in control of your
                         communications.
                     </Dialog.Description>
 
-                    <div className="DialogFeatureList">
-                        <div className="DialogFeatureItem">
-                            <Shield className="DialogFeatureIcon" />
-                            <div className="DialogFeatureContent">
+                    <div className="dialog-feature-list">
+                        <div className="dialog-feature-item">
+                            <Shield className="dialog-feature-icon" />
+                            <div className="dialog-feature-content">
                                 <h4>Privacy First</h4>
                                 <p>
                                     Your identity is stored only on your device,
@@ -89,9 +88,9 @@ export function WelcomeGuide({
                             </div>
                         </div>
 
-                        <div className="DialogFeatureItem">
-                            <Lock className="DialogFeatureIcon" />
-                            <div className="DialogFeatureContent">
+                        <div className="dialog-feature-item">
+                            <Lock className="dialog-feature-icon" />
+                            <div className="dialog-feature-content">
                                 <h4>End-to-End Encryption</h4>
                                 <p>
                                     All your communications are secure and
@@ -100,9 +99,9 @@ export function WelcomeGuide({
                             </div>
                         </div>
 
-                        <div className="DialogFeatureItem">
-                            <Users className="DialogFeatureIcon" />
-                            <div className="DialogFeatureContent">
+                        <div className="dialog-feature-item">
+                            <Users className="dialog-feature-icon" />
+                            <div className="dialog-feature-content">
                                 <h4>Join Communities</h4>
                                 <p>
                                     Connect with others in neighborhood
@@ -111,9 +110,9 @@ export function WelcomeGuide({
                             </div>
                         </div>
 
-                        <div className="DialogFeatureItem">
-                            <Database className="DialogFeatureIcon" />
-                            <div className="DialogFeatureContent">
+                        <div className="dialog-feature-item">
+                            <Database className="dialog-feature-icon" />
+                            <div className="dialog-feature-content">
                                 <h4>Data Ownership</h4>
                                 <p>Export and backup your data anytime.</p>
                             </div>
@@ -131,14 +130,19 @@ export function WelcomeGuide({
                         )}
 
                         <button
-                            className="DialogButton"
+                            className="button button--primary button--full"
                             onClick={handleGenerateIdentity}
                             disabled={isGenerating || isLoading}
                             data-loading={isGenerating || isLoading}
                         >
-                            {isGenerating || isLoading
-                                ? 'Generating Identity...'
-                                : 'Generate My Identity'}
+                            {isGenerating || isLoading ? (
+                                <>
+                                    <div className="spinner" />
+                                    <span>Generating Identity...</span>
+                                </>
+                            ) : (
+                                'Generate My Identity'
+                            )}
                         </button>
                     </div>
                 </Dialog.Content>

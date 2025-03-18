@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { DIDDocManager, IMPeerIdentity, SmashUser } from 'smash-node-lib';
+import { IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
 import { SMEConfig, StoredProfile, db } from '../db';
 import { logger } from '../logger';
-import { initializeSmashMessaging } from '../smash/smash-init';
+import {
+    getDidDocumentManager,
+    initializeSmashMessaging,
+} from '../smash/smash-init';
 import { smashService } from '../smash/smash-service';
 
 interface SmashIdentityState {
@@ -25,8 +28,6 @@ export function useSmashIdentity() {
         smashUser: null,
     });
 
-    const [didManager] = useState(() => new DIDDocManager());
-
     // Load stored identity and profile from IndexedDB
     useEffect(() => {
         const loadIdentity = async () => {
@@ -42,6 +43,7 @@ export function useSmashIdentity() {
                         // Initialize SmashMessaging first
                         logger.debug('Initializing SmashMessaging');
                         initializeSmashMessaging();
+                        const didManager = getDidDocumentManager();
 
                         // Import the identity
                         const identity = await SmashUser.importIdentity(
@@ -60,14 +62,13 @@ export function useSmashIdentity() {
                         // If we have SME config, configure endpoints
                         if (stored.smeConfig) {
                             logger.debug('Configuring endpoints');
-                            const preKeyPair =
-                                await didManager.generateNewPreKeyPair(
-                                    identity,
+                            const preKeyPair = identity.signedPreKeys[0];
+                            if (!preKeyPair) {
+                                throw new Error(
+                                    'No PreKeyPair found in identity',
                                 );
-                            await smashUser.endpoints.connect(
-                                stored.smeConfig,
-                                preKeyPair,
-                            );
+                            }
+                            await smashUser.endpoints.reset([stored.smeConfig]);
 
                             // Register the updated DID document with endpoints
                             didManager.set(await smashUser.getDIDDocument());
@@ -118,7 +119,7 @@ export function useSmashIdentity() {
         };
 
         loadIdentity();
-    }, [didManager]);
+    }, []);
 
     const setIdentity = async (
         identity: IMPeerIdentity,
@@ -126,6 +127,7 @@ export function useSmashIdentity() {
     ) => {
         try {
             logger.info('Setting up new identity');
+            const didManager = getDidDocumentManager();
 
             // First register the DID document
             didManager.set(await identity.getDIDDocument());
@@ -137,10 +139,15 @@ export function useSmashIdentity() {
             const smeConfig = initialSMEConfig || state.smeConfig;
             if (smeConfig) {
                 logger.debug('Configuring endpoints');
+                // Generate a new PreKeyPair for the identity
                 const preKeyPair =
                     await didManager.generateNewPreKeyPair(identity);
-                await smashUser.endpoints.connect(smeConfig, preKeyPair);
-
+                logger.debug('Generated new PreKeyPair for identity');
+                const endpoint = await smashUser.endpoints.connect(
+                    smeConfig,
+                    preKeyPair,
+                );
+                logger.debug('Connected to endpoint', endpoint);
                 // Register the updated DID document with endpoints
                 didManager.set(await smashUser.getDIDDocument());
             }
@@ -190,16 +197,18 @@ export function useSmashIdentity() {
             if (!state.identity) {
                 throw new Error('No identity available');
             }
+            const didManager = getDidDocumentManager();
 
             // Create new SmashUser instance with fresh endpoints
             const smashUser = new SmashUser(state.identity);
 
             // Configure endpoints
             logger.debug('Configuring endpoints with new SME config');
-            const preKeyPair = await didManager.generateNewPreKeyPair(
-                state.identity,
-            );
-            await smashUser.endpoints.connect(config, preKeyPair);
+            const preKeyPair = state.identity.signedPreKeys[0];
+            if (!preKeyPair) {
+                throw new Error('No PreKeyPair found in identity');
+            }
+            await smashUser.endpoints.reset([config]);
 
             // Register the updated DID document
             const updatedDIDDoc = await smashUser.getDIDDocument();

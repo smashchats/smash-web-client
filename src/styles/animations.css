@@ -1,0 +1,198 @@
+/* Fade In */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Fade Out */
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Slide In */
+@keyframes slideIn {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Slide Out */
+@keyframes slideOut {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(100%);
+    }
+}
+
+/* Scale In */
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Scale Out */
+@keyframes scaleOut {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+}
+
+/* Spin */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Overlay Show */
+@keyframes overlayShow {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Content Show */
+@keyframes contentShow {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Toast Show */
+@keyframes toastShow {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Toast Hide */
+@keyframes toastHide {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Shake */
+@keyframes shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-4px);
+    }
+    75% {
+        transform: translateX(4px);
+    }
+}
+
+/* Pulse */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Bounce */
+@keyframes bounce {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+/* Animation Classes */
+.animate-fade-in {
+    animation: fadeIn var(--transition-fast) ease-in-out;
+}
+
+.animate-fade-out {
+    animation: fadeOut var(--transition-fast) ease-in-out;
+}
+
+.animate-slide-in {
+    animation: slideIn var(--transition-fast) ease-in-out;
+}
+
+.animate-slide-out {
+    animation: slideOut var(--transition-fast) ease-in-out;
+}
+
+.animate-scale-in {
+    animation: scaleIn var(--transition-fast) ease-in-out;
+}
+
+.animate-scale-out {
+    animation: scaleOut var(--transition-fast) ease-in-out;
+}
+
+.animate-spin {
+    animation: spin 0.75s linear infinite;
+}
+
+.animate-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+.animate-pulse {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.animate-bounce {
+    animation: bounce 1s ease-in-out infinite;
+}

@@ -188,7 +188,7 @@ export function Settings({
                             <label>Your DID Document</label>
                             <div className="did-document-container">
                                 <button
-                                    className="button button--primary did-copy-button"
+                                    className={`button ${didCopied ? 'button--success' : 'button--primary'} did-copy-button`}
                                     onClick={handleCopyDID}
                                     disabled={!identity}
                                 >

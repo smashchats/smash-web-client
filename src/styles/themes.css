@@ -1,0 +1,171 @@
+/* Light Theme (Default) */
+:root {
+    /* Colors */
+    --color-primary: #693a7d;
+    --color-primary-light: #8b4fa3;
+    --color-primary-dark: #4a1f5c;
+    --color-secondary: #f3f4f6;
+    --color-secondary-light: #f9fafb;
+    --color-secondary-dark: #e5e7eb;
+    --color-accent: #3b82f6;
+    --color-accent-light: #60a5fa;
+    --color-accent-dark: #2563eb;
+    --color-success: #22c55e;
+    --color-error: #ef4444;
+    --color-warning: #f59e0b;
+    --color-info: #3b82f6;
+    --color-muted: #9ca3af;
+    --color-muted-light: #d1d5db;
+    --color-muted-dark: #6b7280;
+    --color-background: #ffffff;
+    --color-surface: #f9fafb;
+    --color-border: #e5e7eb;
+    --color-text: #111827;
+    --color-text-light: #6b7280;
+    --color-text-dark: #111827;
+    --color-overlay: rgba(0, 0, 0, 0.4);
+    --color-shadow: rgba(0, 0, 0, 0.1);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 var(--color-shadow);
+    --shadow-md: 0 4px 6px -1px var(--color-shadow);
+    --shadow-lg: 0 10px 15px -3px var(--color-shadow);
+    --shadow-xl: 0 20px 25px -5px var(--color-shadow);
+}
+
+/* Dark Theme */
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Colors */
+        --color-primary: #8b4fa3;
+        --color-primary-light: #a66bb9;
+        --color-primary-dark: #693a7d;
+        --color-secondary: #1f2937;
+        --color-secondary-light: #374151;
+        --color-secondary-dark: #111827;
+        --color-accent: #60a5fa;
+        --color-accent-light: #93c5fd;
+        --color-accent-dark: #3b82f6;
+        --color-success: #34d399;
+        --color-error: #f87171;
+        --color-warning: #fbbf24;
+        --color-info: #60a5fa;
+        --color-muted: #6b7280;
+        --color-muted-light: #9ca3af;
+        --color-muted-dark: #4b5563;
+        --color-background: #111827;
+        --color-surface: #1f2937;
+        --color-border: #374151;
+        --color-text: #f9fafb;
+        --color-text-light: #d1d5db;
+        --color-text-dark: #f9fafb;
+        --color-overlay: rgba(0, 0, 0, 0.6);
+        --color-shadow: rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* High Contrast Theme */
+@media (prefers-contrast: high) {
+    :root {
+        /* Colors */
+        --color-primary: #000000;
+        --color-primary-light: #333333;
+        --color-primary-dark: #000000;
+        --color-secondary: #ffffff;
+        --color-secondary-light: #ffffff;
+        --color-secondary-dark: #cccccc;
+        --color-accent: #0000ff;
+        --color-accent-light: #3333ff;
+        --color-accent-dark: #0000cc;
+        --color-success: #008000;
+        --color-error: #ff0000;
+        --color-warning: #ffa500;
+        --color-info: #0000ff;
+        --color-muted: #666666;
+        --color-muted-light: #999999;
+        --color-muted-dark: #333333;
+        --color-background: #ffffff;
+        --color-surface: #ffffff;
+        --color-border: #000000;
+        --color-text: #000000;
+        --color-text-light: #666666;
+        --color-text-dark: #000000;
+        --color-overlay: rgba(0, 0, 0, 0.8);
+        --color-shadow: rgba(0, 0, 0, 0.5);
+    }
+}
+
+/* Reduced Motion Theme */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Print Theme */
+@media print {
+    * {
+        background: transparent !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: ' (' attr(href) ')';
+    }
+
+    abbr[title]:after {
+        content: ' (' attr(title) ')';
+    }
+
+    a[href^='javascript:']:after,
+    a[href^='#']:after {
+        content: '';
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        page-break-after: avoid;
+        page-break-before: avoid;
+    }
+}

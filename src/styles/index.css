@@ -1,0 +1,14 @@
+/* Import all CSS files in the correct order */
+@import './variables.css';
+@import './themes.css';
+@import './base.css';
+@import './components.css';
+@import './utilities.css';
+@import './animations.css';
+
+/* Import component-specific styles */
+@import './components/app.css';
+@import './components/chat.css';
+@import './components/settings.css';
+@import './components/welcome.css';
+@import './components/ui.css';

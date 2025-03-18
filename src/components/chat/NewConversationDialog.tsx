@@ -43,11 +43,13 @@ function DialogContent({
 
             <div className="dialog-footer">
                 <Dialog.Close asChild>
-                    <button className="dialog-button secondary">Cancel</button>
+                    <button className="dialog-button buttonbutton--secondary">
+                        Cancel
+                    </button>
                 </Dialog.Close>
                 <Dialog.Close asChild>
                     <button
-                        className="dialog-button primary"
+                        className="dialog-button button button--primary"
                         onClick={onSubmit}
                         disabled={!didInput.trim()}
                     >
@@ -120,7 +122,7 @@ export function NewConversationDialog({
     return (
         <Dialog.Root>
             <Dialog.Trigger asChild>
-                <button className="new-conversation-button">
+                <button className="button--secondary new-conversation-button">
                     New Conversation
                 </button>
             </Dialog.Trigger>

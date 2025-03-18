@@ -2,7 +2,6 @@ import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DIDDocument, SmashMessaging } from 'smash-node-lib';
 
-import './App.css';
 import { WelcomeGuide } from './components/WelcomeGuide';
 import { ChatInput } from './components/chat/ChatInput';
 import { ChatList } from './components/chat/ChatList';
@@ -36,6 +35,7 @@ function App() {
     // Add ref for messages container
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const markReadTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+    const lastMarkedReadRef = useRef<string | undefined>(undefined);
 
     const {
         conversations,
@@ -67,7 +67,13 @@ function App() {
     // Handle marking messages as read when conversation is focused
     const handleConversationFocus = useCallback(
         async (conversationId: string) => {
+            // Skip if we've already marked this conversation as read
+            if (lastMarkedReadRef.current === conversationId) {
+                return;
+            }
+
             logger.debug('Handling conversation focus', { conversationId });
+
             // Clear any existing timeout
             if (markReadTimeoutRef.current) {
                 clearTimeout(markReadTimeoutRef.current);
@@ -77,6 +83,7 @@ function App() {
             markReadTimeoutRef.current = setTimeout(async () => {
                 try {
                     await markConversationAsRead(conversationId);
+                    lastMarkedReadRef.current = conversationId;
                     logger.debug('Conversation marked as read', {
                         conversationId,
                     });
@@ -102,15 +109,22 @@ function App() {
         if (!selectedChat) return;
 
         let isSubscribed = true;
+        let isVisible = document.visibilityState === 'visible';
 
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible' && isSubscribed) {
-                handleConversationFocus(selectedChat);
+            if (!isSubscribed) return;
+
+            const newVisibility = document.visibilityState === 'visible';
+            if (newVisibility !== isVisible) {
+                isVisible = newVisibility;
+                if (isVisible) {
+                    handleConversationFocus(selectedChat);
+                }
             }
         };
 
         // Mark as read when initially selecting and visible
-        if (document.visibilityState === 'visible') {
+        if (isVisible) {
             handleConversationFocus(selectedChat);
         }
 
@@ -124,7 +138,7 @@ function App() {
                 handleVisibilityChange,
             );
         };
-    }, [selectedChat]);
+    }, [handleConversationFocus, selectedChat]);
 
     // Initialize database on mount
     useEffect(() => {
