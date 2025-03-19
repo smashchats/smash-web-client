@@ -44,6 +44,11 @@ export async function generateIdentity(): Promise<IMPeerIdentity> {
     logger.info('Generating new identity');
     const manager = initializeSmashMessaging();
     const identity = await manager.generate();
+
+    // Generate and add a PreKeyPair to the identity
+    const preKeyPair = await manager.generateNewPreKeyPair(identity);
+    identity.addPreKeyPair(preKeyPair);
+
     logger.info('Identity generated successfully', { did: identity.did });
     return identity;
 }
