@@ -9,6 +9,7 @@ dotenv.config({ path: '.env.test' });
 const PORT = 12345;
 const WEBSOCKET_PATH = 'socket.io';
 const VALID_PATH = 'valid';
+const SECONDARY_PATH = 'secondary';
 
 const subtle = globalThis.crypto.subtle;
 
@@ -139,6 +140,7 @@ async function globalSetup() {
     const activeSockets: Record<string, Socket> = {};
 
     const initDataEndpoint = async (
+        endpoint: string,
         clientPublicKey: CryptoKey | undefined,
         client: Socket,
     ) => {
@@ -193,19 +195,82 @@ async function globalSetup() {
         },
     });
 
-    const mainNamespace = socketServer.of('/' + VALID_PATH);
+    // Add server-wide connection error logging
+    socketServer.on('connection_error', (err) => {
+        console.error('Socket.IO connection error:', err);
+    });
 
+    socketServer.on('connect_error', (err) => {
+        console.error('Socket.IO connect error:', err);
+    });
+
+    // Configure main namespace
+    const mainNamespace = socketServer.of('/' + VALID_PATH);
     mainNamespace.on('connection', async (client) => {
+        console.log(
+            `>>> New connection on main namespace (socket ID: ${client.id})`,
+        );
         const auth = !!client.handshake.auth.key;
         const clientPublicKey = auth
             ? await importClientPublicKey(client)
             : undefined;
 
-        await initDataEndpoint(clientPublicKey, client);
+        await initDataEndpoint(
+            `ws://localhost:${PORT}/${VALID_PATH}`,
+            clientPublicKey,
+            client,
+        );
 
         if (clientPublicKey) {
             await initChallengeEndpoint(clientPublicKey, client);
         }
+    });
+
+    // Configure secondary namespace
+    const secondaryNamespace = socketServer.of('/' + SECONDARY_PATH);
+    secondaryNamespace.on('connection', async (client) => {
+        console.log(
+            `>>> New connection on secondary namespace (socket ID: ${client.id})`,
+        );
+        const auth = !!client.handshake.auth.key;
+        const clientPublicKey = auth
+            ? await importClientPublicKey(client)
+            : undefined;
+
+        await initDataEndpoint(
+            `ws://localhost:${PORT}/${SECONDARY_PATH}`,
+            clientPublicKey,
+            client,
+        );
+
+        if (clientPublicKey) {
+            await initChallengeEndpoint(clientPublicKey, client);
+        }
+    });
+
+    // Add namespace-specific logging
+    socketServer.of('/' + VALID_PATH).on('connection', (socket) => {
+        console.log('Namespace /valid connection:', socket.id);
+
+        socket.on('disconnect', (reason) => {
+            console.log('Namespace /valid disconnect:', {
+                id: socket.id,
+                reason,
+                remainingSockets: Object.keys(socket.nsp.sockets).length,
+            });
+        });
+    });
+
+    socketServer.of('/' + SECONDARY_PATH).on('connection', (socket) => {
+        console.log('Namespace /secondary connection:', socket.id);
+
+        socket.on('disconnect', (reason) => {
+            console.log('Namespace /secondary disconnect:', {
+                id: socket.id,
+                reason,
+                remainingSockets: Object.keys(socket.nsp.sockets).length,
+            });
+        });
     });
 
     await new Promise<void>((resolve) => {

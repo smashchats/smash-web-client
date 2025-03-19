@@ -223,4 +223,101 @@ test.describe('Identity Management', () => {
         const reloadedDid = JSON.parse(reloadedClipboardContent).id;
         expect(reloadedDid).toBe(originalDid);
     });
+
+    test('should change SME configuration and connect to new server', async ({
+        page,
+    }) => {
+        // Get the generate identity button
+        const generateButton = page.locator('button.button--primary');
+
+        // Click the button and wait for loading state
+        await generateButton.click();
+        await expect(generateButton).toHaveAttribute('data-loading', 'true');
+
+        // Check for any error messages in the toast
+        const errorToast = page.locator('.toast-viewport [role="alert"]');
+        const hasError = await errorToast.isVisible();
+        if (hasError) {
+            console.log('Error toast found:', await errorToast.textContent());
+        }
+
+        // Wait for app container to appear after identity generation
+        await page
+            .locator('.app-container')
+            .waitFor({ state: 'visible', timeout: 30000 });
+
+        // Should transition to main app view with sidebar
+        const sidebar = page.locator('nav.sidebar');
+        await expect(sidebar).toBeVisible();
+
+        // Click settings (third button with settings icon)
+        const settingsButton = sidebar.locator('button.sidebar-button').nth(2);
+        await expect(settingsButton).toBeVisible();
+        await expect(settingsButton.locator('.lucide-settings')).toBeVisible();
+        await settingsButton.click();
+
+        // Verify we're in settings
+        await expect(
+            page.getByRole('heading', { name: /your identity/i }),
+        ).toBeVisible();
+
+        // Wait for SME Configuration section to be visible
+        await expect(
+            page.getByRole('heading', { name: /sme configuration/i }),
+        ).toBeVisible();
+
+        // Get the SME URL input and change it to use the secondary namespace
+        const smeUrlInput = page.locator('input[placeholder="Enter SME URL"]');
+        await expect(smeUrlInput).toBeVisible();
+        await smeUrlInput.fill('ws://localhost:12345/secondary');
+
+        // Get the SME Public Key input and ensure it has the correct value
+        const smePublicKeyInput = page.locator(
+            'input[placeholder="Enter SME public key"]',
+        );
+        await expect(smePublicKeyInput).toBeVisible();
+        await expect(smePublicKeyInput).toHaveValue(
+            'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEg6rwXUOg3N18rZlQRS8sCmKGuB4opGtTXvYi7DkXltVzK0rEVd91HgM7L9YEyTsM9ntJ8Ye+rHey0LiUZwFwAw==',
+        );
+
+        // The save button should now be enabled
+        const saveSMEButton = page.getByRole('button', {
+            name: /save sme configuration/i,
+        });
+        await expect(saveSMEButton).toBeEnabled();
+
+        // Click save and wait for success message
+        await saveSMEButton.click();
+        await expect(
+            page.getByText(/sme configuration saved successfully!/i),
+        ).toBeVisible({ timeout: 10000 }); // Increase timeout for saving
+
+        // Wait a bit to ensure the connection is established
+        await page.waitForTimeout(1000);
+
+        // Reload the page to ensure the new configuration persists
+        await page.reload();
+
+        // Wait for app container and sidebar again after reload
+        await page
+            .locator('.app-container')
+            .waitFor({ state: 'visible', timeout: 30000 });
+        await expect(sidebar).toBeVisible();
+
+        // Go back to settings to verify the new URL is still there
+        await settingsButton.click();
+
+        // Wait for SME Configuration section again after navigation
+        await expect(
+            page.getByRole('heading', { name: /sme configuration/i }),
+        ).toBeVisible();
+
+        await expect(smeUrlInput).toHaveValue('ws://localhost:12345/secondary');
+
+        // Verify we're still connected by checking the DID document copy button is enabled
+        const copyButton = page.getByRole('button', {
+            name: /copy did document/i,
+        });
+        await expect(copyButton).toBeEnabled();
+    });
 });
