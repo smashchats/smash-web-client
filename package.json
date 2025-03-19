@@ -4,13 +4,17 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite --host 0.0.0.0",
-        "build": "tsc -b && vite build",
-        "preview": "vite preview --host 0.0.0.0",
-        "lint": "eslint . --ignore-pattern 'smash-node-lib/*'",
+        "dev": "vite --mode development",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
+        "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "lint:fix": "npm run lint -- --fix",
         "prettier:format": "prettier --write .",
-        "format": "npm run prettier:format && npm run lint:fix"
+        "format": "npm run prettier:format && npm run lint:fix",
+        "test": "playwright test",
+        "test:ui": "playwright test --ui",
+        "test:debug": "playwright test --debug",
+        "test:report": "playwright show-report"
     },
     "lint-staged": {
         "*": "npm run format"
@@ -38,11 +42,13 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.21.0",
+        "@playwright/test": "^1.51.1",
         "@trivago/prettier-plugin-sort-imports": "^4.3.0",
         "@types/react": "^19.0.10",
         "@types/react-dom": "^19.0.4",
         "@vitejs/plugin-react": "^4.3.4",
         "crypto-browserify": "^3.12.1",
+        "dotenv": "^16.4.7",
         "eslint": "^9.21.0",
         "eslint-plugin-react-hooks": "^5.1.0",
         "eslint-plugin-react-refresh": "^0.4.19",

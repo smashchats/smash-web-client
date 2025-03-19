@@ -14,7 +14,6 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 
 - [x] generating a peer identity / DID
 - [x] exporting a peer identity / DID
-- [x] loading a peer identity into a SmashMessaging instance
 - [x] connecting to SME
 - [x] sending a text message to a peer
 - [x] receiving a text message from a peer
@@ -42,6 +41,7 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 
 - error toast not handling close event
 - unhandled duplicate connection to SME
+- TODO: implement a visual test framework with scenarios -> make sure to update package.json and devcontainer to match
 
 ## Getting Started
 
@@ -74,6 +74,9 @@ npm run preview
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code using Prettier
 - `npm run lint:fix` - Fix linting issues automatically
+- `npm run test` - Run tests in Chromium (primary browser for testing)
+- `npm run test:ui` - Run tests with UI mode for debugging
+- `npm run test:debug` - Run tests in debug mode
 
 ## Contributing
 
