@@ -28,7 +28,7 @@ jobs:
             - name: Set Cache Key Output
               id: set-cache-key
               run: |
-                  echo "cache-key=${{ runner.os }}-node-${{ hashFiles('**/package-lock.json', 'smash-node-lib/package-lock.json') }}" >> $GITHUB_OUTPUT
+                  echo "cache-key=${{ runner.os }}-node-${{ hashFiles('**/package-lock.json', 'smash-node-lib/package-lock.json', 'smash-node-lib/src/**/*.ts', 'smash-node-lib/tsconfig.json') }}" >> $GITHUB_OUTPUT
 
             - name: Check Cache
               id: cache-check
@@ -38,6 +38,7 @@ jobs:
                       node_modules
                       ~/.npm
                       smash-node-lib/node_modules
+                      smash-node-lib/dist
                   key: ${{ steps.set-cache-key.outputs.cache-key }}
 
             - name: Install Lib Dependencies
@@ -48,6 +49,10 @@ jobs:
               if: steps.cache-check.outputs.cache-hit != 'true'
               run: npm ci
 
+            - name: Build Lib
+              if: steps.cache-check.outputs.cache-hit != 'true'
+              run: cd smash-node-lib && npm run build && cd ..
+
             - name: Cache Dependencies
               if: steps.cache-check.outputs.cache-hit != 'true'
               uses: actions/cache/save@v4
@@ -56,6 +61,7 @@ jobs:
                       node_modules
                       ~/.npm
                       smash-node-lib/node_modules
+                      smash-node-lib/dist
                   key: ${{ steps.set-cache-key.outputs.cache-key }}
 
     tests:
@@ -82,10 +88,22 @@ jobs:
                       node_modules
                       ~/.npm
                       smash-node-lib/node_modules
+                      smash-node-lib/dist
                   key: ${{ needs.install.outputs.cache-key }}
 
+            - name: Install Playwright Browsers
+              run: npx playwright install --with-deps chromium
+
             - name: Run Tests
-              run: npm run test:ci -- --coverage
+              run: npm run test
+
+            - name: Upload test results
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 7
 
     build:
         needs: [install, tests]
@@ -111,6 +129,7 @@ jobs:
                       node_modules
                       ~/.npm
                       smash-node-lib/node_modules
+                      smash-node-lib/dist
                   key: ${{ needs.install.outputs.cache-key }}
 
             - name: Build
