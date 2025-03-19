@@ -14,6 +14,13 @@ interface UseMessageHandlingProps {
     ) => void;
 }
 
+// Sort messages by timestamp in ascending order
+const sortMessages = (messages: SmashMessage[]): SmashMessage[] => {
+    return [...messages].sort(
+        (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+    );
+};
+
 export const useMessageHandling = ({
     selectedChat,
     onConversationUpdate,
@@ -37,12 +44,11 @@ export const useMessageHandling = ({
                 });
                 setError(null);
                 const msgs = await smashService.getMessages(selectedChat);
-                setMessages(
-                    msgs.map((msg) => ({
-                        ...msg,
-                        timestamp: new Date(msg.timestamp),
-                    })),
-                );
+                const messagesWithDates = msgs.map((msg) => ({
+                    ...msg,
+                    timestamp: new Date(msg.timestamp),
+                }));
+                setMessages(sortMessages(messagesWithDates));
                 logger.debug('Messages loaded successfully', {
                     count: msgs.length,
                 });
@@ -65,8 +71,20 @@ export const useMessageHandling = ({
             if (message.sender === CURRENT_USER) return;
 
             logger.info('Received new message', { message });
-            setMessages((prev) => [...prev, message]);
-            conversationUpdateRef.current(message.conversationId, message);
+
+            // Only add the message if it belongs to the current conversation
+            if (message.conversationId === selectedChat) {
+                setMessages((prev) => {
+                    const updated = [...prev, message];
+                    return sortMessages(updated);
+                });
+                conversationUpdateRef.current(message.conversationId, message);
+            } else {
+                logger.debug('Received message for different conversation', {
+                    messageConversationId: message.conversationId,
+                    currentConversationId: selectedChat,
+                });
+            }
         };
 
         const handleMessageStatusUpdate = (
@@ -91,7 +109,7 @@ export const useMessageHandling = ({
             smashService.offMessageReceived(handleNewMessage);
             smashService.offMessageStatusUpdated(handleMessageStatusUpdate);
         };
-    }, []); // Remove onConversationUpdate from dependencies
+    }, [selectedChat]); // Add selectedChat to dependencies
 
     const sendMessage = async (content: string) => {
         if (!selectedChat) return;

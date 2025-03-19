@@ -1,5 +1,5 @@
 import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DIDDocument, IM_DID_DOCUMENT, SmashMessaging } from 'smash-node-lib';
 
 import { WelcomeGuide } from './components/WelcomeGuide';
@@ -33,17 +33,14 @@ function App() {
     const [currentView, setCurrentView] = useState<View>('messages');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Add ref for messages container
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const markReadTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-    const lastMarkedReadRef = useRef<string | undefined>(undefined);
 
     const {
         conversations,
         error: conversationError,
         updateConversationWithMessage,
-        markConversationAsRead,
         refreshConversations,
+        addNewConversation,
     } = useConversationHandling();
 
     const {
@@ -55,103 +52,22 @@ function App() {
         onConversationUpdate: updateConversationWithMessage,
     });
 
-    // Add scroll to bottom function
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    // Scroll to bottom when messages change
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
-    // Handle marking messages as read when conversation is focused
-    const handleConversationFocus = useCallback(
-        async (conversationId: string) => {
-            // Skip if we've already marked this conversation as read
-            if (lastMarkedReadRef.current === conversationId) {
-                return;
-            }
-
-            logger.debug('Handling conversation focus', { conversationId });
-
-            // Clear any existing timeout
-            if (markReadTimeoutRef.current) {
-                clearTimeout(markReadTimeoutRef.current);
-            }
-
-            // Set a new timeout to mark as read after 1 second
-            markReadTimeoutRef.current = setTimeout(async () => {
-                try {
-                    await markConversationAsRead(conversationId);
-                    lastMarkedReadRef.current = conversationId;
-                    logger.debug('Conversation marked as read', {
-                        conversationId,
-                    });
-                } catch (err) {
-                    logger.error('Failed to mark conversation as read', err);
-                }
-            }, 1000);
-        },
-        [markConversationAsRead],
-    );
-
-    // Clean up timeout on unmount
     useEffect(() => {
-        return () => {
-            if (markReadTimeoutRef.current) {
-                clearTimeout(markReadTimeoutRef.current);
-            }
-        };
-    }, []);
-
-    // Handle conversation focus when selected chat changes or tab becomes visible
-    useEffect(() => {
-        if (!selectedChat) return;
-
-        let isSubscribed = true;
-        let isVisible = document.visibilityState === 'visible';
-
-        const handleVisibilityChange = () => {
-            if (!isSubscribed) return;
-
-            const newVisibility = document.visibilityState === 'visible';
-            if (newVisibility !== isVisible) {
-                isVisible = newVisibility;
-                if (isVisible) {
-                    handleConversationFocus(selectedChat);
-                }
-            }
-        };
-
-        // Mark as read when initially selecting and visible
-        if (isVisible) {
-            handleConversationFocus(selectedChat);
-        }
-
-        // Add visibility change listener
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        return () => {
-            isSubscribed = false;
-            document.removeEventListener(
-                'visibilitychange',
-                handleVisibilityChange,
-            );
-        };
-    }, [handleConversationFocus, selectedChat]);
-
-    // Initialize database and load cached DID documents on mount
-    useEffect(() => {
-        const initialize = async () => {
+        const initializeDatabase = async () => {
             try {
                 logger.debug('Initializing database');
                 await initDB();
                 logger.debug('Database initialized successfully');
 
-                // Only load DID documents if we have an identity (which means Smash messaging is initialized)
                 if (identity) {
-                    // Load cached DID documents after database is initialized
                     const didDocuments = await db.getAllDIDDocuments();
                     const didDocManager = getDidDocumentManager();
 
@@ -159,9 +75,7 @@ function App() {
                         count: didDocuments.length,
                     });
 
-                    for (const doc of didDocuments) {
-                        didDocManager.set(doc);
-                    }
+                    didDocuments.forEach((doc) => didDocManager.set(doc));
                 }
             } catch (err) {
                 logger.error(
@@ -171,10 +85,9 @@ function App() {
             }
         };
 
-        initialize();
+        initializeDatabase();
     }, [identity]);
 
-    // Handle DID document events
     useEffect(() => {
         if (!identity || !smashUser) return;
 
@@ -188,20 +101,14 @@ function App() {
                     did: message.data.id,
                 });
 
-                // Store the DID document in our cache
                 await db.addDIDDocument(message.data);
-
-                // Update the DID document manager
-                const didDocManager = getDidDocumentManager();
-                didDocManager.set(message.data);
+                getDidDocumentManager().set(message.data);
             } catch (err) {
                 logger.error('Failed to handle DID document', err);
             }
         };
 
-        // Listen for DID document events
         smashUser.on(IM_DID_DOCUMENT, handleDIDDocument);
-
         return () => {
             smashUser.off(IM_DID_DOCUMENT, handleDIDDocument);
         };
@@ -213,7 +120,6 @@ function App() {
         });
 
         try {
-            // Create a new conversation in the database
             const conversation: StoredConversation = {
                 id: didDoc.id,
                 title: `Chat with ${didDoc.id.slice(0, 8)}...`,
@@ -227,15 +133,16 @@ function App() {
             logger.debug('Adding conversation to database', {
                 conversationId: conversation.id,
             });
-            await db.addConversation(conversation);
 
+            await db.addConversation(conversation);
+            addNewConversation(conversation);
             setSelectedChat(conversation.id);
 
-            // Store the DID document for future message sending
             logger.debug('Resolving DID document in SmashMessaging', {
                 didId: didDoc.id,
             });
             SmashMessaging.resolve(didDoc);
+
             logger.info('Conversation creation completed successfully', {
                 conversationId: conversation.id,
             });
@@ -245,7 +152,7 @@ function App() {
         }
     };
 
-    const handleSelectChat = async (chatId: string) => {
+    const handleSelectChat = (chatId: string) => {
         logger.debug('Selecting chat', { chatId });
         setSelectedChat(chatId);
         setIsMobileMenuOpen(false);
@@ -256,7 +163,6 @@ function App() {
         await clearIdentity();
     };
 
-    // If not initialized, show loading state
     if (!isInitialized) {
         logger.debug('Application not initialized, showing loading state');
         return (
@@ -266,7 +172,6 @@ function App() {
         );
     }
 
-    // If no identity AND we're initialized, show welcome guide
     if (!identity && isInitialized) {
         logger.debug('No identity found, showing welcome guide');
         return (
@@ -296,7 +201,6 @@ function App() {
 
     return (
         <div className="app-container">
-            {/* Sidebar */}
             <nav className="sidebar">
                 <button
                     className={`sidebar-button ${currentView === 'messages' ? 'active' : ''}`}
@@ -327,7 +231,6 @@ function App() {
                 </button>
             </nav>
 
-            {/* Main content */}
             {currentView === 'messages' && (
                 <main className="chat-container">
                     <div
@@ -390,7 +293,6 @@ function App() {
                 </main>
             )}
 
-            {/* Mobile overlay */}
             {isMobileMenuOpen && (
                 <div
                     className="fixed inset-0 bg-background/80 backdrop-blur-sm z-20 md:hidden"
@@ -401,7 +303,6 @@ function App() {
                 />
             )}
 
-            {/* Error toast */}
             {(conversationError || messageError) && (
                 <div className="error-toast">
                     <p>{(conversationError || messageError)?.message}</p>

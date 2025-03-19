@@ -6,6 +6,7 @@ import { logger } from '../../lib/logger';
 interface ChatInputProps {
     onSendMessage: (message: string) => void;
     isLoading?: boolean;
+    onFocus?: () => void;
 }
 
 interface SendButtonProps {
@@ -33,6 +34,7 @@ function SendButton({ isLoading, disabled }: SendButtonProps) {
 export function ChatInput({
     onSendMessage,
     isLoading = false,
+    onFocus,
 }: ChatInputProps) {
     const [message, setMessage] = useState('');
 
@@ -63,6 +65,7 @@ export function ChatInput({
                     disabled={isLoading}
                     rows={1}
                     onKeyDown={handleKeyDown}
+                    onFocus={onFocus}
                 />
                 <SendButton
                     isLoading={isLoading}

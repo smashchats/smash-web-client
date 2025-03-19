@@ -257,14 +257,12 @@ class SmashDB {
             count: messages.length,
         });
 
-        // Sort by timestamp
-        return messages
-            .sort(
-                (a, b) =>
-                    new Date(a.timestamp).getTime() -
-                    new Date(b.timestamp).getTime(),
-            )
-            .slice(0, limit);
+        return messages.slice(-limit);
+    }
+
+    async getMessage(messageId: string): Promise<StoredMessage | undefined> {
+        if (!this.db) throw new Error('Database not initialized');
+        return this.db.get('messages', messageId);
     }
 
     async getConversations(): Promise<StoredConversation[]> {
@@ -337,6 +335,19 @@ class SmashDB {
     async clearDIDDocuments(): Promise<void> {
         if (!this.db) throw new Error('Database not initialized');
         await this.db.clear('didDocuments');
+    }
+
+    async updateConversationUnreadCount(
+        conversationId: string,
+        unreadCount: number,
+    ): Promise<void> {
+        if (!this.db) throw new Error('Database not initialized');
+
+        const conversation = await this.db.get('conversations', conversationId);
+        if (!conversation) return;
+
+        conversation.unreadCount = unreadCount;
+        await this.db.put('conversations', conversation);
     }
 }
 

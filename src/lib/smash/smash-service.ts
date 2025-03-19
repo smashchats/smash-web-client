@@ -147,14 +147,6 @@ class SmashService {
             messageId: smashMessage.id,
         });
         this.messageCallbacks.forEach((cb) => cb(smashMessage));
-
-        // Mark message as received if it has a hash
-        if (message.sha256) {
-            logger.debug('Acknowledging message', {
-                messageId: message.sha256,
-            });
-            await this.smashUser.ackMessagesRead(senderId, [message.sha256]);
-        }
     }
 
     async sendMessage(
@@ -232,6 +224,63 @@ class SmashService {
             logger.warn('Conversation not found for marking as read', {
                 conversationId,
             });
+        }
+    }
+
+    async markMessageAsRead(messageId: string): Promise<void> {
+        if (!this.smashUser) throw new Error('SmashService not initialized');
+
+        try {
+            logger.info('Marking message as read', { messageId });
+
+            // Get the message to find its conversation
+            const message = await db.getMessage(messageId);
+            if (!message) {
+                logger.warn('Message not found when marking as read', {
+                    messageId,
+                });
+                return;
+            }
+
+            // Acknowledge the message as read
+            await this.smashUser.ackMessagesRead(
+                message.conversationId as DID,
+                [messageId as sha256],
+            );
+
+            // Update the message status in the database
+            await db.updateMessageStatus(messageId, 'read');
+
+            // Get all messages for this conversation to count unread ones
+            const messages = await db.getMessages(message.conversationId);
+            const unreadCount = messages.filter(
+                (msg) => msg.sender !== 'You' && msg.status !== 'read',
+            ).length;
+
+            // Update the conversation's unread count
+            const conversation = await db.getConversation(
+                message.conversationId,
+            );
+            if (conversation) {
+                conversation.unreadCount = unreadCount;
+
+                // Update the conversation in the database
+                await db.updateConversation(conversation);
+
+                // Notify listeners about the conversation update
+                this.conversationCallbacks.forEach((callback) =>
+                    callback(conversation),
+                );
+            }
+
+            logger.debug('Message marked as read successfully', {
+                messageId,
+                conversationId: message.conversationId,
+                updatedUnreadCount: unreadCount,
+            });
+        } catch (err) {
+            logger.error('Failed to mark message as read', err);
+            throw err;
         }
     }
 
