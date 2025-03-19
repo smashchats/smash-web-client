@@ -1,6 +1,6 @@
 import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DIDDocument, SmashMessaging } from 'smash-node-lib';
+import { DIDDocument, IM_DID_DOCUMENT, SmashMessaging } from 'smash-node-lib';
 
 import { WelcomeGuide } from './components/WelcomeGuide';
 import { ChatInput } from './components/chat/ChatInput';
@@ -13,6 +13,7 @@ import { useMessageHandling } from './hooks/useMessageHandling';
 import { StoredConversation, db, initDB } from './lib/db';
 import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { logger } from './lib/logger';
+import { getDidDocumentManager } from './lib/smash/smash-init';
 
 function App() {
     const {
@@ -140,13 +141,71 @@ function App() {
         };
     }, [handleConversationFocus, selectedChat]);
 
-    // Initialize database on mount
+    // Initialize database and load cached DID documents on mount
     useEffect(() => {
-        logger.debug('Initializing database');
-        initDB().catch((err) => {
-            logger.error('Failed to initialize database', err);
-        });
-    }, []);
+        const initialize = async () => {
+            try {
+                logger.debug('Initializing database');
+                await initDB();
+                logger.debug('Database initialized successfully');
+
+                // Only load DID documents if we have an identity (which means Smash messaging is initialized)
+                if (identity) {
+                    // Load cached DID documents after database is initialized
+                    const didDocuments = await db.getAllDIDDocuments();
+                    const didDocManager = getDidDocumentManager();
+
+                    logger.debug('Loading cached DID documents', {
+                        count: didDocuments.length,
+                    });
+
+                    for (const doc of didDocuments) {
+                        didDocManager.set(doc);
+                    }
+                }
+            } catch (err) {
+                logger.error(
+                    'Failed to initialize database or load DID documents',
+                    err,
+                );
+            }
+        };
+
+        initialize();
+    }, [identity]);
+
+    // Handle DID document events
+    useEffect(() => {
+        if (!identity || !smashUser) return;
+
+        const handleDIDDocument = async (
+            sender: string,
+            message: { data: DIDDocument },
+        ) => {
+            try {
+                logger.debug('Received DID document', {
+                    from: sender,
+                    did: message.data.id,
+                });
+
+                // Store the DID document in our cache
+                await db.addDIDDocument(message.data);
+
+                // Update the DID document manager
+                const didDocManager = getDidDocumentManager();
+                didDocManager.set(message.data);
+            } catch (err) {
+                logger.error('Failed to handle DID document', err);
+            }
+        };
+
+        // Listen for DID document events
+        smashUser.on(IM_DID_DOCUMENT, handleDIDDocument);
+
+        return () => {
+            smashUser.off(IM_DID_DOCUMENT, handleDIDDocument);
+        };
+    }, [identity, smashUser]);
 
     const handleCreateConversation = async (didDoc: DIDDocument) => {
         logger.info('Starting conversation creation process', {

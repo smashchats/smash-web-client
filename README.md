@@ -12,11 +12,39 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 
 ## Features
 
-- Basic messaging functionality
-- Message deduplication and ordering
-- Secure communication using the Signal Protocol
-- Neighborhood-based organization
-- Integration with AT Protocol for decentralized identity
+- [x] generating a peer identity / DID
+- [x] exporting a peer identity / DID
+- [x] loading a peer identity into a SmashMessaging instance
+
+- [x] connecting to SME
+- [x] sending a text message to a peer
+- [x] receiving a text message from a peer
+- [x] handling message status updates
+
+- [-] offline storage and app reload
+
+- [ ] marking messages as read
+
+- [ ] receiving a profile message from a peer
+- [ ] updating the peer's profile
+
+- [ ] joining a Neighborhood
+- [ ] discovering other peers in the neighborhood (NBH_PROFILE_LIST)
+- [ ] smashing another user from the neighborhood
+- [ ] passing another user from the neighborhood
+- [ ] clearing another user from the neighborhood
+
+- [ ] blocking/unblocking another peer
+- [ ] message deduplication and ordering
+
+- [ ] update message status more granular (sending, delivered, received, read, failed, retrying)
+- [ ] report peer to admins
+- [ ] P2P communication upgrade
+
+### bugs
+
+- error toast not handling close event
+- unhandled duplicate connection to SME
 
 ## Getting Started
 

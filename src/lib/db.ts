@@ -1,5 +1,5 @@
 import { DBSchema, IDBPDatabase, openDB } from 'idb';
-import { IIMPeerIdentity } from 'smash-node-lib';
+import { DIDDocument, IIMPeerIdentity } from 'smash-node-lib';
 
 import { logger } from './logger';
 
@@ -26,6 +26,10 @@ interface SmashDBSchema extends DBSchema {
             profile: StoredProfile | null;
             smeConfig: SMEConfig | null;
         };
+    };
+    didDocuments: {
+        key: string;
+        value: DIDDocument;
     };
 }
 
@@ -99,6 +103,11 @@ class SmashDB {
                 conversationsStore.createIndex('by-updated', 'updatedAt');
 
                 db.createObjectStore('identity');
+
+                // Add DID documents store
+                db.createObjectStore('didDocuments', {
+                    keyPath: 'id',
+                });
             },
         });
     }
@@ -307,6 +316,27 @@ class SmashDB {
         this.db.close();
         this.db = null;
         logger.debug('Database connection closed');
+    }
+
+    // DID Document management
+    async addDIDDocument(didDocument: DIDDocument): Promise<void> {
+        if (!this.db) throw new Error('Database not initialized');
+        await this.db.put('didDocuments', didDocument);
+    }
+
+    async getDIDDocument(did: string): Promise<DIDDocument | undefined> {
+        if (!this.db) throw new Error('Database not initialized');
+        return this.db.get('didDocuments', did);
+    }
+
+    async getAllDIDDocuments(): Promise<DIDDocument[]> {
+        if (!this.db) throw new Error('Database not initialized');
+        return this.db.getAll('didDocuments');
+    }
+
+    async clearDIDDocuments(): Promise<void> {
+        if (!this.db) throw new Error('Database not initialized');
+        await this.db.clear('didDocuments');
     }
 }
 
