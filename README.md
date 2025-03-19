@@ -42,11 +42,6 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 
 - error toast not handling close event
 - unhandled duplicate connection to SME
-- session resets not always being sent on reload? (todo debug)
-- when a user creates a new conversation , the new conversation isnt displayed in the @ChatList.tsx . it will be displayed when reloading the app.
-- upon reloading the app, the order of messages is reversed in the conversation view. we might want to use the @sortSmashMessages.ts util from the library.
-- when User A has conversation with User B open in their web UI and they receive a message from User C, the message from user C displays in the conversation with User B... when switching conversations or reloading things go back to normal
-- sync marking as read and badge count
 
 ## Getting Started
 
