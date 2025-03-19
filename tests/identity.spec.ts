@@ -6,9 +6,10 @@ test.describe('Identity Management', () => {
         console.log('Starting test');
         console.log('--------------------------------');
 
-        // Grant clipboard permissions
+        console.log('Granting clipboard permissions');
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
+        console.log('Navigating to home page');
         await page.goto('/');
 
         // Listen to console messages
@@ -21,10 +22,12 @@ test.describe('Identity Management', () => {
     });
 
     test('should generate a new peer identity', async ({ page }) => {
+        console.log('Testing peer identity generation');
+
         // Get the generate identity button
         const generateButton = page.locator('button.button--primary');
 
-        // Click the button and wait for loading state
+        console.log('Clicking generate identity button');
         await generateButton.click();
         await expect(generateButton).toHaveAttribute('data-loading', 'true');
 
@@ -35,31 +38,30 @@ test.describe('Identity Management', () => {
             console.log('Error toast found:', await errorToast.textContent());
         }
 
-        // Wait for app container to appear after identity generation
+        console.log('Waiting for app container');
         await page
             .locator('.app-container')
             .waitFor({ state: 'visible', timeout: 30000 });
 
-        // Should transition to main app view with sidebar
+        console.log('Verifying sidebar and settings');
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
-        // Verify settings icon is visible in the sidebar (third button with settings icon)
         const settingsButton = sidebar.locator('button.sidebar-button').nth(2);
         await expect(settingsButton).toBeVisible();
         await expect(settingsButton.locator('.lucide-settings')).toBeVisible();
 
-        // Verify we're in the empty chat state
+        console.log('Verifying empty chat state');
         await expect(
             page.getByText('Select a chat to start messaging'),
         ).toBeVisible();
     });
 
     test('should copy DID document from settings', async ({ page }) => {
-        // Get the generate identity button
-        const generateButton = page.locator('button.button--primary');
+        console.log('Testing DID document copy functionality');
 
-        // Click the button and wait for loading state
+        console.log('Generating identity');
+        const generateButton = page.locator('button.button--primary');
         await generateButton.click();
         await expect(generateButton).toHaveAttribute('data-loading', 'true');
 
@@ -70,37 +72,34 @@ test.describe('Identity Management', () => {
             console.log('Error toast found:', await errorToast.textContent());
         }
 
-        // Wait for app container to appear after identity generation
+        console.log('Waiting for app container');
         await page
             .locator('.app-container')
             .waitFor({ state: 'visible', timeout: 30000 });
 
-        // Should transition to main app view with sidebar
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
-        // Click settings (third button with settings icon)
+        console.log('Navigating to settings');
         const settingsButton = sidebar.locator('button.sidebar-button').nth(2);
         await expect(settingsButton).toBeVisible();
         await expect(settingsButton.locator('.lucide-settings')).toBeVisible();
         await settingsButton.click();
 
-        // Verify we're in settings
         await expect(
             page.getByRole('heading', { name: /your identity/i }),
         ).toBeVisible();
 
-        // Click copy DID document button
+        console.log('Copying DID document');
         const copyButton = page.getByRole('button', {
             name: /copy did document/i,
         });
         await expect(copyButton).toBeVisible();
         await copyButton.click();
 
-        // Verify success state
         await expect(page.getByText(/copied!/i)).toBeVisible();
 
-        // Get clipboard content and verify it's a valid DID document
+        console.log('Verifying clipboard content');
         const clipboardContent = await page.evaluate(async () => {
             try {
                 return await navigator.clipboard.readText();
@@ -116,7 +115,7 @@ test.describe('Identity Management', () => {
 
         const didDoc = JSON.parse(clipboardContent);
 
-        // Verify DID document structure
+        console.log('Validating DID document structure');
         expect(didDoc).toHaveProperty('id');
         expect(didDoc.id).toMatch(/^did:/);
         expect(didDoc).toHaveProperty('ik');
@@ -127,10 +126,10 @@ test.describe('Identity Management', () => {
     });
 
     test('should persist identity across page reloads', async ({ page }) => {
-        // Get the generate identity button
-        const generateButton = page.locator('button.button--primary');
+        console.log('Testing identity persistence');
 
-        // Click the button and wait for loading state
+        console.log('Generating initial identity');
+        const generateButton = page.locator('button.button--primary');
         await generateButton.click();
         await expect(generateButton).toHaveAttribute('data-loading', 'true');
 
@@ -141,37 +140,33 @@ test.describe('Identity Management', () => {
             console.log('Error toast found:', await errorToast.textContent());
         }
 
-        // Wait for app container to appear after identity generation
+        console.log('Waiting for app container');
         await page
             .locator('.app-container')
             .waitFor({ state: 'visible', timeout: 30000 });
 
-        // Should transition to main app view with sidebar
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
-        // Click settings (third button with settings icon)
+        console.log('Navigating to settings');
         const settingsButton = sidebar.locator('button.sidebar-button').nth(2);
         await expect(settingsButton).toBeVisible();
         await expect(settingsButton.locator('.lucide-settings')).toBeVisible();
         await settingsButton.click();
 
-        // Verify we're in settings
         await expect(
             page.getByRole('heading', { name: /your identity/i }),
         ).toBeVisible();
 
-        // Get original DID
+        console.log('Getting original DID');
         const copyButton = page.getByRole('button', {
             name: /copy did document/i,
         });
         await expect(copyButton).toBeVisible();
         await copyButton.click();
 
-        // Verify success state
         await expect(page.getByText(/copied!/i)).toBeVisible();
 
-        // Get original DID from clipboard
         const originalClipboardContent = await page.evaluate(async () => {
             try {
                 return await navigator.clipboard.readText();
@@ -187,26 +182,24 @@ test.describe('Identity Management', () => {
 
         const originalDid = JSON.parse(originalClipboardContent).id;
 
-        // Reload the page
+        console.log('Reloading page');
         await page.reload();
 
-        // Wait for app container and sidebar again after reload
+        console.log('Waiting for app container after reload');
         await page
             .locator('.app-container')
             .waitFor({ state: 'visible', timeout: 30000 });
         await expect(sidebar).toBeVisible();
 
-        // Go back to settings
+        console.log('Verifying DID persistence');
         await settingsButton.click();
         await expect(
             page.getByRole('heading', { name: /your identity/i }),
         ).toBeVisible();
 
-        // Copy DID document again
         await copyButton.click();
         await expect(page.getByText(/copied!/i)).toBeVisible();
 
-        // Get reloaded DID from clipboard
         const reloadedClipboardContent = await page.evaluate(async () => {
             try {
                 return await navigator.clipboard.readText();
@@ -227,10 +220,10 @@ test.describe('Identity Management', () => {
     test('should change SME configuration and connect to new server', async ({
         page,
     }) => {
-        // Get the generate identity button
-        const generateButton = page.locator('button.button--primary');
+        console.log('Testing SME configuration change');
 
-        // Click the button and wait for loading state
+        console.log('Generating identity');
+        const generateButton = page.locator('button.button--primary');
         await generateButton.click();
         await expect(generateButton).toHaveAttribute('data-loading', 'true');
 
@@ -241,37 +234,33 @@ test.describe('Identity Management', () => {
             console.log('Error toast found:', await errorToast.textContent());
         }
 
-        // Wait for app container to appear after identity generation
+        console.log('Waiting for app container');
         await page
             .locator('.app-container')
             .waitFor({ state: 'visible', timeout: 30000 });
 
-        // Should transition to main app view with sidebar
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
-        // Click settings (third button with settings icon)
+        console.log('Navigating to settings');
         const settingsButton = sidebar.locator('button.sidebar-button').nth(2);
         await expect(settingsButton).toBeVisible();
         await expect(settingsButton.locator('.lucide-settings')).toBeVisible();
         await settingsButton.click();
 
-        // Verify we're in settings
         await expect(
             page.getByRole('heading', { name: /your identity/i }),
         ).toBeVisible();
 
-        // Wait for SME Configuration section to be visible
+        console.log('Configuring SME settings');
         await expect(
             page.getByRole('heading', { name: /sme configuration/i }),
         ).toBeVisible();
 
-        // Get the SME URL input and change it to use the secondary namespace
         const smeUrlInput = page.locator('input[placeholder="Enter SME URL"]');
         await expect(smeUrlInput).toBeVisible();
         await smeUrlInput.fill('ws://localhost:12345/secondary');
 
-        // Get the SME Public Key input and ensure it has the correct value
         const smePublicKeyInput = page.locator(
             'input[placeholder="Enter SME public key"]',
         );
@@ -280,41 +269,38 @@ test.describe('Identity Management', () => {
             'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEg6rwXUOg3N18rZlQRS8sCmKGuB4opGtTXvYi7DkXltVzK0rEVd91HgM7L9YEyTsM9ntJ8Ye+rHey0LiUZwFwAw==',
         );
 
-        // The save button should now be enabled
+        console.log('Saving SME configuration');
         const saveSMEButton = page.getByRole('button', {
             name: /save sme configuration/i,
         });
         await expect(saveSMEButton).toBeEnabled();
-
-        // Click save and wait for success message
         await saveSMEButton.click();
+
         await expect(
             page.getByText(/sme configuration saved successfully!/i),
-        ).toBeVisible({ timeout: 10000 }); // Increase timeout for saving
+        ).toBeVisible({ timeout: 10000 });
 
-        // Wait a bit to ensure the connection is established
+        console.log('Waiting for connection establishment');
         await page.waitForTimeout(1000);
 
-        // Reload the page to ensure the new configuration persists
+        console.log('Verifying configuration persistence');
         await page.reload();
 
-        // Wait for app container and sidebar again after reload
+        console.log('Waiting for app container after reload');
         await page
             .locator('.app-container')
             .waitFor({ state: 'visible', timeout: 30000 });
         await expect(sidebar).toBeVisible();
 
-        // Go back to settings to verify the new URL is still there
         await settingsButton.click();
 
-        // Wait for SME Configuration section again after navigation
         await expect(
             page.getByRole('heading', { name: /sme configuration/i }),
         ).toBeVisible();
 
         await expect(smeUrlInput).toHaveValue('ws://localhost:12345/secondary');
 
-        // Verify we're still connected by checking the DID document copy button is enabled
+        console.log('Verifying connection status');
         const copyButton = page.getByRole('button', {
             name: /copy did document/i,
         });

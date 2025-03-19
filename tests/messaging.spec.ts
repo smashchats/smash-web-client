@@ -14,6 +14,10 @@ test.describe('Messaging Features', () => {
 
     // Set up crypto engine once for all tests
     test.beforeAll(() => {
+        console.log('--------------------------------');
+        console.log('Setting up crypto engine');
+        console.log('--------------------------------');
+
         const crypto = new Crypto();
         SmashUser.setCrypto(crypto);
 
@@ -30,10 +34,12 @@ test.describe('Messaging Features', () => {
         console.log('--------------------------------');
 
         // Set up DID document manager
+        console.log('Setting up DID document manager');
         didDocumentManager = new DIDDocManager();
         SmashUser.use(didDocumentManager);
 
         // Grant clipboard permissions
+        console.log('Granting clipboard permissions');
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
         await page.goto('/');
@@ -48,7 +54,12 @@ test.describe('Messaging Features', () => {
     });
 
     test('should send a message to a peer', async ({ page }) => {
+        console.log('--------------------------------');
+        console.log('Starting send message test');
+        console.log('--------------------------------');
+
         // Create a test peer
+        console.log('Creating test peer identity');
         const testPeerIdentity = await didDocumentManager.generate();
         const preKeyPair =
             await didDocumentManager.generateNewPreKeyPair(testPeerIdentity);
@@ -56,6 +67,7 @@ test.describe('Messaging Features', () => {
         const testPeer = new SmashUser(testPeerIdentity, 'test-peer');
 
         // Configure SME endpoint for test peer
+        console.log('Configuring SME endpoint for test peer');
         await testPeer.endpoints.reset([
             {
                 url: socketServerUrl,
@@ -64,11 +76,13 @@ test.describe('Messaging Features', () => {
         ]);
 
         // Get the test peer's DID document and register it
+        console.log('Registering test peer DID document');
         const testPeerDidDoc = await testPeer.getDIDDocument();
         didDocumentManager.set(testPeerDidDoc);
         const testPeerDidDocString = JSON.stringify(testPeerDidDoc);
 
         // Generate identity in the web interface
+        console.log('Generating web client identity');
         const generateButton = page.locator('button.button--primary');
         await generateButton.click();
         await expect(generateButton).toHaveAttribute('data-loading', 'true');
@@ -80,44 +94,45 @@ test.describe('Messaging Features', () => {
             console.log('Error toast found:', await errorToast.textContent());
         }
 
-        // Wait for app container to appear after identity generation
+        // Wait for app initialization
+        console.log('Waiting for app initialization');
         await page
             .locator('.app-container')
             .waitFor({ state: 'visible', timeout: 30000 });
-
-        // Should transition to main app view with sidebar
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
-        // Click "New Conversation" button
+        // Create new conversation
+        console.log('Creating new conversation');
         const newConversationButton = page.getByRole('button', {
             name: /new conversation/i,
         });
         await expect(newConversationButton).toBeVisible();
         await newConversationButton.click();
 
-        // Wait for dialog to appear
+        // Set up conversation with test peer
+        console.log('Setting up conversation with test peer');
         const dialog = page.locator('div[role="dialog"]');
         await expect(dialog).toBeVisible();
 
-        // Paste the test peer's DID document
         const didInput = dialog.locator('textarea');
         await didInput.fill(testPeerDidDocString);
 
-        // Create conversation
         const createButton = dialog.getByRole('button', {
             name: /create conversation/i,
         });
         await expect(createButton).toBeEnabled();
         await createButton.click();
 
-        // Wait for dialog to close and conversation to appear
+        // Verify conversation created
+        console.log('Verifying conversation created');
         await expect(dialog).not.toBeVisible();
         await expect(
             page.getByText('Select a chat to start messaging'),
         ).not.toBeVisible();
 
-        // Type and send a message
+        // Send test message
+        console.log('Sending test message');
         const messageInput = page.locator(
             'textarea[placeholder="Type a message..."]',
         );
@@ -125,7 +140,8 @@ test.describe('Messaging Features', () => {
         await messageInput.fill('Hello, test peer!');
         await messageInput.press('Enter');
 
-        // Wait for message to appear in chat
+        // Verify message sent
+        console.log('Verifying message sent');
         await expect(
             page
                 .locator('.messages-container .text-sm.whitespace-pre-wrap')
@@ -133,6 +149,7 @@ test.describe('Messaging Features', () => {
         ).toBeVisible();
 
         // Clean up
+        console.log('Test complete, cleaning up');
         await testPeer.close();
     });
 
@@ -142,14 +159,13 @@ test.describe('Messaging Features', () => {
         console.log('--------------------------------');
 
         // Create and configure test peer
-        console.log(
-            'Creating test peer identity and configuring SME endpoint...',
-        );
+        console.log('Creating test peer identity');
         const testPeerIdentity = await didDocumentManager.generate();
         const preKeyPair =
             await didDocumentManager.generateNewPreKeyPair(testPeerIdentity);
         testPeerIdentity.addPreKeyPair(preKeyPair);
 
+        console.log('Configuring test peer messaging');
         const testPeer = new SmashMessaging(
             testPeerIdentity,
             'test-peer',
@@ -157,25 +173,25 @@ test.describe('Messaging Features', () => {
         );
         await testPeer.endpoints.reset([
             {
-                url: 'ws://localhost:12345/valid',
+                url: socketServerUrl,
                 smePublicKey: SME_PUBLIC_KEY,
             },
         ]);
 
         // Register test peer's DID document
-        console.log('Registering test peer DID document...');
+        console.log('Registering test peer DID document');
         const testPeerDidDoc = await testPeer.getDIDDocument();
         didDocumentManager.set(testPeerDidDoc);
         const testPeerDidDocString = JSON.stringify(testPeerDidDoc);
 
         // Generate web client identity
-        console.log('Generating web client identity...');
+        console.log('Generating web client identity');
         const generateButton = page.locator('button.button--primary');
         await generateButton.click();
         await expect(generateButton).toHaveAttribute('data-loading', 'true');
 
         // Wait for app initialization
-        console.log('Waiting for app initialization...');
+        console.log('Waiting for app initialization');
         await page
             .locator('.app-container')
             .waitFor({ state: 'visible', timeout: 30000 });
@@ -183,7 +199,7 @@ test.describe('Messaging Features', () => {
         await expect(sidebar).toBeVisible();
 
         // Get web client DID document
-        console.log('Getting web client DID document...');
+        console.log('Getting web client DID document');
         const settingsButton = sidebar.locator('button.sidebar-button').nth(2);
         await settingsButton.click();
         await expect(
@@ -211,7 +227,7 @@ test.describe('Messaging Features', () => {
         const webClientDidDoc = JSON.parse(clipboardContent);
 
         // Create conversation
-        console.log('Creating conversation with test peer...');
+        console.log('Creating conversation with test peer');
         const messagesButton = sidebar.locator('button.sidebar-button').first();
         await messagesButton.click();
 
@@ -236,14 +252,14 @@ test.describe('Messaging Features', () => {
             page.getByText('Select a chat to start messaging'),
         ).not.toBeVisible();
 
-        // Send and verify test message
-        console.log('Sending test message from peer...');
+        // Send test message
+        console.log('Sending test message from peer');
         const message = new IMText('hey');
         await testPeer.send(webClientDidDoc, message);
         await page.waitForTimeout(2000);
 
         // Verify message in chat list
-        console.log('Verifying message appears in chat list...');
+        console.log('Verifying message in chat list');
         const chatItem = page.locator('.chat-item');
         await expect(chatItem).toBeVisible();
         await expect(chatItem.locator('.chat-badge')).toHaveText('1');
@@ -251,7 +267,7 @@ test.describe('Messaging Features', () => {
         await expect(chatItem.locator('.chat-item-time')).toBeVisible();
 
         // Verify message in conversation
-        console.log('Verifying message appears in conversation...');
+        console.log('Verifying message in conversation');
         await chatItem.click();
 
         const messagesContainer = page.locator('.messages-container');
@@ -270,7 +286,7 @@ test.describe('Messaging Features', () => {
         await expect(senderDid).toHaveText(testPeerIdentity.did);
 
         // Clean up
-        console.log('Test complete, cleaning up...');
+        console.log('Test complete, cleaning up');
         await testPeer.close();
     });
 });
