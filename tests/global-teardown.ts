@@ -1,9 +1,14 @@
 import { Server } from 'http';
 import { Server as SocketServer } from 'socket.io';
 
+interface GlobalWithServers {
+    __smeServer: Server;
+    __socketServer: SocketServer;
+}
+
 async function globalTeardown() {
-    const server = (globalThis as any).__smeServer as Server;
-    const socketServer = (globalThis as any).__socketServer as SocketServer;
+    const server = (globalThis as GlobalWithServers).__smeServer;
+    const socketServer = (globalThis as GlobalWithServers).__socketServer;
 
     if (socketServer) {
         await new Promise<void>((resolve) => {
