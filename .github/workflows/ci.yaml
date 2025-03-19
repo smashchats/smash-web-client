@@ -22,9 +22,13 @@ jobs:
               with:
                   node-version: '22.x'
 
+            - name: Clone smash-node-lib dependency
+              run: git clone --depth 1 https://github.com/smashchats/smash-node-lib.git
+
             - name: Set Cache Key Output
               id: set-cache-key
-              run: echo "cache-key=${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}" >> $GITHUB_OUTPUT
+              run: |
+                  echo "cache-key=${{ runner.os }}-node-${{ hashFiles('**/package-lock.json', 'smash-node-lib/package-lock.json') }}" >> $GITHUB_OUTPUT
 
             - name: Check Cache
               id: cache-check
@@ -33,10 +37,8 @@ jobs:
                   path: |
                       node_modules
                       ~/.npm
+                      smash-node-lib/node_modules
                   key: ${{ steps.set-cache-key.outputs.cache-key }}
-
-            - name: Clone smash-node-lib dependency
-              run: git clone --depth 1 https://github.com/smashchats/smash-node-lib.git
 
             - name: Install Lib Dependencies
               if: steps.cache-check.outputs.cache-hit != 'true'
@@ -53,6 +55,7 @@ jobs:
                   path: |
                       node_modules
                       ~/.npm
+                      smash-node-lib/node_modules
                   key: ${{ steps.set-cache-key.outputs.cache-key }}
 
     tests:
@@ -69,16 +72,20 @@ jobs:
               with:
                   node-version: '22.x'
 
+            - name: Clone smash-node-lib dependency
+              run: git clone --depth 1 https://github.com/smashchats/smash-node-lib.git
+
             - name: Restore Cache
               uses: actions/cache/restore@v4
               with:
                   path: |
                       node_modules
                       ~/.npm
+                      smash-node-lib/node_modules
                   key: ${{ needs.install.outputs.cache-key }}
 
             - name: Run Tests
-              run: npm run test
+              run: npm run test:ci -- --coverage
 
     build:
         needs: [install, tests]
@@ -94,12 +101,16 @@ jobs:
               with:
                   node-version: '22.x'
 
+            - name: Clone smash-node-lib dependency
+              run: git clone --depth 1 https://github.com/smashchats/smash-node-lib.git
+
             - name: Restore Cache
               uses: actions/cache/restore@v4
               with:
                   path: |
                       node_modules
                       ~/.npm
+                      smash-node-lib/node_modules
                   key: ${{ needs.install.outputs.cache-key }}
 
             - name: Build
