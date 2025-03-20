@@ -26,6 +26,13 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] receiving a profile message from a peer
 - [x] updating the peer's profile
 
+- [ ] share embedded media
+- [ ] livestream embedded media (snap)
+- [ ] CDN-hosted media
+- [ ] media types: images, videos, vocals
+
+- [ ] PDS to store backup and settings (multi device - semaphore)
+
 - [ ] joining a Neighborhood
 - [ ] discovering other peers in the neighborhood (NBH_PROFILE_LIST)
 - [ ] smashing another user from the neighborhood
@@ -33,11 +40,17 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [ ] clearing another user from the neighborhood
 
 - [ ] blocking/unblocking another peer
-- [ ] message deduplication and ordering
+- [-] message deduplication and ordering
 
 - [ ] update message status more granular (sending, delivered, received, read, failed, retrying)
 - [ ] report peer to admins
 - [ ] P2P communication upgrade
+
+- [ ] privacy/trust: more granular profile sharing
+
+- [ ] P2P calls
+- [ ] P2P calls with relay server
+- [ ] privacy settings
 
 ### bugs
 
