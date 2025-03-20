@@ -1,4 +1,4 @@
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, X } from 'lucide-react';
 import { useState } from 'react';
 import { DIDDocument } from 'smash-node-lib';
 
@@ -11,9 +11,10 @@ interface ChatHeaderProps {
         description: string;
         avatar: string;
     } | null;
+    onClose?: () => void;
 }
 
-export function ChatHeader({ didDocument, profile }: ChatHeaderProps) {
+export function ChatHeader({ didDocument, profile, onClose }: ChatHeaderProps) {
     const [didCopied, setDidCopied] = useState(false);
     const [copyError, setCopyError] = useState<string | null>(null);
 
@@ -52,7 +53,7 @@ export function ChatHeader({ didDocument, profile }: ChatHeaderProps) {
                             {didDocument.id}
                         </span>
                         <button
-                            className="did-copy-button"
+                            className="did-header-copy-button"
                             onClick={handleCopyDID}
                             title="Copy DID"
                         >
@@ -64,6 +65,17 @@ export function ChatHeader({ didDocument, profile }: ChatHeaderProps) {
                         </button>
                     </div>
                 </div>
+            </div>
+            <div className="chat-header-actions">
+                {onClose && (
+                    <button
+                        className="chat-header-close"
+                        onClick={onClose}
+                        aria-label="Close chat"
+                    >
+                        <X size={24} />
+                    </button>
+                )}
             </div>
             {copyError && (
                 <div className="status-message error">

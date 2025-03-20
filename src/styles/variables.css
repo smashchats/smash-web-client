@@ -89,6 +89,8 @@
     --z-index-modal: 1050;
     --z-index-popover: 1060;
     --z-index-tooltip: 1070;
+    --z-index-mobile-nav: 1080;
+    --z-index-mobile-chat: 1040;
 
     /* Colors */
     --color-background-hover: rgba(0, 0, 0, 0.05);

@@ -65,18 +65,34 @@
 
 /* Mobile Menu */
 @media (max-width: 768px) {
-    .chat-list-container {
-        position: fixed;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        z-index: var(--z-index-modal);
-        transform: translateX(-100%);
-        transition: transform var(--transition-fast);
+    .app-container {
+        flex-direction: column;
     }
 
-    .chat-list-container.mobile-open {
-        transform: translateX(0);
+    .sidebar {
+        width: 100%;
+        height: 60px;
+        flex-direction: row;
+        justify-content: space-around;
+        border-right: none;
+        border-top: var(--border-width) solid var(--color-border);
+        padding: var(--spacing-xs);
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: var(--z-index-mobile-nav);
+        background-color: var(--color-background);
+    }
+
+    .sidebar-button {
+        width: 48px;
+        height: 48px;
+    }
+
+    .main-area {
+        height: calc(100vh - 60px);
+        padding-bottom: 60px;
     }
 }
 

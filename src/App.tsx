@@ -66,6 +66,8 @@ function App() {
         null,
     );
 
+    const [isChatViewActive, setIsChatViewActive] = useState(false);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -274,6 +276,12 @@ function App() {
         logger.debug('Selecting chat', { chatId });
         setSelectedChat(chatId);
         setIsMobileMenuOpen(false);
+        setIsChatViewActive(true);
+    };
+
+    const handleCloseChat = () => {
+        setSelectedChat(undefined);
+        setIsChatViewActive(false);
     };
 
     const handleLogout = async () => {
@@ -358,9 +366,7 @@ function App() {
 
             {currentView === 'messages' && (
                 <main className="chat-container">
-                    <div
-                        className={`chat-list-container ${isMobileMenuOpen ? 'mobile-open' : ''}`}
-                    >
+                    <div className="chat-list-container">
                         <ChatList
                             conversations={conversations}
                             selectedChat={selectedChat}
@@ -370,34 +376,34 @@ function App() {
                         />
                     </div>
 
-                    <div className="flex-1 flex flex-col">
+                    <div
+                        className={`chat-messages-container ${isChatViewActive ? 'active' : ''}`}
+                    >
                         {selectedChat ? (
                             <>
                                 {peerDidDocument && (
                                     <ChatHeader
                                         didDocument={peerDidDocument}
                                         profile={peerProfile}
+                                        onClose={handleCloseChat}
                                     />
                                 )}
-                                <div className="chat-messages-container">
-                                    <div className="messages-container">
-                                        {messages.map((message) => (
-                                            <ChatMessage
-                                                key={message.id}
-                                                message={message}
-                                                isOwnMessage={
-                                                    message.sender ===
-                                                    CURRENT_USER
-                                                }
-                                                peerProfile={
-                                                    peerProfiles[message.sender]
-                                                }
-                                            />
-                                        ))}
-                                        <div ref={messagesEndRef} />
-                                    </div>
-                                    <ChatInput onSendMessage={sendMessage} />
+                                <div className="messages-container">
+                                    {messages.map((message) => (
+                                        <ChatMessage
+                                            key={message.id}
+                                            message={message}
+                                            isOwnMessage={
+                                                message.sender === CURRENT_USER
+                                            }
+                                            peerProfile={
+                                                peerProfiles[message.sender]
+                                            }
+                                        />
+                                    ))}
+                                    <div ref={messagesEndRef} />
                                 </div>
+                                <ChatInput onSendMessage={sendMessage} />
                             </>
                         ) : (
                             <div className="no-chat-selected">

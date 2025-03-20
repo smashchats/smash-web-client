@@ -26,8 +26,6 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] receiving a profile message from a peer
 - [x] updating the peer's profile
 
-- [ ] Fix mobile/responsive styles (chat list not visible)
-
 - [ ] joining a Neighborhood
 - [ ] discovering other peers in the neighborhood (NBH_PROFILE_LIST)
 - [ ] smashing another user from the neighborhood

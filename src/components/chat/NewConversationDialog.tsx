@@ -36,20 +36,19 @@ function DialogContent({
                 value={didInput}
                 onChange={(e) => onDidInputChange(e.target.value)}
                 placeholder="Paste DID document JSON here..."
-                rows={10}
             />
 
             {error && <p className="dialog-error">{error}</p>}
 
             <div className="dialog-footer">
                 <Dialog.Close asChild>
-                    <button className="dialog-button buttonbutton--secondary">
+                    <button className="button button--secondary dialog-button">
                         Cancel
                     </button>
                 </Dialog.Close>
                 <Dialog.Close asChild>
                     <button
-                        className="dialog-button button button--primary"
+                        className="button button--primary dialog-button"
                         onClick={onSubmit}
                         disabled={!didInput.trim()}
                     >

@@ -14,6 +14,7 @@ interface ChatMessagesProps {
         avatar: string;
     } | null;
     identity: string | null;
+    onClose?: () => void;
 }
 
 export function ChatMessages({
@@ -22,11 +23,16 @@ export function ChatMessages({
     didDocument,
     peerProfile,
     identity,
+    onClose,
 }: ChatMessagesProps) {
     return (
         <div className="messages-container" ref={messagesRef}>
             {didDocument && (
-                <ChatHeader didDocument={didDocument} profile={peerProfile} />
+                <ChatHeader
+                    didDocument={didDocument}
+                    profile={peerProfile}
+                    onClose={onClose}
+                />
             )}
             <div className="messages-content">
                 {messages.map((message) => (
