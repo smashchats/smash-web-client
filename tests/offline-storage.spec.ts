@@ -88,7 +88,7 @@ test.describe('Offline Storage and App Reload', () => {
         console.log('Waiting for app initialization');
         await page
             .locator('.app-container')
-            .waitFor({ state: 'visible', timeout: 30000 });
+            .waitFor({ state: 'visible', timeout: 10000 });
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
@@ -159,7 +159,7 @@ test.describe('Offline Storage and App Reload', () => {
         console.log('Verifying message sent');
         await expect(
             page
-                .locator('.messages-container .text-sm.whitespace-pre-wrap')
+                .locator('.message-content .message-text')
                 .getByText('Hello, test peer!'),
         ).toBeVisible();
 
@@ -167,7 +167,7 @@ test.describe('Offline Storage and App Reload', () => {
         console.log('Sending test message from peer');
         const peerMessage = new IMText('Hello from test peer!');
         await testPeer.send(webClientDidDoc, peerMessage);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
 
         // Verify message appears in chat list
         console.log('Verifying message in chat list');
@@ -186,7 +186,7 @@ test.describe('Offline Storage and App Reload', () => {
         console.log('Verifying conversation state after reload');
         await page
             .locator('.app-container')
-            .waitFor({ state: 'visible', timeout: 30000 });
+            .waitFor({ state: 'visible', timeout: 10000 });
         await expect(sidebar).toBeVisible();
 
         // Verify chat list
@@ -204,19 +204,17 @@ test.describe('Offline Storage and App Reload', () => {
         // Verify both messages are present
         await expect(
             messagesContainer
-                .locator('.text-sm.whitespace-pre-wrap')
+                .locator('.message-content .message-text')
                 .getByText('Hello, test peer!'),
         ).toBeVisible();
         await expect(
             messagesContainer
-                .locator('.text-sm.whitespace-pre-wrap')
+                .locator('.message-content .message-text')
                 .getByText('Hello from test peer!'),
         ).toBeVisible();
 
         // Verify sender DID is visible
-        const senderDid = page.locator(
-            '.message.incoming .font-medium.text-sm.text-muted',
-        );
+        const senderDid = page.locator('.chat-header-did-text');
         await expect(senderDid).toBeVisible();
         await expect(senderDid).toHaveText(testPeerIdentity.did);
 

@@ -8,6 +8,7 @@ import { SmashMessage } from '../../lib/types';
 interface ChatMessageProps {
     message: SmashMessage;
     isOwnMessage: boolean;
+    peerProfile?: { title: string; description: string; avatar: string } | null;
 }
 
 interface MessageStatusIndicatorProps {
@@ -155,17 +156,12 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
     return (
         <div
             ref={messageRef}
-            className={`message ${isOwnMessage ? 'outgoing ml-auto' : 'incoming'}`}
+            className={`message ${isOwnMessage ? 'outgoing' : 'incoming'}`}
         >
-            {!isOwnMessage && (
-                <div className="font-medium text-sm text-muted mb-1">
-                    {message.sender}
-                </div>
-            )}
-            <div className="flex flex-col">
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                <div className="flex items-center gap-1 mt-1">
-                    <span className="text-xs opacity-70">
+            <div className="message-content">
+                <div className="message-text">{message.content}</div>
+                <div className="message-meta">
+                    <span className="message-time">
                         {formatTime(message.timestamp)}
                     </span>
                     {isOwnMessage && (

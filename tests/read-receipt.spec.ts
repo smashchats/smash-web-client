@@ -85,7 +85,7 @@ test.describe('Read Receipt Features', () => {
         console.log('Waiting for app initialization');
         await page
             .locator('.app-container')
-            .waitFor({ state: 'visible', timeout: 30000 });
+            .waitFor({ state: 'visible', timeout: 10000 });
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
@@ -158,11 +158,12 @@ test.describe('Read Receipt Features', () => {
         console.log('Sending test message from peer');
         const message = new IMText('message that should be marked as read');
         await testPeer.send(webClientDidDoc, message);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
 
-        // Verify message appears in chat list
         console.log('Verifying message appears in chat list');
-        const chatItem = page.locator('.chat-item');
+        const chatItem = page.locator(
+            'button.chat-item:has(p.chat-item-preview:text("message that should be marked as read"))',
+        );
         await expect(chatItem).toBeVisible();
         await expect(chatItem.locator('.chat-badge')).toHaveText('1');
 
@@ -177,7 +178,7 @@ test.describe('Read Receipt Features', () => {
 
         // Wait for read receipt
         console.log('Waiting for message to be marked as read');
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2000);
 
         // Verify read receipt was received
         console.log('Verifying read receipt was received by test peer');

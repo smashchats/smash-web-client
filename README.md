@@ -23,8 +23,10 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 
 - [x] offline storage and app reload
 
-- [ ] receiving a profile message from a peer
-- [ ] updating the peer's profile
+- [x] receiving a profile message from a peer
+- [x] updating the peer's profile
+
+- [ ] Fix mobile/responsive styles (chat list not visible)
 
 - [ ] joining a Neighborhood
 - [ ] discovering other peers in the neighborhood (NBH_PROFILE_LIST)

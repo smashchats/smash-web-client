@@ -73,11 +73,13 @@
 
     /* Layout */
     --sidebar-width: 72px;
-    --chat-list-width: 300px;
+    --chat-list-width: 320px;
     --max-width-sm: 640px;
     --max-width-md: 768px;
     --max-width-lg: 1024px;
     --max-width-xl: 1280px;
+    --header-height: 60px;
+    --content-width: 800px;
 
     /* Z-index */
     --z-index-dropdown: 1000;
@@ -87,6 +89,9 @@
     --z-index-modal: 1050;
     --z-index-popover: 1060;
     --z-index-tooltip: 1070;
+
+    /* Colors */
+    --color-background-hover: rgba(0, 0, 0, 0.05);
 }
 
 /* Dark theme */

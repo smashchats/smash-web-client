@@ -1,8 +1,15 @@
 import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { DIDDocument, IM_DID_DOCUMENT, SmashMessaging } from 'smash-node-lib';
+import {
+    DID,
+    DIDDocument,
+    IM_DID_DOCUMENT,
+    IM_PROFILE,
+    SmashMessaging,
+} from 'smash-node-lib';
 
 import { WelcomeGuide } from './components/WelcomeGuide';
+import { ChatHeader } from './components/chat/ChatHeader';
 import { ChatInput } from './components/chat/ChatInput';
 import { ChatList } from './components/chat/ChatList';
 import { ChatMessage } from './components/chat/ChatMessage';
@@ -32,6 +39,9 @@ function App() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentView, setCurrentView] = useState<View>('messages');
     const [isLoading, setIsLoading] = useState(false);
+    const [peerProfiles, setPeerProfiles] = useState<
+        Record<string, { title: string; description: string; avatar: string }>
+    >({});
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -51,6 +61,10 @@ function App() {
         selectedChat,
         onConversationUpdate: updateConversationWithMessage,
     });
+
+    const [peerDidDocument, setPeerDidDocument] = useState<DIDDocument | null>(
+        null,
+    );
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -89,6 +103,25 @@ function App() {
     }, [identity]);
 
     useEffect(() => {
+        const loadPeerProfiles = async () => {
+            try {
+                if (identity) {
+                    logger.debug('Loading cached peer profiles');
+                    const profiles = await db.getAllPeerProfiles();
+                    setPeerProfiles(profiles);
+                    logger.debug('Loaded peer profiles', {
+                        count: Object.keys(profiles).length,
+                    });
+                }
+            } catch (err) {
+                logger.error('Failed to load peer profiles', err);
+            }
+        };
+
+        loadPeerProfiles();
+    }, [identity]);
+
+    useEffect(() => {
         if (!identity || !smashUser) return;
 
         const handleDIDDocument = async (
@@ -101,18 +134,103 @@ function App() {
                     did: message.data.id,
                 });
 
+                // Set in memory manager
+                await getDidDocumentManager().set(message.data);
+                // Persist to database
                 await db.addDIDDocument(message.data);
-                getDidDocumentManager().set(message.data);
+
+                logger.debug('DID document cached successfully', {
+                    did: message.data.id,
+                });
             } catch (err) {
                 logger.error('Failed to handle DID document', err);
             }
         };
 
+        const handleProfile = async (
+            sender: string,
+            message: {
+                data: { title: string; description: string; avatar: string };
+            },
+        ) => {
+            try {
+                logger.debug('Received profile update', {
+                    from: sender,
+                    title: message.data.title,
+                });
+
+                setPeerProfiles((prev) => ({
+                    ...prev,
+                    [sender]: message.data,
+                }));
+
+                await db.setPeerProfile(sender, message.data);
+
+                const conversation = conversations.find((c) => c.id === sender);
+                if (conversation && conversation.type === 'direct') {
+                    const updatedConversation: StoredConversation = {
+                        ...conversation,
+                        title: message.data.title || sender.slice(0, 8) + '...',
+                        updatedAt: new Date().toISOString(),
+                        lastMessage: conversation.lastMessage
+                            ? {
+                                  ...conversation.lastMessage,
+                                  timestamp:
+                                      conversation.lastMessage.timestamp.toISOString(),
+                                  status: conversation.lastMessage.status as
+                                      | 'error'
+                                      | 'sent'
+                                      | 'delivered'
+                                      | 'read',
+                              }
+                            : undefined,
+                    };
+                    await db.updateConversation(updatedConversation);
+                    refreshConversations();
+                }
+            } catch (err) {
+                logger.error('Failed to handle profile update', err);
+            }
+        };
+
         smashUser.on(IM_DID_DOCUMENT, handleDIDDocument);
+        smashUser.on(IM_PROFILE, handleProfile);
+
         return () => {
             smashUser.off(IM_DID_DOCUMENT, handleDIDDocument);
+            smashUser.off(IM_PROFILE, handleProfile);
         };
-    }, [identity, smashUser]);
+    }, [identity, smashUser, conversations, refreshConversations]);
+
+    useEffect(() => {
+        const loadPeerDidDocument = async () => {
+            if (selectedChat) {
+                try {
+                    logger.debug('Loading peer DID document', { selectedChat });
+                    // First try to get from local DB
+                    let doc = await db.getDIDDocument(selectedChat);
+                    if (!doc) {
+                        // If not in DB, try to resolve
+                        doc = await getDidDocumentManager().resolve(
+                            selectedChat as DID,
+                        );
+                        if (doc) {
+                            // Store for future use
+                            await db.addDIDDocument(doc);
+                        }
+                    }
+                    setPeerDidDocument(doc || null);
+                } catch (err) {
+                    logger.error('Failed to load peer DID document', err);
+                    setPeerDidDocument(null);
+                }
+            } else {
+                setPeerDidDocument(null);
+            }
+        };
+
+        loadPeerDidDocument();
+    }, [selectedChat]);
 
     const handleCreateConversation = async (didDoc: DIDDocument) => {
         logger.info('Starting conversation creation process', {
@@ -152,7 +270,7 @@ function App() {
         }
     };
 
-    const handleSelectChat = (chatId: string) => {
+    const handleSelectChat = async (chatId: string) => {
         logger.debug('Selecting chat', { chatId });
         setSelectedChat(chatId);
         setIsMobileMenuOpen(false);
@@ -199,6 +317,13 @@ function App() {
         conversationCount: conversations.length,
     });
 
+    const selectedConversation = conversations.find(
+        (c) => c.id === selectedChat,
+    );
+    const peerProfile = selectedConversation
+        ? peerProfiles[selectedConversation.id]
+        : null;
+
     return (
         <div className="app-container">
             <nav className="sidebar">
@@ -241,26 +366,39 @@ function App() {
                             selectedChat={selectedChat}
                             onSelectChat={handleSelectChat}
                             onCreateConversation={handleCreateConversation}
+                            peerProfiles={peerProfiles}
                         />
                     </div>
 
                     <div className="flex-1 flex flex-col">
                         {selectedChat ? (
-                            <div className="chat-messages-container">
-                                <div className="messages-container">
-                                    {messages.map((message) => (
-                                        <ChatMessage
-                                            key={message.id}
-                                            message={message}
-                                            isOwnMessage={
-                                                message.sender === CURRENT_USER
-                                            }
-                                        />
-                                    ))}
-                                    <div ref={messagesEndRef} />
+                            <>
+                                {peerDidDocument && (
+                                    <ChatHeader
+                                        didDocument={peerDidDocument}
+                                        profile={peerProfile}
+                                    />
+                                )}
+                                <div className="chat-messages-container">
+                                    <div className="messages-container">
+                                        {messages.map((message) => (
+                                            <ChatMessage
+                                                key={message.id}
+                                                message={message}
+                                                isOwnMessage={
+                                                    message.sender ===
+                                                    CURRENT_USER
+                                                }
+                                                peerProfile={
+                                                    peerProfiles[message.sender]
+                                                }
+                                            />
+                                        ))}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+                                    <ChatInput onSendMessage={sendMessage} />
                                 </div>
-                                <ChatInput onSendMessage={sendMessage} />
-                            </div>
+                            </>
                         ) : (
                             <div className="no-chat-selected">
                                 <p>Select a chat to start messaging</p>

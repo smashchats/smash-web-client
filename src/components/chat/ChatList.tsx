@@ -9,18 +9,27 @@ interface ChatListProps {
     selectedChat?: string;
     onSelectChat: (chatId: string) => void;
     onCreateConversation: (didDoc: DIDDocument) => void;
+    peerProfiles: Record<
+        string,
+        { title: string; description: string; avatar: string }
+    >;
 }
 
 interface ChatItemProps {
     chat: SmashConversation;
     isSelected: boolean;
     onSelect: (chatId: string) => void;
+    peerProfile?: { title: string; description: string; avatar: string } | null;
 }
 
-function ChatItem({ chat, isSelected, onSelect }: ChatItemProps) {
+function ChatItem({ chat, isSelected, onSelect, peerProfile }: ChatItemProps) {
     const getParticipantNames = () => {
         if (chat.type === 'direct') {
-            return chat.participants.find((p) => p !== 'You') || 'Unknown';
+            return (
+                peerProfile?.title ||
+                chat.participants.find((p) => p !== 'You') ||
+                'Unknown'
+            );
         }
         return chat.participants.filter((p) => p !== 'You').join(', ');
     };
@@ -64,6 +73,7 @@ export function ChatList({
     selectedChat,
     onSelectChat,
     onCreateConversation,
+    peerProfiles,
 }: ChatListProps) {
     const handleSelectChat = (chatId: string) => {
         logger.debug('Selecting chat', { chatId });
@@ -87,6 +97,11 @@ export function ChatList({
                         chat={chat}
                         isSelected={selectedChat === chat.id}
                         onSelect={handleSelectChat}
+                        peerProfile={
+                            chat.type === 'direct'
+                                ? peerProfiles[chat.id]
+                                : null
+                        }
                     />
                 ))}
             </div>

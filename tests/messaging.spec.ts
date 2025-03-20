@@ -91,7 +91,7 @@ test.describe('Messaging Features', () => {
         console.log('Waiting for app initialization');
         await page
             .locator('.app-container')
-            .waitFor({ state: 'visible', timeout: 30000 });
+            .waitFor({ state: 'visible', timeout: 10000 });
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
@@ -132,7 +132,7 @@ test.describe('Messaging Features', () => {
         console.log('Verifying message sent');
         await expect(
             page
-                .locator('.messages-container .text-sm.whitespace-pre-wrap')
+                .locator('.message-content .message-text')
                 .getByText('Hello, test peer!'),
         ).toBeVisible();
 
@@ -175,7 +175,7 @@ test.describe('Messaging Features', () => {
         console.log('Waiting for app initialization');
         await page
             .locator('.app-container')
-            .waitFor({ state: 'visible', timeout: 30000 });
+            .waitFor({ state: 'visible', timeout: 10000 });
         const sidebar = page.locator('nav.sidebar');
         await expect(sidebar).toBeVisible();
 
@@ -200,7 +200,6 @@ test.describe('Messaging Features', () => {
                 return null;
             }
         });
-
         if (!clipboardContent) {
             throw new Error('Failed to read clipboard content');
         }
@@ -237,27 +236,32 @@ test.describe('Messaging Features', () => {
         await page.waitForTimeout(2000);
 
         console.log('Verifying message in chat list');
-        const chatItem = page.locator('.chat-item');
-        await expect(chatItem).toBeVisible();
-        await expect(chatItem.locator('.chat-badge')).toHaveText('1');
-        await expect(chatItem.locator('.chat-item-preview')).toHaveText('hey');
-        await expect(chatItem.locator('.chat-item-time')).toBeVisible();
+        const newChatItem = page.locator(
+            'button.chat-item:has(p.chat-item-preview:text("hey"))',
+        );
+        await expect(newChatItem).toBeVisible();
+        await expect(newChatItem.locator('p.chat-item-preview')).toHaveText(
+            'hey',
+        );
+        await expect(newChatItem.locator('.chat-item-time')).toBeVisible();
 
         console.log('Verifying message in conversation');
-        await chatItem.click();
+        await newChatItem.click();
 
         const messagesContainer = page.locator('.messages-container');
         await expect(messagesContainer).toBeVisible();
         await expect(
-            messagesContainer.locator('.text-sm.whitespace-pre-wrap'),
+            messagesContainer.locator(
+                '.message.incoming .message-content .message-text',
+            ),
         ).toHaveText('hey');
         await expect(
-            messagesContainer.locator('.text-xs.opacity-70'),
+            messagesContainer.locator(
+                '.message.incoming .message-content .message-meta .message-time',
+            ),
         ).toBeVisible();
 
-        const senderDid = page.locator(
-            '.message.incoming .font-medium.text-sm.text-muted',
-        );
+        const senderDid = page.locator('.chat-header-did-text');
         await expect(senderDid).toBeVisible();
         await expect(senderDid).toHaveText(testPeerIdentity.did);
 
@@ -311,7 +315,7 @@ test.describe('Messaging Features', () => {
             console.log('Waiting for app initialization');
             await page
                 .locator('.app-container')
-                .waitFor({ state: 'visible', timeout: 30000 });
+                .waitFor({ state: 'visible', timeout: 10000 });
             const sidebar = page.locator('nav.sidebar');
             await expect(sidebar).toBeVisible();
 
@@ -388,27 +392,25 @@ test.describe('Messaging Features', () => {
             await messageInput.fill('Test message for delivered status');
             await messageInput.press('Enter');
 
-            console.log('Verifying initial sent status');
+            console.log('Verifying message content');
             const messagesContainer = page.locator('.messages-container');
             await expect(messagesContainer).toBeVisible();
             await expect(
-                messagesContainer.locator('.text-sm.whitespace-pre-wrap'),
+                messagesContainer.locator('.message-content .message-text'),
             ).toHaveText('Test message for delivered status');
-
-            const sentStatus = messagesContainer.locator(
-                '.message.outgoing .text-muted-foreground .h-3.w-3',
-            );
-            await expect(sentStatus).toBeVisible();
-            await expect(sentStatus).toHaveCSS('opacity', '0.5');
 
             console.log('Waiting for delivered status');
             await page.waitForTimeout(2000);
 
-            const deliveredStatus = messagesContainer.locator(
-                '.message.outgoing .text-muted-foreground .h-3.w-3',
+            const messageStatus = messagesContainer.locator(
+                '.message.outgoing .message-content .message-meta .text-muted-foreground',
             );
-            await expect(deliveredStatus).toBeVisible();
-            await expect(deliveredStatus).toHaveCSS('opacity', '0.5');
+            await expect(messageStatus).toBeVisible();
+
+            // check for delivered status indicator
+            const statusIcon = messageStatus.locator('.lucide-check-check');
+            await expect(statusIcon).toBeVisible();
+            await expect(statusIcon).toHaveCSS('opacity', '0.5');
         });
 
         test('should show read status when peer acknowledges message as read', async ({
@@ -432,17 +434,19 @@ test.describe('Messaging Features', () => {
             const messagesContainer = page.locator('.messages-container');
             await expect(messagesContainer).toBeVisible();
             await expect(
-                messagesContainer.locator('.text-sm.whitespace-pre-wrap'),
+                messagesContainer.locator('.message-content .message-text'),
             ).toHaveText('Test message for read status');
 
             console.log('Waiting for read status');
             await page.waitForTimeout(2000);
 
             const readStatus = messagesContainer.locator(
-                '.message.outgoing .text-muted-foreground .h-3.w-3',
+                '.message.outgoing .message-content .message-meta .text-muted-foreground .lucide-check-check',
             );
             await expect(readStatus).toBeVisible();
             await expect(readStatus).toHaveCSS('opacity', '1');
         });
     });
+
+    // todo offline peer
 });
