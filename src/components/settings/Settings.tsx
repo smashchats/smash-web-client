@@ -168,7 +168,22 @@ export function Settings({
             setCopyError(null);
             const didDoc = await smashUser.getDIDDocument();
             const didDocString = JSON.stringify(didDoc, null, 2);
-            await navigator.clipboard.writeText(didDocString);
+
+            // Create a temporary textarea element
+            const textarea = document.createElement('textarea');
+            textarea.value = didDocString;
+            textarea.style.position = 'fixed'; // Prevent scrolling to bottom
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+
+            // Select and copy the text
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand('copy');
+
+            // Clean up
+            document.body.removeChild(textarea);
+
             setDidCopied(true);
             setTimeout(() => setDidCopied(false), 2000);
             logger.info('DID document copied successfully');
