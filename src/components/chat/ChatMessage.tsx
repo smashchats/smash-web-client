@@ -1,5 +1,6 @@
-import { Check, CheckCheck } from 'lucide-react';
+import { Check, CheckCheck, Image, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { IMMediaEmbedded } from 'smash-node-lib';
 
 import { logger } from '../../lib/logger';
 import { smashService } from '../../lib/smash/smash-service';
@@ -35,10 +36,113 @@ function MessageStatusIndicator({ status }: MessageStatusIndicatorProps) {
     );
 }
 
+function MediaContent({ data }: { data: IMMediaEmbedded['data'] }) {
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [showModal, setShowModal] = useState(false);
+    const [convertedImageUrl, setConvertedImageUrl] = useState<string | null>(
+        null,
+    );
+
+    useEffect(() => {
+        const handleHeicImage = async () => {
+            if (
+                data.mimeType === 'image/heic' ||
+                data.mimeType === 'image/heif'
+            ) {
+                try {
+                    setIsLoading(true);
+                    // Here you would add the actual HEIC to JPEG conversion
+                    // For now, we'll show an error message
+                    setError(
+                        'HEIC image format is not supported yet. Please convert to JPEG or PNG before sending.',
+                    );
+                    setIsLoading(false);
+                } catch (err) {
+                    logger.error('Failed to convert HEIC image', {
+                        error: err,
+                    });
+                    setError('Failed to convert HEIC image');
+                    setIsLoading(false);
+                }
+            } else {
+                setConvertedImageUrl(
+                    `data:${data.mimeType};base64,${data.content}`,
+                );
+            }
+        };
+
+        void handleHeicImage();
+    }, [data]);
+
+    const handleImageClick = () => {
+        if (!error) {
+            setShowModal(true);
+        }
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+    };
+
+    return (
+        <div className="media-content">
+            {data.mimeType.startsWith('image/') && (
+                <>
+                    <div className="media-image-container">
+                        {isLoading && (
+                            <div className="media-loading">
+                                <Image className="w-6 h-6" />
+                            </div>
+                        )}
+                        {error && (
+                            <div className="media-error">
+                                <span>{error}</span>
+                            </div>
+                        )}
+                        {!error && convertedImageUrl && (
+                            <img
+                                src={convertedImageUrl}
+                                alt={data.alt || 'Shared image'}
+                                className="media-image"
+                                onLoad={() => setIsLoading(false)}
+                                onError={() => {
+                                    setIsLoading(false);
+                                    setError('Failed to load image');
+                                }}
+                                onClick={handleImageClick}
+                                style={{
+                                    aspectRatio: data.aspectRatio
+                                        ? `${data.aspectRatio.width} / ${data.aspectRatio.height}`
+                                        : 'auto',
+                                }}
+                            />
+                        )}
+                    </div>
+                    {showModal && convertedImageUrl && (
+                        <div className="image-modal" onClick={handleCloseModal}>
+                            <img
+                                src={convertedImageUrl}
+                                alt={data.alt || 'Shared image'}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                            <button
+                                className="image-modal-close"
+                                onClick={handleCloseModal}
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
+    );
+}
+
 export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
-    const formatTime = (timestamp: Date | string) => {
-        const date =
-            timestamp instanceof Date ? timestamp : new Date(timestamp);
+    const formatTime = (timestamp: number) => {
+        const date = new Date(timestamp);
         return date.toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
@@ -153,13 +257,49 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
         hasUserInteracted,
     });
 
+    const renderMessageContent = () => {
+        logger.debug('Rendering message content', {
+            type: message.type,
+            content:
+                typeof message.content === 'string'
+                    ? message.content
+                    : '[Media Content]',
+        });
+
+        switch (message.type) {
+            case 'im.chat.media.embedded':
+                if (typeof message.content === 'string') {
+                    return (
+                        <div className="message-text">{message.content}</div>
+                    );
+                }
+                return <MediaContent data={message.content} />;
+            case 'im.chat.text':
+                return (
+                    <div className="message-text">
+                        {typeof message.content === 'string'
+                            ? message.content
+                            : JSON.stringify(message.content)}
+                    </div>
+                );
+            default:
+                const type = (message as { type: string }).type;
+                logger.warn('Unknown message type', { type });
+                return (
+                    <div className="message-text">
+                        Unsupported message type ({type})
+                    </div>
+                );
+        }
+    };
+
     return (
         <div
             ref={messageRef}
             className={`message ${isOwnMessage ? 'outgoing' : 'incoming'}`}
         >
             <div className="message-content">
-                <div className="message-text">{message.content}</div>
+                {renderMessageContent()}
                 <div className="message-meta">
                     <span className="message-time">
                         {formatTime(message.timestamp)}

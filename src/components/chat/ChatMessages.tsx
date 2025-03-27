@@ -1,11 +1,11 @@
 import { DIDDocument } from 'smash-node-lib';
 
-import { StoredMessage } from '../../lib/types';
+import { SmashMessage } from '../../lib/types';
 import { ChatHeader } from './ChatHeader';
 import { ChatMessage } from './ChatMessage';
 
 interface ChatMessagesProps {
-    messages: StoredMessage[];
+    messages: SmashMessage[];
     messagesRef: React.RefObject<HTMLDivElement>;
     didDocument: DIDDocument | null;
     peerProfile?: {
@@ -38,10 +38,7 @@ export function ChatMessages({
                 {messages.map((message) => (
                     <ChatMessage
                         key={message.id}
-                        message={{
-                            ...message,
-                            timestamp: new Date(message.timestamp),
-                        }}
+                        message={message}
                         peerProfile={peerProfile}
                         isOwnMessage={message.sender === identity}
                     />

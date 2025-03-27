@@ -2,13 +2,12 @@ import { DBSchema, IDBPDatabase, openDB } from 'idb';
 import { DIDDocument, IIMPeerIdentity } from 'smash-node-lib';
 
 import { logger } from './logger';
+import { SmashConversation, SmashMessage } from './types';
 
-// Types
 interface StoredPeerProfile extends StoredProfile {
     id: string;
 }
 
-// Define store names as a const array to help with typing
 const STORE_NAMES = [
     'messages',
     'conversations',
@@ -19,7 +18,6 @@ const STORE_NAMES = [
 
 type StoreNames = (typeof STORE_NAMES)[number];
 
-// Define index names for type safety
 type MessageIndexNames = 'by-conversation' | 'by-timestamp';
 type ConversationIndexNames = 'by-updated';
 type IndexNames = MessageIndexNames | ConversationIndexNames;
@@ -27,17 +25,17 @@ type IndexNames = MessageIndexNames | ConversationIndexNames;
 interface SmashDBSchema extends DBSchema {
     messages: {
         key: string;
-        value: StoredMessage;
+        value: SmashMessage;
         indexes: {
             'by-conversation': string;
-            'by-timestamp': string;
+            'by-timestamp': number;
         };
     };
     conversations: {
         key: string;
-        value: StoredConversation;
+        value: SmashConversation;
         indexes: {
-            'by-updated': string;
+            'by-updated': number;
         };
     };
     identity: {
@@ -58,15 +56,6 @@ interface SmashDBSchema extends DBSchema {
     };
 }
 
-export interface StoredMessage {
-    id: string;
-    conversationId: string;
-    content: string;
-    sender: string;
-    timestamp: string;
-    status: 'sent' | 'delivered' | 'read' | 'error';
-}
-
 export interface StoredProfile {
     title: string;
     description: string;
@@ -78,22 +67,10 @@ export interface SMEConfig {
     smePublicKey: string;
 }
 
-export interface StoredConversation {
-    id: string;
-    title: string;
-    lastMessage?: StoredMessage;
-    unreadCount: number;
-    participants: string[];
-    type: 'direct' | 'group';
-    updatedAt: string;
-}
-
-// Database initialization
 export async function initDB() {
     return SmashDB.getInstance().init();
 }
 
-// Database types
 interface StoreConfig {
     keyPath: string | null;
     indexes?: Array<{
@@ -106,7 +83,6 @@ type StoreConfigs = {
     [K in StoreNames]: StoreConfig;
 };
 
-// Main database class
 class SmashDB {
     private static instance: SmashDB;
     private db: IDBPDatabase<SmashDBSchema> | null = null;
@@ -342,7 +318,7 @@ class SmashDB {
     }
 
     // Message Management
-    async addMessage(message: StoredMessage): Promise<void> {
+    async addMessage(message: SmashMessage): Promise<void> {
         this.checkConnection();
         logger.debug('Adding message', { messageId: message.id });
 
@@ -370,7 +346,7 @@ class SmashDB {
 
     async updateMessageStatus(
         messageId: string,
-        status: StoredMessage['status'],
+        status: SmashMessage['status'],
     ): Promise<void> {
         this.checkConnection();
         logger.debug('Updating message status', { messageId, status });
@@ -399,7 +375,7 @@ class SmashDB {
     async getMessages(
         conversationId: string,
         limit = 50,
-    ): Promise<StoredMessage[]> {
+    ): Promise<SmashMessage[]> {
         this.checkConnection();
         logger.debug('Getting messages', { conversationId, limit });
 
@@ -418,14 +394,14 @@ class SmashDB {
         return messages.slice(-limit);
     }
 
-    async getMessage(messageId: string): Promise<StoredMessage | undefined> {
+    async getMessage(messageId: string): Promise<SmashMessage | undefined> {
         this.checkConnection();
         logger.debug('Getting message', { messageId });
         return this.db!.get('messages', messageId);
     }
 
     // Conversation Management
-    async addConversation(conversation: StoredConversation): Promise<void> {
+    async addConversation(conversation: SmashConversation): Promise<void> {
         await this.init();
         this.checkConnection();
         logger.debug('Adding conversation', {
@@ -437,7 +413,7 @@ class SmashDB {
         });
     }
 
-    async updateConversation(conversation: StoredConversation): Promise<void> {
+    async updateConversation(conversation: SmashConversation): Promise<void> {
         await this.init();
         this.checkConnection();
         logger.debug('Updating conversation', {
@@ -449,7 +425,7 @@ class SmashDB {
         });
     }
 
-    async getConversations(): Promise<StoredConversation[]> {
+    async getConversations(): Promise<SmashConversation[]> {
         this.checkConnection();
         logger.debug('Getting all conversations');
         const conversations = await this.db!.getAllFromIndex(
@@ -462,7 +438,7 @@ class SmashDB {
         return conversations;
     }
 
-    async getConversation(id: string): Promise<StoredConversation | undefined> {
+    async getConversation(id: string): Promise<SmashConversation | undefined> {
         await this.init();
         this.checkConnection();
         logger.debug('Getting conversation', { conversationId: id });

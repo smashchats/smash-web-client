@@ -16,11 +16,12 @@ const createMessage = (
     hoursAgo: number,
     status: MessageStatus = 'delivered',
 ): SmashMessage => ({
+    type: 'im.chat.text',
     id,
     conversationId,
     content,
     sender,
-    timestamp: getRecentTimestamp(hoursAgo),
+    timestamp: getRecentTimestamp(hoursAgo).toISOString(),
     status,
 });
 

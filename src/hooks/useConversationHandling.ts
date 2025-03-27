@@ -3,40 +3,19 @@ import { useEffect, useState } from 'react';
 import { initDB } from '../lib/db';
 import { logger } from '../lib/logger';
 import { smashService } from '../lib/smash/smash-service';
-import {
-    SmashConversation,
-    SmashMessage,
-    StoredConversation,
-} from '../lib/types';
-
-const convertToSmashConversation = (
-    conversation: StoredConversation,
-): SmashConversation => ({
-    ...conversation,
-    lastMessage: conversation.lastMessage
-        ? {
-              ...conversation.lastMessage,
-              timestamp: new Date(conversation.lastMessage.timestamp),
-          }
-        : undefined,
-});
+import { SmashConversation, SmashMessage } from '../lib/types';
 
 export const useConversationHandling = () => {
     const [conversations, setConversations] = useState<SmashConversation[]>([]);
     const [error, setError] = useState<Error | null>(null);
 
-    const addNewConversation = (conversation: StoredConversation) => {
+    const addNewConversation = (conversation: SmashConversation) => {
         logger.debug('Adding new conversation', {
             conversationId: conversation.id,
         });
         setConversations((prev) => {
-            const smashConversation = convertToSmashConversation(conversation);
-            const updated = [...prev, smashConversation];
-            return updated.sort((a, b) => {
-                const aTime = a.lastMessage?.timestamp || new Date(0);
-                const bTime = b.lastMessage?.timestamp || new Date(0);
-                return bTime.getTime() - aTime.getTime();
-            });
+            const updated = [...prev, conversation];
+            return updated.sort((a, b) => b.updatedAt - a.updatedAt);
         });
     };
 
@@ -46,13 +25,9 @@ export const useConversationHandling = () => {
             setError(null);
             await initDB();
             const convos = await smashService.getConversations();
-            const sortedConversations = convos
-                .map(convertToSmashConversation)
-                .sort((a, b) => {
-                    const aTime = a.lastMessage?.timestamp || new Date(0);
-                    const bTime = b.lastMessage?.timestamp || new Date(0);
-                    return bTime.getTime() - aTime.getTime();
-                });
+            const sortedConversations = convos.sort(
+                (a, b) => b.updatedAt - a.updatedAt,
+            );
             setConversations(sortedConversations);
             logger.debug('Conversations loaded successfully', {
                 count: convos.length,
@@ -70,33 +45,23 @@ export const useConversationHandling = () => {
     useEffect(() => {
         loadConversations();
 
-        const handleConversationUpdate = (conversation: StoredConversation) => {
+        const handleConversationUpdate = (conversation: SmashConversation) => {
             logger.info('Conversation updated', {
                 conversationId: conversation.id,
             });
             setConversations((prev) => {
-                const smashConversation =
-                    convertToSmashConversation(conversation);
                 const existing = prev.find((c) => c.id === conversation.id);
                 if (existing) {
                     // Update existing conversation
                     const updated = prev.map((c) =>
-                        c.id === conversation.id ? smashConversation : c,
+                        c.id === conversation.id ? conversation : c,
                     );
-                    // Sort by last message time
-                    return updated.sort((a, b) => {
-                        const aTime = a.lastMessage?.timestamp || new Date(0);
-                        const bTime = b.lastMessage?.timestamp || new Date(0);
-                        return bTime.getTime() - aTime.getTime();
-                    });
+                    // Sort by updatedAt timestamp
+                    return updated.sort((a, b) => b.updatedAt - a.updatedAt);
                 } else {
                     // Add new conversation and sort
-                    const updated = [...prev, smashConversation];
-                    return updated.sort((a, b) => {
-                        const aTime = a.lastMessage?.timestamp || new Date(0);
-                        const bTime = b.lastMessage?.timestamp || new Date(0);
-                        return bTime.getTime() - aTime.getTime();
-                    });
+                    const updated = [...prev, conversation];
+                    return updated.sort((a, b) => b.updatedAt - a.updatedAt);
                 }
             });
         };
@@ -125,16 +90,12 @@ export const useConversationHandling = () => {
                           lastMessage,
                           // Keep the existing unread count as it's handled by handleIncomingMessage
                           unreadCount: conv.unreadCount || 0,
-                          updatedAt: lastMessage.timestamp.toISOString(),
+                          updatedAt: lastMessage.timestamp,
                       }
                     : conv,
             );
-            // Sort by last message time
-            return updated.sort((a, b) => {
-                const aTime = a.lastMessage?.timestamp || new Date(0);
-                const bTime = b.lastMessage?.timestamp || new Date(0);
-                return bTime.getTime() - aTime.getTime();
-            });
+            // Sort by updatedAt timestamp
+            return updated.sort((a, b) => b.updatedAt - a.updatedAt);
         });
     };
 

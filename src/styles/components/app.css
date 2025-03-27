@@ -3,6 +3,7 @@
     display: flex;
     height: 100vh;
     background-color: var(--color-background);
+    position: relative;
 }
 
 /* Sidebar */
@@ -131,4 +132,35 @@
 
 .error-toast-close:hover {
     background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Global Dropzone */
+.global-dropzone {
+    position: fixed;
+    inset: 0;
+    background-color: var(--color-overlay);
+    backdrop-filter: blur(4px);
+    z-index: var(--z-index-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: overlayShow var(--transition-fast) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.global-dropzone-content {
+    background-color: var(--color-background);
+    border: 2px dashed var(--color-primary);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    color: var(--color-primary);
+    animation: contentShow var(--transition-fast) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.global-dropzone-content span {
+    font-size: var(--font-size-lg);
+    font-weight: 500;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { DIDString } from 'smash-node-lib';
+import { DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
 import { CURRENT_USER } from '../config/constants';
 import { logger } from '../lib/logger';
@@ -16,9 +16,7 @@ interface UseMessageHandlingProps {
 
 // Sort messages by timestamp in ascending order
 const sortMessages = (messages: SmashMessage[]): SmashMessage[] => {
-    return [...messages].sort(
-        (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
-    );
+    return [...messages].sort((a, b) => a.timestamp - b.timestamp);
 };
 
 export const useMessageHandling = ({
@@ -44,11 +42,7 @@ export const useMessageHandling = ({
                 });
                 setError(null);
                 const msgs = await smashService.getMessages(selectedChat);
-                const messagesWithDates = msgs.map((msg) => ({
-                    ...msg,
-                    timestamp: new Date(msg.timestamp),
-                }));
-                setMessages(sortMessages(messagesWithDates));
+                setMessages(sortMessages(msgs));
                 logger.debug('Messages loaded successfully', {
                     count: msgs.length,
                 });
@@ -111,13 +105,13 @@ export const useMessageHandling = ({
         };
     }, [selectedChat]); // Add selectedChat to dependencies
 
-    const sendMessage = async (content: string) => {
+    const sendMessage = async (content: string | IMMediaEmbedded) => {
         if (!selectedChat) return;
 
         try {
             logger.info('Sending message', {
                 conversationId: selectedChat,
-                content,
+                type: typeof content === 'string' ? 'text' : 'media',
             });
             setError(null);
             const message = await smashService.sendMessage(
@@ -125,16 +119,11 @@ export const useMessageHandling = ({
                 content,
             );
 
-            const smashMessage: SmashMessage = {
-                ...message,
-                timestamp: new Date(message.timestamp),
-            };
-
             logger.debug('Message sent successfully', {
-                messageId: smashMessage.id,
+                messageId: message.id,
             });
-            setMessages((prev) => [...prev, smashMessage]);
-            conversationUpdateRef.current(selectedChat, smashMessage);
+            setMessages((prev) => [...prev, message]);
+            conversationUpdateRef.current(selectedChat, message);
         } catch (err) {
             const error =
                 err instanceof Error

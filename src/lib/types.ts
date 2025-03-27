@@ -1,35 +1,35 @@
+import { EmbeddedBase64Media } from 'smash-node-lib';
+
 export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed' | 'error';
 
-export interface BaseMessage {
+interface BaseMessage {
     id: string;
     conversationId: string;
-    content: string;
     sender: string;
     status: MessageStatus;
+    timestamp: number; // Unix timestamp in milliseconds
 }
 
-export interface StoredMessage extends BaseMessage {
-    timestamp: string;
+export interface TextMessage extends BaseMessage {
+    type: 'im.chat.text';
+    content: string;
 }
 
-export interface SmashMessage extends BaseMessage {
-    timestamp: Date;
+export interface MediaMessage extends BaseMessage {
+    type: 'im.chat.media.embedded';
+    content: EmbeddedBase64Media;
 }
 
-export interface BaseConversation {
+export type SmashMessage = TextMessage | MediaMessage;
+
+export interface SmashConversation {
     id: string;
     title: string;
+    lastMessage?: SmashMessage;
     unreadCount: number;
     participants: string[];
     type: 'direct' | 'group';
-}
-
-export interface StoredConversation extends BaseConversation {
-    lastMessage?: StoredMessage;
-}
-
-export interface SmashConversation extends BaseConversation {
-    lastMessage?: SmashMessage;
+    updatedAt: number; // Unix timestamp in milliseconds
 }
 
 export interface SMEConfig {
@@ -44,13 +44,13 @@ export interface Profile {
 }
 
 export interface SmashService {
-    getConversations(): Promise<StoredConversation[]>;
-    getMessages(conversationId: string): Promise<StoredMessage[]>;
+    getConversations(): Promise<SmashConversation[]>;
+    getMessages(conversationId: string): Promise<SmashMessage[]>;
     updateProfile(profile: Profile): Promise<void>;
     updateSMEConfig(config: SMEConfig): Promise<void>;
-    onMessageReceived(callback: (message: StoredMessage) => void): void;
+    onMessageReceived(callback: (message: SmashMessage) => void): void;
     onConversationUpdated(
-        callback: (conversation: StoredConversation) => void,
+        callback: (conversation: SmashConversation) => void,
     ): void;
 }
 

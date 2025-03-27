@@ -1,8 +1,10 @@
 import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Upload } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     DID,
     DIDDocument,
+    IMMediaEmbedded,
     IM_DID_DOCUMENT,
     IM_PROFILE,
     SmashMessaging,
@@ -17,10 +19,11 @@ import { Settings } from './components/settings/Settings';
 import { CURRENT_USER, DEFAULT_SME_CONFIG, View } from './config/constants';
 import { useConversationHandling } from './hooks/useConversationHandling';
 import { useMessageHandling } from './hooks/useMessageHandling';
-import { StoredConversation, db, initDB } from './lib/db';
+import { db, initDB } from './lib/db';
 import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { logger } from './lib/logger';
 import { getDidDocumentManager } from './lib/smash/smash-init';
+import { SmashConversation } from './lib/types';
 
 function App() {
     const {
@@ -67,6 +70,8 @@ function App() {
     );
 
     const [isChatViewActive, setIsChatViewActive] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isProcessingMedia, setIsProcessingMedia] = useState(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -170,20 +175,15 @@ function App() {
 
                 const conversation = conversations.find((c) => c.id === sender);
                 if (conversation && conversation.type === 'direct') {
-                    const updatedConversation: StoredConversation = {
+                    const updatedConversation: SmashConversation = {
                         ...conversation,
                         title: message.data.title || sender.slice(0, 8) + '...',
-                        updatedAt: new Date().toISOString(),
+                        updatedAt: Date.now(),
                         lastMessage: conversation.lastMessage
                             ? {
                                   ...conversation.lastMessage,
-                                  timestamp:
-                                      conversation.lastMessage.timestamp.toISOString(),
-                                  status: conversation.lastMessage.status as
-                                      | 'error'
-                                      | 'sent'
-                                      | 'delivered'
-                                      | 'read',
+                                  timestamp: conversation.lastMessage.timestamp,
+                                  status: conversation.lastMessage.status,
                               }
                             : undefined,
                     };
@@ -240,13 +240,13 @@ function App() {
         });
 
         try {
-            const conversation: StoredConversation = {
+            const conversation: SmashConversation = {
                 id: didDoc.id,
                 title: `Chat with ${didDoc.id.slice(0, 8)}...`,
                 participants: [CURRENT_USER, didDoc.id],
                 type: 'direct',
                 unreadCount: 0,
-                updatedAt: new Date().toISOString(),
+                updatedAt: Date.now(),
                 lastMessage: undefined,
             };
 
@@ -288,6 +288,42 @@ function App() {
         logger.info('Logging out user');
         await clearIdentity();
     };
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    }, []);
+
+    const handleDrop = useCallback(
+        async (e: React.DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
+
+            const files = Array.from(e.dataTransfer.files);
+            setIsProcessingMedia(true);
+            try {
+                for (const file of files) {
+                    if (file.type.startsWith('image/')) {
+                        const message = await IMMediaEmbedded.fromFile(file);
+                        if (selectedChat) {
+                            sendMessage(message);
+                        }
+                    }
+                }
+            } finally {
+                setIsProcessingMedia(false);
+            }
+        },
+        [selectedChat, sendMessage],
+    );
 
     if (!isInitialized) {
         logger.debug('Application not initialized, showing loading state');
@@ -333,7 +369,12 @@ function App() {
         : null;
 
     return (
-        <div className="app-container">
+        <div
+            className={`app-container ${isDragging ? 'dragging' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
             <nav className="sidebar">
                 <button
                     className={`sidebar-button ${currentView === 'messages' ? 'active' : ''}`}
@@ -403,7 +444,10 @@ function App() {
                                     ))}
                                     <div ref={messagesEndRef} />
                                 </div>
-                                <ChatInput onSendMessage={sendMessage} />
+                                <ChatInput
+                                    onSendMessage={sendMessage}
+                                    isLoading={isProcessingMedia}
+                                />
                             </>
                         ) : (
                             <div className="no-chat-selected">
@@ -461,6 +505,15 @@ function App() {
                     >
                         ×
                     </button>
+                </div>
+            )}
+
+            {isDragging && (
+                <div className="global-dropzone">
+                    <div className="global-dropzone-content">
+                        <Upload className="w-12 h-12" />
+                        <span>Drop image to send</span>
+                    </div>
                 </div>
             )}
         </div>

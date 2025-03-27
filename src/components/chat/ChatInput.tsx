@@ -1,10 +1,12 @@
 import { Send } from 'lucide-react';
 import { useState } from 'react';
+import { IMMediaEmbedded } from 'smash-node-lib';
 
 import { logger } from '../../lib/logger';
+import { MediaUpload } from './MediaUpload';
 
 interface ChatInputProps {
-    onSendMessage: (message: string) => void;
+    onSendMessage: (message: string | IMMediaEmbedded) => void;
     isLoading?: boolean;
     onFocus?: () => void;
 }
@@ -37,6 +39,7 @@ export function ChatInput({
     onFocus,
 }: ChatInputProps) {
     const [message, setMessage] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,22 +57,35 @@ export function ChatInput({
         }
     };
 
+    const handleMediaSelect = async (mediaMessage: IMMediaEmbedded) => {
+        setIsProcessing(true);
+        try {
+            onSendMessage(mediaMessage);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit} className="chat-input-container">
             <div className="chat-input-wrapper">
+                <MediaUpload
+                    onMediaSelect={handleMediaSelect}
+                    disabled={isLoading || isProcessing}
+                />
                 <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type a message..."
                     className="chat-input"
-                    disabled={isLoading}
+                    disabled={isLoading || isProcessing}
                     rows={1}
                     onKeyDown={handleKeyDown}
                     onFocus={onFocus}
                 />
                 <SendButton
-                    isLoading={isLoading}
-                    disabled={!message.trim() || isLoading}
+                    isLoading={isLoading || isProcessing}
+                    disabled={!message.trim() || isLoading || isProcessing}
                 />
             </div>
         </form>

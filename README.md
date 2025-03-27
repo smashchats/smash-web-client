@@ -22,11 +22,12 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] marking messages as read
 
 - [x] offline storage and app reload
+- [ ] reload message queues
 
 - [x] receiving a profile message from a peer
 - [x] updating the peer's profile
 
-- [ ] share embedded media
+- [x] share embedded media
 - [ ] livestream embedded media (snap)
 - [ ] CDN-hosted media
 - [ ] media types: images, videos, vocals

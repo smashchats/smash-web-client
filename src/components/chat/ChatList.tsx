@@ -34,13 +34,23 @@ function ChatItem({ chat, isSelected, onSelect, peerProfile }: ChatItemProps) {
         return chat.participants.filter((p) => p !== 'You').join(', ');
     };
 
-    const formatTime = (timestamp: Date | string) => {
-        const date =
-            timestamp instanceof Date ? timestamp : new Date(timestamp);
-        return date.toLocaleTimeString([], {
+    const formatTime = (timestamp: number) => {
+        return new Date(timestamp).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
         });
+    };
+
+    const getMessagePreview = () => {
+        if (!chat.lastMessage) return 'No messages yet';
+
+        if (chat.lastMessage.type === 'im.chat.media.embedded') {
+            return '📷 Image';
+        }
+
+        return typeof chat.lastMessage.content === 'string'
+            ? chat.lastMessage.content
+            : 'Message';
     };
 
     return (
@@ -61,9 +71,7 @@ function ChatItem({ chat, isSelected, onSelect, peerProfile }: ChatItemProps) {
                     )}
                 </div>
             </div>
-            <p className="chat-item-preview">
-                {chat.lastMessage?.content || 'No messages yet'}
-            </p>
+            <p className="chat-item-preview">{getMessagePreview()}</p>
         </button>
     );
 }

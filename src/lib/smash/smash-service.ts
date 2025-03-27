@@ -1,20 +1,23 @@
 import {
     DID,
     DIDString,
+    IMMediaEmbedded,
+    IMMediaEmbeddedMessage,
     IMProtoMessage,
     IMText,
     IM_CHAT_TEXT,
+    IM_MEDIA_EMBEDDED,
     MessageStatus,
     SmashUser,
     sha256,
 } from 'smash-node-lib';
 
-import { StoredConversation, StoredMessage, db } from '../db';
+import { db } from '../db';
 import { logger } from '../logger';
-import { SmashMessage } from '../types';
+import { SmashConversation, SmashMessage } from '../types';
 
 export type MessageCallback = (message: SmashMessage) => void;
-export type ConversationCallback = (conversation: StoredConversation) => void;
+export type ConversationCallback = (conversation: SmashConversation) => void;
 export type StatusCallback = (
     messageId: string,
     status: SmashMessage['status'],
@@ -45,6 +48,10 @@ class SmashService {
 
         // Set up message listeners
         this.smashUser.on(IM_CHAT_TEXT, this.handleIncomingMessage.bind(this));
+        this.smashUser.on(
+            IM_MEDIA_EMBEDDED,
+            this.handleIncomingMessage.bind(this),
+        );
 
         // Set up status listener
         this.smashUser.on(
@@ -61,7 +68,7 @@ class SmashService {
         );
     }
 
-    private mapMessageStatus(status: MessageStatus): StoredMessage['status'] {
+    private mapMessageStatus(status: MessageStatus): SmashMessage['status'] {
         switch (status) {
             case 'received':
             case 'delivered':
@@ -84,14 +91,37 @@ class SmashService {
             messageId: message.sha256,
         });
 
-        const storedMessage: StoredMessage = {
-            id: message.sha256 || crypto.randomUUID(),
-            content: message.data as string,
-            sender: senderId,
-            conversationId: senderId,
-            timestamp: message.timestamp || new Date().toISOString(),
-            status: 'delivered',
-        };
+        let storedMessage: SmashMessage;
+
+        if (message.type === IM_CHAT_TEXT) {
+            storedMessage = {
+                id: message.sha256 || crypto.randomUUID(),
+                sender: senderId,
+                conversationId: senderId,
+                timestamp: message.timestamp
+                    ? new Date(message.timestamp).getTime()
+                    : Date.now(),
+                status: 'delivered',
+                type: 'im.chat.text',
+                content: message.data as string,
+            };
+        } else if (message.type === IM_MEDIA_EMBEDDED) {
+            const mediaMessage = message as IMMediaEmbeddedMessage;
+            storedMessage = {
+                id: message.sha256 || crypto.randomUUID(),
+                sender: senderId,
+                conversationId: senderId,
+                timestamp: message.timestamp
+                    ? new Date(message.timestamp).getTime()
+                    : Date.now(),
+                status: 'delivered',
+                type: 'im.chat.media.embedded',
+                content: mediaMessage.data,
+            };
+        } else {
+            logger.warn('Unknown message type', { type: message.type });
+            return;
+        }
 
         logger.debug('Storing incoming message', {
             messageId: storedMessage.id,
@@ -139,66 +169,113 @@ class SmashService {
             callback(conversation),
         );
 
-        const smashMessage: SmashMessage = {
-            ...storedMessage,
-            timestamp: new Date(storedMessage.timestamp),
-        };
         logger.debug('Notifying message received', {
-            messageId: smashMessage.id,
+            messageId: storedMessage.id,
         });
-        this.messageCallbacks.forEach((cb) => cb(smashMessage));
+        this.messageCallbacks.forEach((cb) => cb(storedMessage));
     }
 
     async sendMessage(
         conversationId: DIDString,
-        content: string,
+        content: string | IMMediaEmbedded,
     ): Promise<SmashMessage> {
         if (!this.smashUser) throw new Error('SmashService not initialized');
 
         logger.info('Sending message', {
             conversationId,
-            contentLength: content.length,
+            type: typeof content === 'string' ? 'text' : 'media',
         });
 
-        // Create message
-        const message = new IMText(content);
-        const sent = await this.smashUser.send(conversationId as DID, message);
+        let message: IMProtoMessage;
+        let smashMessage: SmashMessage;
 
-        const smashMessage: SmashMessage = {
-            id: sent.sha256!,
-            conversationId,
-            content,
-            sender: 'You',
-            timestamp: new Date(sent.timestamp),
-            status: 'sent',
-        };
+        if (typeof content === 'string') {
+            // Handle text message
+            message = new IMText(content);
+            const sent = await this.smashUser.send(
+                conversationId as DID,
+                message,
+            );
+
+            smashMessage = {
+                id: sent.sha256!,
+                conversationId,
+                sender: 'You',
+                timestamp: new Date(sent.timestamp).getTime(),
+                status: 'sent',
+                type: 'im.chat.text',
+                content,
+            };
+        } else {
+            // Handle media message
+            const sent = await this.smashUser.send(
+                conversationId as DID,
+                content,
+            );
+
+            smashMessage = {
+                id: sent.sha256!,
+                conversationId,
+                sender: 'You',
+                timestamp: new Date(sent.timestamp).getTime(),
+                status: 'sent',
+                type: 'im.chat.media.embedded',
+                content: {
+                    mimeType: content.data.mimeType,
+                    content: content.data.content,
+                    alt: content.data.alt,
+                    aspectRatio: content.data.aspectRatio,
+                },
+            };
+        }
 
         logger.debug('Storing sent message', { messageId: smashMessage.id });
 
         // Store in database
-        await db.addMessage({
-            ...smashMessage,
-            timestamp: smashMessage.timestamp.toISOString(),
-            status: 'sent',
-        });
+        await db.addMessage(smashMessage);
 
         return smashMessage;
     }
 
     async getMessages(conversationId: string): Promise<SmashMessage[]> {
         logger.debug('Getting messages', { conversationId });
-        const messages = await db.getMessages(conversationId);
+        const storedMessages = await db.getMessages(conversationId);
         logger.debug('Retrieved messages', {
             conversationId,
-            count: messages.length,
+            count: storedMessages.length,
         });
-        return messages.map((msg) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-        }));
+        return storedMessages.map((msg): SmashMessage => {
+            switch (msg.type) {
+                case 'im.chat.media.embedded':
+                    return {
+                        id: msg.id,
+                        conversationId: msg.conversationId,
+                        sender: msg.sender,
+                        timestamp: msg.timestamp,
+                        status: msg.status,
+                        type: 'im.chat.media.embedded',
+                        content: msg.content,
+                    };
+                case 'im.chat.text':
+                    return {
+                        id: msg.id,
+                        conversationId: msg.conversationId,
+                        sender: msg.sender,
+                        timestamp: msg.timestamp,
+                        status: msg.status,
+                        type: 'im.chat.text',
+                        content: msg.content || '',
+                    };
+                default:
+                    const _exhaustiveCheck: never = msg;
+                    throw new Error(
+                        `Unhandled message type: ${_exhaustiveCheck}`,
+                    );
+            }
+        });
     }
 
-    async getConversations(): Promise<StoredConversation[]> {
+    async getConversations(): Promise<SmashConversation[]> {
         logger.debug('Getting conversations');
         const conversations = await db.getConversations();
         logger.debug('Retrieved conversations', {
