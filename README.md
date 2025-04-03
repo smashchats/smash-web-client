@@ -22,12 +22,16 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] marking messages as read
 
 - [x] offline storage and app reload
-- [ ] reload message queues
+- [ ] reload message queues & buffers/parts
 
 - [x] receiving a profile message from a peer
 - [x] updating the peer's profile
 
 - [x] share embedded media
+- [x] share embedded media in parts (limit any message size at protocol level)
+- [ ] show loader when sending/receiving media parts (+ preview available info)
+- [ ] implement support for video mime types
+
 - [ ] livestream embedded media (snap)
 - [ ] CDN-hosted media
 - [ ] media types: images, videos, vocals
