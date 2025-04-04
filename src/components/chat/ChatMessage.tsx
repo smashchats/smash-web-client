@@ -26,13 +26,9 @@ function MessageStatusIndicator({ status }: MessageStatusIndicatorProps) {
                     <div className="spinner__dot"></div>
                 </div>
             )}
-            {status === 'delivered' && <Check className="h-3 w-3 opacity-50" />}
-            {status === 'received' && (
-                <CheckCheck className="h-3 w-3 opacity-50" />
-            )}
-            {status === 'read' && (
-                <CheckCheck className="h-3 w-3 opacity-100" />
-            )}
+            {status === 'delivered' && <Check className="opacity-50" />}
+            {status === 'received' && <CheckCheck className="opacity-50" />}
+            {status === 'read' && <CheckCheck className="opacity-100" />}
             {status === 'error' && (
                 <span className="text-destructive text-xs">Error</span>
             )}

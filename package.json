@@ -31,6 +31,7 @@
         "url": "https://github.com/smashchats/smash-web-client"
     },
     "dependencies": {
+        "smash-node-lib": "./smash-node-lib/",
         "@lucide/lab": "^0.1.2",
         "@protobufjs/inquire": "^1.1.0",
         "@radix-ui/react-avatar": "^1.1.3",
