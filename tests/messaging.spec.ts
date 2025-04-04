@@ -403,7 +403,7 @@ test.describe('Messaging Features', () => {
             await page.waitForTimeout(2000);
 
             const messageStatus = messagesContainer.locator(
-                '.message.outgoing .message-content .message-meta .text-muted-foreground',
+                '.message.outgoing .message-content .message-meta .message-status',
             );
             await expect(messageStatus).toBeVisible();
 
@@ -441,7 +441,7 @@ test.describe('Messaging Features', () => {
             await page.waitForTimeout(2000);
 
             const readStatus = messagesContainer.locator(
-                '.message.outgoing .message-content .message-meta .text-muted-foreground .lucide-check-check',
+                '.message.outgoing .message-content .message-meta .message-status .lucide-check-check',
             );
             await expect(readStatus).toBeVisible();
             await expect(readStatus).toHaveCSS('opacity', '1');
