@@ -12,3 +12,5 @@
 @import './components/settings.css';
 @import './components/welcome.css';
 @import './components/ui.css';
+
+@import 'tailwindcss';
