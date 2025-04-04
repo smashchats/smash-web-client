@@ -31,6 +31,7 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] share embedded media
 - [x] share embedded media in parts (limit any message size at protocol level)
 - [ ] show loader when sending/receiving media parts + preview available info
+- [ ] use thumbnail in chat! (avoids loading 100%)
 - [-] implement support for all browser mime types
 - [-] implement support for video mime types
 - [-] implement support for vocal mime types
