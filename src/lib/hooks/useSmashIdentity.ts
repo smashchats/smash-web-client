@@ -212,12 +212,9 @@ export function useSmashIdentity() {
                 await smashService.close();
             }
 
-            logger.debug('Initializing database for cleanup');
             await db.init();
-            logger.debug('Clearing database');
             await db.clearIdentity();
-            logger.debug('Closing database connection');
-            await db.close();
+            await db.deleteDatabase();
 
             setState({
                 identity: null,
@@ -229,7 +226,9 @@ export function useSmashIdentity() {
             });
 
             logger.info('Refreshing page');
-            window.location.reload();
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
         } catch (error) {
             logger.error('Error during logout', error);
             setState((prev) => ({ ...prev, error: error as Error }));

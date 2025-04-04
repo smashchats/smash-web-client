@@ -302,19 +302,52 @@ class SmashDB {
         this.checkConnection();
         logger.info('Clearing identity and related data');
 
-        const tx = this.db!.transaction(
-            ['identity', 'conversations', 'messages'],
-            'readwrite',
+        // Create a transaction that includes all stores
+        const tx = this.db!.transaction(STORE_NAMES, 'readwrite');
+
+        // Clear all stores in parallel
+        await Promise.all(
+            STORE_NAMES.map((storeName) => tx.objectStore(storeName).clear()),
         );
 
-        await Promise.all([
-            tx.objectStore('identity').clear(),
-            tx.objectStore('conversations').clear(),
-            tx.objectStore('messages').clear(),
-        ]);
-
         await tx.done;
-        logger.info('Identity and related data cleared successfully');
+        logger.info('All database stores cleared successfully');
+    }
+
+    async deleteDatabase(): Promise<void> {
+        logger.info('Deleting entire database');
+
+        // Close the current connection if it exists
+        if (this.db) {
+            this.db.close();
+            this.db = null;
+        }
+
+        // Return a promise that resolves when the database is deleted
+        return new Promise((resolve, reject) => {
+            const request = window.indexedDB.deleteDatabase(this.dbName);
+
+            request.onerror = (event) => {
+                const error = new Error(
+                    `Failed to delete database: ${this.dbName}`,
+                );
+                logger.error('Database deletion failed', { error, event });
+                reject(error);
+            };
+
+            request.onsuccess = () => {
+                logger.info('Database deleted successfully');
+                resolve();
+            };
+
+            request.onblocked = (event) => {
+                logger.warn('Database deletion blocked by other connections', {
+                    event,
+                });
+                // Still resolve as this is usually just a temporary state
+                resolve();
+            };
+        });
     }
 
     // Message Management
