@@ -4,6 +4,7 @@ import { IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
 import { DEFAULT_SME_CONFIG } from '../../config/constants';
 import { logger } from '../../lib/logger';
+import { copyToClipboard } from '../../lib/utils';
 
 interface Profile {
     title: string;
@@ -53,6 +54,10 @@ export function Settings({
     const [smeStatus, setSmeStatus] = useState<SMEStatus>(null);
     const [didCopied, setDidCopied] = useState(false);
     const [copyError, setCopyError] = useState<string | null>(null);
+    const [didDocumentString, setDidDocumentString] = useState<string | null>(
+        null,
+    );
+    const [isLoadingDID, setIsLoadingDID] = useState(true);
 
     useEffect(() => {
         if (profile) {
@@ -65,6 +70,49 @@ export function Settings({
             setSmeFormData(smeConfig);
         }
     }, [smeConfig]);
+
+    // Preload DID document when component mounts or when smashUser changes
+    useEffect(() => {
+        const loadDIDDocument = async () => {
+            if (!identity || !smashUser) {
+                setIsLoadingDID(false);
+                return;
+            }
+
+            try {
+                setIsLoadingDID(true);
+                const doc = await smashUser.getDIDDocument();
+                setDidDocumentString(JSON.stringify(doc, null, 2));
+            } catch (error) {
+                logger.error('Failed to load DID document', error);
+                setCopyError('Error loading DID document');
+            } finally {
+                setIsLoadingDID(false);
+            }
+        };
+
+        loadDIDDocument();
+    }, [smashUser, identity]);
+
+    const reloadDIDDocument = async () => {
+        setDidDocumentString(null);
+
+        if (!identity || !smashUser) {
+            return;
+        }
+
+        try {
+            setIsLoadingDID(true);
+            const doc = await smashUser.getDIDDocument();
+            setDidDocumentString(JSON.stringify(doc, null, 2));
+            logger.info('DID document reloaded successfully');
+        } catch (error) {
+            logger.error('Failed to reload DID document', error);
+            setCopyError('Error reloading DID document');
+        } finally {
+            setIsLoadingDID(false);
+        }
+    };
 
     useEffect(() => {
         return () => {
@@ -133,8 +181,14 @@ export function Settings({
             setIsSavingSME(true);
             await onUpdateSME(smeFormData);
             setSmeStatus('success');
+
+            // Reload DID document after successful SME config update
+            await reloadDIDDocument();
+
             setTimeout(() => setSmeStatus(null), 2000);
-            logger.info('SME configuration saved successfully');
+            logger.info(
+                'SME configuration saved successfully and DID document updated',
+            );
         } catch (error) {
             logger.error('Failed to save SME configuration', error);
             setSmeStatus('error');
@@ -157,39 +211,33 @@ export function Settings({
     };
 
     const handleCopyDID = async () => {
-        if (!identity || !smashUser) {
-            logger.warn('Attempted to copy DID without identity or smashUser');
-            setCopyError('No identity available');
+        if (!didDocumentString) {
+            setCopyError('DID document not available');
             return;
         }
 
         try {
             logger.debug('Copying DID document');
             setCopyError(null);
-            const didDoc = await smashUser.getDIDDocument();
-            const didDocString = JSON.stringify(didDoc, null, 2);
 
-            // Create a temporary textarea element
-            const textarea = document.createElement('textarea');
-            textarea.value = didDocString;
-            textarea.style.position = 'fixed'; // Prevent scrolling to bottom
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-
-            // Select and copy the text
-            textarea.select();
-            textarea.setSelectionRange(0, 99999); // For mobile devices
-            document.execCommand('copy');
-
-            // Clean up
-            document.body.removeChild(textarea);
+            // Use preloaded DID document
+            const result = await copyToClipboard(didDocumentString);
+            if (!result.success) {
+                throw new Error(
+                    result.errorMessage || 'Failed to copy to clipboard',
+                );
+            }
 
             setDidCopied(true);
             setTimeout(() => setDidCopied(false), 2000);
             logger.info('DID document copied successfully');
         } catch (err) {
             logger.error('Failed to copy DID document', err);
-            setCopyError('Failed to copy DID document');
+            setCopyError(
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to copy DID document',
+            );
         }
     };
 
@@ -205,9 +253,16 @@ export function Settings({
                                 <button
                                     className={`button ${didCopied ? 'button--success' : 'button--primary'} did-copy-button`}
                                     onClick={handleCopyDID}
-                                    disabled={!identity}
+                                    disabled={
+                                        isLoadingDID || !didDocumentString
+                                    }
                                 >
-                                    {didCopied ? (
+                                    {isLoadingDID ? (
+                                        <>
+                                            <div className="spinner" />
+                                            <span>Loading...</span>
+                                        </>
+                                    ) : didCopied ? (
                                         <>
                                             <Check size={16} />
                                             Copied!

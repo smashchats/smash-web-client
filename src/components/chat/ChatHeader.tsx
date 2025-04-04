@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { DIDDocument } from 'smash-node-lib';
 
 import { logger } from '../../lib/logger';
+import { copyToClipboard } from '../../lib/utils';
 
 interface ChatHeaderProps {
     didDocument: DIDDocument;
@@ -23,13 +24,24 @@ export function ChatHeader({ didDocument, profile, onClose }: ChatHeaderProps) {
             logger.debug('Copying DID document');
             setCopyError(null);
             const didDocString = JSON.stringify(didDocument, null, 2);
-            await navigator.clipboard.writeText(didDocString);
+
+            const result = await copyToClipboard(didDocString);
+            if (!result.success) {
+                throw new Error(
+                    result.errorMessage || 'Failed to copy to clipboard',
+                );
+            }
+
             setDidCopied(true);
             setTimeout(() => setDidCopied(false), 2000);
             logger.info('DID document copied successfully');
         } catch (err) {
             logger.error('Failed to copy DID document', err);
-            setCopyError('Failed to copy DID document');
+            setCopyError(
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to copy DID document',
+            );
         }
     };
 
