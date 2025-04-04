@@ -33,7 +33,10 @@ export const useMessageHandling = ({
     }, [onConversationUpdate]);
 
     useEffect(() => {
-        if (!selectedChat) return;
+        if (!selectedChat) {
+            setMessages([]);
+            return;
+        }
 
         const loadMessages = async () => {
             try {
@@ -64,13 +67,17 @@ export const useMessageHandling = ({
             // Only handle incoming messages (not our own)
             if (message.sender === CURRENT_USER) return;
 
-            logger.info('Received new message', { message });
+            logger.info('Received new message', { messageId: message.id });
 
             // Only add the message if it belongs to the current conversation
             if (message.conversationId === selectedChat) {
                 setMessages((prev) => {
-                    const updated = [...prev, message];
-                    return sortMessages(updated);
+                    // Check if we already have this message to avoid duplicates
+                    if (!prev.some((m) => m.id === message.id)) {
+                        const updated = [...prev, message];
+                        return sortMessages(updated);
+                    }
+                    return prev;
                 });
                 conversationUpdateRef.current(message.conversationId, message);
             } else {
@@ -85,12 +92,29 @@ export const useMessageHandling = ({
             messageId: string,
             status: SmashMessage['status'],
         ) => {
-            logger.debug('Message status updated', { messageId, status });
-            setMessages((prev) =>
-                prev.map((msg) =>
-                    msg.id === messageId ? { ...msg, status } : msg,
-                ),
-            );
+            logger.debug('Message status updated in hook', {
+                messageId,
+                status,
+            });
+
+            setMessages((prev) => {
+                // Only update if the message exists in our current state
+                const hasMessage = prev.some((msg) => msg.id === messageId);
+
+                if (hasMessage) {
+                    return prev.map((msg) =>
+                        msg.id === messageId ? { ...msg, status } : msg,
+                    );
+                } else {
+                    // If no message found with this ID, just leave the state as is
+                    logger.debug('No message found with ID for status update', {
+                        messageId,
+                        status,
+                        messageCount: prev.length,
+                    });
+                    return prev;
+                }
+            });
         };
 
         // Set up message handling
@@ -103,7 +127,7 @@ export const useMessageHandling = ({
             smashService.offMessageReceived(handleNewMessage);
             smashService.offMessageStatusUpdated(handleMessageStatusUpdate);
         };
-    }, [selectedChat]); // Add selectedChat to dependencies
+    }, [selectedChat]);
 
     const sendMessage = async (content: string | IMMediaEmbedded) => {
         if (!selectedChat) return;
@@ -114,16 +138,25 @@ export const useMessageHandling = ({
                 type: typeof content === 'string' ? 'text' : 'media',
             });
             setError(null);
+
             const message = await smashService.sendMessage(
                 selectedChat as DIDString,
                 content,
             );
 
-            logger.debug('Message sent successfully', {
+            setMessages((prev) => {
+                // Check if we already have this message to avoid duplicates
+                if (!prev.some((m) => m.id === message.id)) {
+                    return sortMessages([...prev, message]);
+                }
+                return prev;
+            });
+
+            conversationUpdateRef.current(selectedChat, message);
+
+            logger.debug('Message sending initiated', {
                 messageId: message.id,
             });
-            setMessages((prev) => [...prev, message]);
-            conversationUpdateRef.current(selectedChat, message);
         } catch (err) {
             const error =
                 err instanceof Error

@@ -1,6 +1,12 @@
 import { EmbeddedBase64Media } from 'smash-node-lib';
 
-export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed' | 'error';
+export type MessageStatus =
+    | 'sending'
+    | 'sent'
+    | 'delivered'
+    | 'read'
+    | 'failed'
+    | 'error';
 
 interface BaseMessage {
     id: string;
