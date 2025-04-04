@@ -72,6 +72,17 @@
     }
 }
 
+/* Three Dots Animation */
+@keyframes dotPulse {
+    0%,
+    100% {
+        opacity: 0.2;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
 /* Overlay Show */
 @keyframes overlayShow {
     from {

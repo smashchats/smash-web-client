@@ -144,6 +144,20 @@
     opacity: 0.8;
 }
 
+.message-status {
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-xs);
+}
+
+.message.outgoing .message-status {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message.incoming .message-status {
+    color: var(--color-text-light);
+}
+
 /* Image Message Styles */
 .message-content img {
     max-width: 100%;

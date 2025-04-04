@@ -18,7 +18,14 @@ interface MessageStatusIndicatorProps {
 
 function MessageStatusIndicator({ status }: MessageStatusIndicatorProps) {
     return (
-        <span className="flex items-center text-xs text-muted-foreground">
+        <span className="message-status">
+            {status === 'sending' && (
+                <div className="dots-container">
+                    <div className="spinner__dot"></div>
+                    <div className="spinner__dot"></div>
+                    <div className="spinner__dot"></div>
+                </div>
+            )}
             {status === 'sent' && <Check className="h-3 w-3 opacity-50" />}
             {status === 'delivered' && (
                 <CheckCheck className="h-3 w-3 opacity-50" />

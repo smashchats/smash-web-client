@@ -317,10 +317,12 @@ function App() {
                     if (file.type.startsWith('image/')) {
                         const message = await IMMediaEmbedded.fromFile(file);
                         if (selectedChat) {
-                            sendMessage(message);
+                            await sendMessage(message);
                         }
                     }
                 }
+            } catch (err) {
+                logger.error('Failed to process dropped media', err);
             } finally {
                 setIsProcessingMedia(false);
             }

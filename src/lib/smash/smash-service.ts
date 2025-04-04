@@ -1,39 +1,36 @@
 import {
     DID,
     DIDString,
+    EmbeddedBase64Media,
+    EncapsulatedIMProtoMessage,
     IMMediaEmbedded,
     IMMediaEmbeddedMessage,
     IMProtoMessage,
     IMText,
     IM_CHAT_TEXT,
     IM_MEDIA_EMBEDDED,
-    MessageStatus,
+    MessageStatus as NodeLibMessageStatus,
     SmashUser,
+    encapsulateMessage,
     sha256,
 } from 'smash-node-lib';
 
 import { db } from '../db';
 import { logger } from '../logger';
-import { SmashConversation, SmashMessage } from '../types';
+import { MessageStatus, SmashConversation, SmashMessage } from '../types';
 
 export type MessageCallback = (message: SmashMessage) => void;
 export type ConversationCallback = (conversation: SmashConversation) => void;
-export type StatusCallback = (
-    messageId: string,
-    status: SmashMessage['status'],
-) => void;
+export type StatusCallback = (messageId: string, status: MessageStatus) => void;
 
 class SmashService {
     private static instance: SmashService;
-    private messageCallbacks: Set<MessageCallback> = new Set();
-    private conversationCallbacks: Set<ConversationCallback> = new Set();
-    private statusCallbacks: Set<StatusCallback> = new Set();
+    private messageCallbacks = new Set<MessageCallback>();
+    private conversationCallbacks = new Set<ConversationCallback>();
+    private statusCallbacks = new Set<StatusCallback>();
     private smashUser: SmashUser | null = null;
 
-    private constructor() {
-        // We don't need to set up event listeners in constructor
-        // They will be set up when a user is initialized
-    }
+    private constructor() {}
 
     static getInstance(): SmashService {
         if (!SmashService.instance) {
@@ -46,29 +43,74 @@ class SmashService {
         this.smashUser = smashUser;
         await db.init();
 
-        // Set up message listeners
+        this.setupMessageListeners();
+        this.setupStatusListener();
+    }
+
+    private setupMessageListeners(): void {
+        if (!this.smashUser) return;
+
         this.smashUser.on(IM_CHAT_TEXT, this.handleIncomingMessage.bind(this));
         this.smashUser.on(
             IM_MEDIA_EMBEDDED,
             this.handleIncomingMessage.bind(this),
         );
+    }
 
-        // Set up status listener
+    private setupStatusListener(): void {
+        if (!this.smashUser) return;
+
         this.smashUser.on(
             'status',
-            (status: MessageStatus, messageIds: sha256[]) => {
-                messageIds.forEach((messageId) => {
-                    const mappedStatus = this.mapMessageStatus(status);
-                    void db.updateMessageStatus(messageId, mappedStatus);
-                    this.statusCallbacks.forEach((callback) =>
-                        callback(messageId, mappedStatus),
-                    );
+            async (status: NodeLibMessageStatus, messageIds: sha256[]) => {
+                // Debug the incoming status update
+                logger.debug('Received status update from library', {
+                    status,
+                    messageIds,
                 });
+
+                for (const messageId of messageIds) {
+                    try {
+                        // Convert library status to our app status
+                        const mappedStatus = this.mapMessageStatus(status);
+
+                        // Try to find the message in our database using the SHA256 ID directly
+                        const message = await db.getMessage(messageId);
+
+                        if (message) {
+                            // We found it - update the status
+                            await db.updateMessageStatus(
+                                messageId,
+                                mappedStatus,
+                            );
+                            this.notifyStatusCallbacks(messageId, mappedStatus);
+                            logger.debug('Updated message status', {
+                                messageId,
+                                status: mappedStatus,
+                            });
+                        } else {
+                            // If message isn't found with the SHA256 ID, this is an error
+                            logger.error(
+                                'Could not find message for status update',
+                                {
+                                    messageId,
+                                    status,
+                                },
+                            );
+                        }
+                    } catch (err) {
+                        logger.error('Error processing status update', {
+                            messageId,
+                            status,
+                            error: err,
+                        });
+                    }
+                }
             },
         );
     }
 
-    private mapMessageStatus(status: MessageStatus): SmashMessage['status'] {
+    private mapMessageStatus(status: NodeLibMessageStatus): MessageStatus {
         switch (status) {
             case 'received':
             case 'delivered':
@@ -78,6 +120,44 @@ class SmashService {
             default:
                 return 'error';
         }
+    }
+
+    private createSmashMessage(
+        senderId: DIDString,
+        message: IMProtoMessage,
+    ): SmashMessage {
+        if (!message.sha256) {
+            throw new Error('Message must have a sha256 hash to be stored');
+        }
+
+        const baseMessage = {
+            id: message.sha256,
+            sender: senderId,
+            conversationId: senderId,
+            timestamp: message.timestamp
+                ? new Date(message.timestamp).getTime()
+                : Date.now(),
+            status: 'delivered' as const,
+        };
+
+        if (message.type === IM_CHAT_TEXT) {
+            return {
+                ...baseMessage,
+                type: 'im.chat.text',
+                content: message.data as string,
+            };
+        }
+
+        if (message.type === IM_MEDIA_EMBEDDED) {
+            const mediaMessage = message as IMMediaEmbeddedMessage;
+            return {
+                ...baseMessage,
+                type: 'im.chat.media.embedded',
+                content: mediaMessage.data,
+            };
+        }
+
+        throw new Error(`Unknown message type: ${message.type}`);
     }
 
     private async handleIncomingMessage(
@@ -91,88 +171,95 @@ class SmashService {
             messageId: message.sha256,
         });
 
-        let storedMessage: SmashMessage;
+        const storedMessage = this.createSmashMessage(senderId, message);
+        await this.storeMessage(storedMessage);
+        await this.updateConversation(senderId, storedMessage);
+    }
 
-        if (message.type === IM_CHAT_TEXT) {
-            storedMessage = {
-                id: message.sha256 || crypto.randomUUID(),
-                sender: senderId,
-                conversationId: senderId,
-                timestamp: message.timestamp
-                    ? new Date(message.timestamp).getTime()
-                    : Date.now(),
-                status: 'delivered',
-                type: 'im.chat.text',
-                content: message.data as string,
-            };
-        } else if (message.type === IM_MEDIA_EMBEDDED) {
-            const mediaMessage = message as IMMediaEmbeddedMessage;
-            storedMessage = {
-                id: message.sha256 || crypto.randomUUID(),
-                sender: senderId,
-                conversationId: senderId,
-                timestamp: message.timestamp
-                    ? new Date(message.timestamp).getTime()
-                    : Date.now(),
-                status: 'delivered',
-                type: 'im.chat.media.embedded',
-                content: mediaMessage.data,
-            };
+    private async storeMessage(message: SmashMessage): Promise<void> {
+        logger.debug('Storing incoming message', { messageId: message.id });
+        await db.addMessage(message);
+    }
+
+    private async updateConversation(
+        senderId: DIDString,
+        message: SmashMessage,
+    ): Promise<void> {
+        let conversation = await db.getConversation(senderId);
+
+        if (!conversation) {
+            conversation = await this.createNewConversation(senderId, message);
         } else {
-            logger.warn('Unknown message type', { type: message.type });
-            return;
+            conversation = await this.updateExistingConversation(
+                conversation,
+                message,
+            );
         }
 
-        logger.debug('Storing incoming message', {
-            messageId: storedMessage.id,
+        this.notifyConversationCallbacks(conversation);
+        this.notifyMessageCallbacks(message);
+    }
+
+    private async createNewConversation(
+        senderId: DIDString,
+        message: SmashMessage,
+    ): Promise<SmashConversation> {
+        const conversation = {
+            id: senderId,
+            title: `Chat with ${senderId.slice(0, 8)}...`,
+            participants: ['You', senderId],
+            type: 'direct' as const,
+            unreadCount: 1,
+            updatedAt: message.timestamp,
+            lastMessage: message,
+        };
+
+        logger.debug('Creating new conversation', {
+            conversationId: conversation.id,
+        });
+        await db.addConversation(conversation);
+        return conversation;
+    }
+
+    private async updateExistingConversation(
+        conversation: SmashConversation,
+        message: SmashMessage,
+    ): Promise<SmashConversation> {
+        const updatedConversation = {
+            ...conversation,
+            unreadCount: (conversation.unreadCount || 0) + 1,
+            lastMessage: message,
+            updatedAt: message.timestamp,
+        };
+
+        logger.debug('Updating existing conversation', {
+            conversationId: updatedConversation.id,
+            unreadCount: updatedConversation.unreadCount,
         });
 
-        // Add message to database - this will also create a conversation if it doesn't exist
-        await db.addMessage(storedMessage);
+        await db.updateConversation(updatedConversation);
+        return updatedConversation;
+    }
 
-        // Get or create conversation with incremented unread count
-        let conversation = await db.getConversation(senderId);
-        if (!conversation) {
-            // Create new conversation with unread count 1
-            conversation = {
-                id: senderId,
-                title: `Chat with ${senderId.slice(0, 8)}...`,
-                participants: ['You', senderId],
-                type: 'direct',
-                unreadCount: 1,
-                updatedAt: storedMessage.timestamp,
-                lastMessage: storedMessage,
-            };
-            logger.debug('Creating new conversation', {
-                conversationId: conversation.id,
-            });
-            await db.addConversation(conversation);
-        } else {
-            // Update existing conversation with incremented unread count
-            conversation = {
-                ...conversation,
-                unreadCount: (conversation.unreadCount || 0) + 1,
-                lastMessage: storedMessage,
-                updatedAt: storedMessage.timestamp,
-            };
-            logger.debug('Updating existing conversation', {
-                conversationId: conversation.id,
-                unreadCount: conversation.unreadCount,
-            });
-            await db.updateConversation(conversation);
-        }
-
+    private notifyConversationCallbacks(conversation: SmashConversation): void {
         logger.debug('Notifying conversation update', {
             conversationId: conversation.id,
         });
         this.conversationCallbacks.forEach((callback) =>
             callback(conversation),
         );
+    }
 
-        logger.debug('Notifying message received', {
-            messageId: storedMessage.id,
-        });
-        this.messageCallbacks.forEach((cb) => cb(storedMessage));
+    private notifyMessageCallbacks(message: SmashMessage): void {
+        logger.debug('Notifying message received', { messageId: message.id });
+        this.messageCallbacks.forEach((cb) => cb(message));
+    }
+
+    private notifyStatusCallbacks(
+        messageId: string,
+        status: MessageStatus,
+    ): void {
+        this.statusCallbacks.forEach((callback) => callback(messageId, status));
     }
 
     async sendMessage(
@@ -181,60 +268,65 @@ class SmashService {
     ): Promise<SmashMessage> {
         if (!this.smashUser) throw new Error('SmashService not initialized');
 
-        logger.info('Sending message', {
+        const message: IMProtoMessage =
+            typeof content === 'string' ? new IMText(content) : content;
+        const encapsulated = await encapsulateMessage(message);
+
+        const smashMessage = await this.createOutgoingMessage(
             conversationId,
-            type: typeof content === 'string' ? 'text' : 'media',
-        });
-
-        let message: IMProtoMessage;
-        let smashMessage: SmashMessage;
-
-        if (typeof content === 'string') {
-            // Handle text message
-            message = new IMText(content);
-            const sent = await this.smashUser.send(
-                conversationId as DID,
-                message,
-            );
-
-            smashMessage = {
-                id: sent.sha256!,
-                conversationId,
-                sender: 'You',
-                timestamp: new Date(sent.timestamp).getTime(),
-                status: 'sent',
-                type: 'im.chat.text',
-                content,
-            };
-        } else {
-            // Handle media message
-            const sent = await this.smashUser.send(
-                conversationId as DID,
-                content,
-            );
-
-            smashMessage = {
-                id: sent.sha256!,
-                conversationId,
-                sender: 'You',
-                timestamp: new Date(sent.timestamp).getTime(),
-                status: 'sent',
-                type: 'im.chat.media.embedded',
-                content: {
-                    mimeType: content.data.mimeType,
-                    content: content.data.content,
-                    alt: content.data.alt,
-                    aspectRatio: content.data.aspectRatio,
-                },
-            };
-        }
-
-        logger.debug('Storing sent message', { messageId: smashMessage.id });
-
-        // Store in database
+            message,
+            encapsulated,
+        );
         await db.addMessage(smashMessage);
 
+        void this.sendInBackground(conversationId as DID, encapsulated);
         return smashMessage;
+    }
+
+    private async createOutgoingMessage(
+        conversationId: DIDString,
+        message: IMProtoMessage,
+        encapsulated: { sha256?: string },
+    ): Promise<SmashMessage> {
+        const baseMessage = {
+            id: encapsulated.sha256!,
+            conversationId,
+            sender: 'You',
+            timestamp: Date.now(),
+            status: 'sending' as const,
+        };
+
+        return typeof message.data === 'string'
+            ? {
+                  ...baseMessage,
+                  type: 'im.chat.text' as const,
+                  content: message.data,
+              }
+            : {
+                  ...baseMessage,
+                  type: 'im.chat.media.embedded' as const,
+                  content: message.data as EmbeddedBase64Media,
+              };
+    }
+
+    private async sendInBackground(
+        recipientDid: DID,
+        message: EncapsulatedIMProtoMessage,
+    ): Promise<void> {
+        try {
+            await this.smashUser!.send(recipientDid, message);
+        } catch (err) {
+            await this.handleMessageError(message.sha256, err);
+        }
+    }
+
+    private async handleMessageError(
+        messageId: string,
+        error: unknown,
+    ): Promise<void> {
+        logger.error('Failed to send message', error);
+        await db.updateMessageStatus(messageId, 'failed');
+        this.notifyStatusCallbacks(messageId, 'failed');
     }
 
     async getMessages(conversationId: string): Promise<SmashMessage[]> {
@@ -244,35 +336,7 @@ class SmashService {
             conversationId,
             count: storedMessages.length,
         });
-        return storedMessages.map((msg): SmashMessage => {
-            switch (msg.type) {
-                case 'im.chat.media.embedded':
-                    return {
-                        id: msg.id,
-                        conversationId: msg.conversationId,
-                        sender: msg.sender,
-                        timestamp: msg.timestamp,
-                        status: msg.status,
-                        type: 'im.chat.media.embedded',
-                        content: msg.content,
-                    };
-                case 'im.chat.text':
-                    return {
-                        id: msg.id,
-                        conversationId: msg.conversationId,
-                        sender: msg.sender,
-                        timestamp: msg.timestamp,
-                        status: msg.status,
-                        type: 'im.chat.text',
-                        content: msg.content || '',
-                    };
-                default:
-                    const _exhaustiveCheck: never = msg;
-                    throw new Error(
-                        `Unhandled message type: ${_exhaustiveCheck}`,
-                    );
-            }
-        });
+        return storedMessages;
     }
 
     async getConversations(): Promise<SmashConversation[]> {
@@ -286,79 +350,78 @@ class SmashService {
 
     async markConversationAsRead(conversationId: string): Promise<void> {
         logger.info('Marking conversation as read', { conversationId });
-        // Update conversation in database
-        const conversation = await db.getConversation(conversationId);
-        if (conversation) {
-            conversation.unreadCount = 0;
-            await db.updateConversation(conversation);
 
-            // Notify UI about the update
-            this.conversationCallbacks.forEach((callback) =>
-                callback(conversation),
-            );
-            logger.debug('Conversation marked as read', { conversationId });
-        } else {
+        const conversation = await db.getConversation(conversationId);
+        if (!conversation) {
             logger.warn('Conversation not found for marking as read', {
                 conversationId,
             });
+            return;
         }
+
+        conversation.unreadCount = 0;
+        await db.updateConversation(conversation);
+        this.notifyConversationCallbacks(conversation);
+        logger.debug('Conversation marked as read', { conversationId });
     }
 
     async markMessageAsRead(messageId: string): Promise<void> {
         if (!this.smashUser) throw new Error('SmashService not initialized');
 
         try {
-            logger.info('Marking message as read', { messageId });
+            const message = await this.getMessageForReading(messageId);
+            if (!message) return;
 
-            // Get the message to find its conversation
-            const message = await db.getMessage(messageId);
-            if (!message) {
-                logger.warn('Message not found when marking as read', {
-                    messageId,
-                });
-                return;
-            }
-
-            // Acknowledge the message as read
-            await this.smashUser.ackMessagesRead(
-                message.conversationId as DID,
-                [messageId as sha256],
-            );
-
-            // Update the message status in the database
-            await db.updateMessageStatus(messageId, 'read');
-
-            // Get all messages for this conversation to count unread ones
-            const messages = await db.getMessages(message.conversationId);
-            const unreadCount = messages.filter(
-                (msg) => msg.sender !== 'You' && msg.status !== 'read',
-            ).length;
-
-            // Update the conversation's unread count
-            const conversation = await db.getConversation(
-                message.conversationId,
-            );
-            if (conversation) {
-                conversation.unreadCount = unreadCount;
-
-                // Update the conversation in the database
-                await db.updateConversation(conversation);
-
-                // Notify listeners about the conversation update
-                this.conversationCallbacks.forEach((callback) =>
-                    callback(conversation),
-                );
-            }
-
-            logger.debug('Message marked as read successfully', {
-                messageId,
-                conversationId: message.conversationId,
-                updatedUnreadCount: unreadCount,
-            });
+            await this.acknowledgeMessageRead(message);
+            await this.updateMessageAndConversation(message);
         } catch (err) {
             logger.error('Failed to mark message as read', err);
             throw err;
         }
+    }
+
+    private async getMessageForReading(
+        messageId: string,
+    ): Promise<SmashMessage | null> {
+        logger.info('Marking message as read', { messageId });
+
+        const message = await db.getMessage(messageId);
+        if (!message) {
+            logger.warn('Message not found when marking as read', {
+                messageId,
+            });
+            return null;
+        }
+        return message;
+    }
+
+    private async acknowledgeMessageRead(message: SmashMessage): Promise<void> {
+        await this.smashUser!.ackMessagesRead(message.conversationId as DID, [
+            message.id as sha256,
+        ]);
+        await db.updateMessageStatus(message.id, 'read');
+    }
+
+    private async updateMessageAndConversation(
+        message: SmashMessage,
+    ): Promise<void> {
+        const messages = await db.getMessages(message.conversationId);
+        const unreadCount = messages.filter(
+            (msg) => msg.sender !== 'You' && msg.status !== 'read',
+        ).length;
+
+        const conversation = await db.getConversation(message.conversationId);
+        if (conversation) {
+            conversation.unreadCount = unreadCount;
+            await db.updateConversation(conversation);
+            this.notifyConversationCallbacks(conversation);
+        }
+
+        logger.debug('Message marked as read successfully', {
+            messageId: message.id,
+            conversationId: message.conversationId,
+            updatedUnreadCount: unreadCount,
+        });
     }
 
     onMessageReceived(callback: MessageCallback): void {
