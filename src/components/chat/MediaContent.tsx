@@ -38,9 +38,51 @@ const SUPPORTED_MIME_TYPES = {
     ],
 } as const;
 
+// Helper to calculate the file size from base64 string
+const getFileSizeFromBase64 = (base64Content: string): number => {
+    // Base64 string length * 0.75 gives approximate file size in bytes
+    const base64Length = base64Content.replace(/=/g, '').length;
+    return Math.floor(base64Length * 0.75);
+};
+
+// Helper to format file size in human-readable format
+const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+
+    return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`;
+};
+
+// Helper to get a more readable MIME type description
+const getMimeTypeDescription = (mimeType: string): string => {
+    const parts = mimeType.split('/');
+    if (parts.length !== 2) return mimeType;
+
+    const [type, subtype] = parts;
+    return `${type.charAt(0).toUpperCase() + type.slice(1)} (${subtype})`;
+};
+
 // Helper to check if a MIME type is supported by the browser
 const isMimeTypeSupported = (mimeType: string): boolean => {
     if (typeof window === 'undefined') return false;
+
+    // For audio and video, use a different approach than MediaSource
+    if (mimeType.startsWith('audio/')) {
+        // Create a test audio element to check format support
+        const audio = document.createElement('audio');
+        // canPlayType returns: "", "maybe", or "probably"
+        return !!audio.canPlayType(mimeType);
+    }
+
+    if (mimeType.startsWith('video/')) {
+        // Create a test video element to check format support
+        const video = document.createElement('video');
+        return !!video.canPlayType(mimeType);
+    }
+
+    // For other types, fallback to MediaSource check
     return window.MediaSource?.isTypeSupported(mimeType) ?? false;
 };
 
@@ -89,6 +131,7 @@ export function MediaContent({ data }: MediaContentProps) {
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+    const [fileSize, setFileSize] = useState<number>(0);
     const videoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -98,6 +141,10 @@ export function MediaContent({ data }: MediaContentProps) {
                 setIsLoading(true);
                 setError(null);
 
+                // Calculate file size
+                const size = getFileSizeFromBase64(data.content);
+                setFileSize(size);
+
                 // Create data URL for the media content
                 const url = `data:${data.mimeType};base64,${data.content}`;
                 setMediaUrl(url);
@@ -105,7 +152,7 @@ export function MediaContent({ data }: MediaContentProps) {
                 // Check if the MIME type is supported
                 const category = getMediaCategory(data.mimeType);
                 if (category === 'other') {
-                    setError('Unsupported media type');
+                    setError('unsupported_type');
                     setIsLoading(false);
                     return;
                 }
@@ -115,7 +162,7 @@ export function MediaContent({ data }: MediaContentProps) {
                     (category === 'video' || category === 'audio') &&
                     !isMimeTypeSupported(data.mimeType)
                 ) {
-                    setError('Media format not supported by your browser');
+                    setError('browser_unsupported');
                     setIsLoading(false);
                     return;
                 }
@@ -123,7 +170,7 @@ export function MediaContent({ data }: MediaContentProps) {
                 setIsLoading(false);
             } catch (err) {
                 logger.error('Failed to process media', { error: err });
-                setError('Failed to process media');
+                setError('failed_to_process');
                 setIsLoading(false);
             }
         };
@@ -132,7 +179,11 @@ export function MediaContent({ data }: MediaContentProps) {
     }, [data]);
 
     const handleMediaClick = () => {
-        if (!error) {
+        if (
+            !error ||
+            error === 'unsupported_type' ||
+            error === 'browser_unsupported'
+        ) {
             setShowModal(true);
         }
     };
@@ -164,11 +215,44 @@ export function MediaContent({ data }: MediaContentProps) {
         }
 
         if (error) {
-            return (
-                <div className="media-error">
-                    <span>{error}</span>
-                </div>
-            );
+            if (error === 'unsupported_type') {
+                return (
+                    <div className="media-unsupported">
+                        <File className="w-6 h-6" />
+                        <div className="flex flex-col">
+                            <span className="font-medium">
+                                {getMimeTypeDescription(data.mimeType)}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                                {formatFileSize(fileSize)}
+                            </span>
+                        </div>
+                    </div>
+                );
+            } else if (error === 'browser_unsupported') {
+                return (
+                    <div className="media-unsupported">
+                        <File className="w-6 h-6" />
+                        <div className="flex flex-col">
+                            <span>Format not supported by your browser</span>
+                            <span className="text-sm text-gray-500">
+                                {getMimeTypeDescription(data.mimeType)} •{' '}
+                                {formatFileSize(fileSize)}
+                            </span>
+                        </div>
+                    </div>
+                );
+            } else {
+                return (
+                    <div className="media-error">
+                        <span>
+                            {error === 'failed_to_process'
+                                ? 'Failed to process media'
+                                : error}
+                        </span>
+                    </div>
+                );
+            }
         }
 
         const category = getMediaCategory(data.mimeType);

@@ -1,4 +1,4 @@
-import { Image } from 'lucide-react';
+import { Paperclip } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
@@ -19,10 +19,8 @@ export function MediaUpload({
             try {
                 const files = Array.from(e.target.files || []);
                 for (const file of files) {
-                    if (file.type.startsWith('image/')) {
-                        const message = await IMMediaEmbedded.fromFile(file);
-                        onMediaSelect(message);
-                    }
+                    const message = await IMMediaEmbedded.fromFile(file);
+                    onMediaSelect(message);
                 }
             } finally {
                 setIsProcessing(false);
@@ -35,7 +33,7 @@ export function MediaUpload({
         <div className={`media-upload ${disabled ? 'disabled' : ''}`}>
             <input
                 type="file"
-                accept="image/*"
+                accept="*/*"
                 onChange={handleFileSelect}
                 disabled={disabled || isProcessing}
                 className="hidden"
@@ -45,7 +43,7 @@ export function MediaUpload({
                 {isProcessing ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                    <Image className="w-5 h-5" />
+                    <Paperclip className="w-5 h-5" />
                 )}
             </label>
         </div>

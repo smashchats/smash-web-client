@@ -314,11 +314,9 @@ function App() {
             setIsProcessingMedia(true);
             try {
                 for (const file of files) {
-                    if (file.type.startsWith('image/')) {
-                        const message = await IMMediaEmbedded.fromFile(file);
-                        if (selectedChat) {
-                            await sendMessage(message);
-                        }
+                    const message = await IMMediaEmbedded.fromFile(file);
+                    if (selectedChat) {
+                        await sendMessage(message);
                     }
                 }
             } catch (err) {
@@ -517,7 +515,7 @@ function App() {
                 <div className="global-dropzone">
                     <div className="global-dropzone-content">
                         <Upload className="w-12 h-12" />
-                        <span>Drop image to send</span>
+                        <span>Drop file to send</span>
                     </div>
                 </div>
             )}

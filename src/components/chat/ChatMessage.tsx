@@ -185,10 +185,17 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
         }
     };
 
+    // Check if message contains audio content
+    const hasAudioContent =
+        message.type === 'im.chat.media.embedded' &&
+        typeof message.content !== 'string' &&
+        message.content.mimeType.startsWith('audio/');
+
     return (
         <div
             ref={messageRef}
-            className={`message ${isOwnMessage ? 'outgoing' : 'incoming'}`}
+            className={`message ${isOwnMessage ? 'outgoing' : 'incoming'} ${hasAudioContent ? 'has-audio' : ''}`}
+            style={hasAudioContent ? { padding: '0.75rem' } : undefined}
         >
             <div className="message-content">
                 {renderMessageContent()}

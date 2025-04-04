@@ -778,10 +778,25 @@
 
 .media-audio {
     width: 100%;
+    min-width: 300px;
     padding: var(--spacing-sm);
-    margin: calc(var(--spacing-sm) * -1);
+    margin: 0;
     background-color: rgba(0, 0, 0, 0.05);
     border-radius: var(--border-radius-md);
+    min-height: 50px;
+    height: 50px;
+}
+
+/* Ensure message content with audio has proper spacing */
+.message.has-audio .message-content {
+    gap: var(--spacing-sm);
+}
+
+/* Set wider message bubbles when they contain audio */
+.message.has-audio {
+    min-width: 300px;
+    max-width: 350px;
+    padding: var(--spacing-md);
 }
 
 .message.outgoing .media-audio {
@@ -875,5 +890,16 @@
     .media-modal-close {
         top: var(--spacing-md);
         right: var(--spacing-md);
+    }
+
+    .media-audio {
+        min-width: 220px;
+        width: 100%;
+    }
+
+    /* Ensure audio messages have enough space on mobile */
+    .message.has-audio {
+        min-width: 260px;
+        max-width: 95%;
     }
 }
