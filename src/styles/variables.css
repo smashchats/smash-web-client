@@ -91,6 +91,7 @@
     --z-index-tooltip: 1070;
     --z-index-mobile-nav: 1080;
     --z-index-mobile-chat: 1040;
+    --z-index-mobile-chat-overlay: 1090;
 
     /* Colors */
     --color-background-hover: rgba(0, 0, 0, 0.05);

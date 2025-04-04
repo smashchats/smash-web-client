@@ -18,6 +18,28 @@ body {
     line-height: var(--line-height-normal);
     color: var(--color-text);
     background-color: var(--color-background);
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+    html {
+        height: -webkit-fill-available; /* Mobile Safari specific fix */
+    }
+
+    /* Viewport height adjustments for mobile */
+    body {
+        min-height: -webkit-fill-available;
+        height: 100vh;
+        /* Prevent content from being obscured by the keyboard */
+        position: relative;
+    }
+
+    /* Input focus adjustments for mobile */
+    input:focus,
+    textarea:focus {
+        font-size: 16px; /* Prevents iOS zoom on focus */
+    }
 }
 
 /* Typography */
