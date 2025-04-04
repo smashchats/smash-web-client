@@ -41,11 +41,24 @@ function ChatItem({ chat, isSelected, onSelect, peerProfile }: ChatItemProps) {
         });
     };
 
+    const getMediaTypePreview = (mimeType: string) => {
+        if (mimeType.startsWith('image/')) {
+            return '📷 Image';
+        } else if (mimeType.startsWith('video/')) {
+            return '🎬 Video';
+        } else if (mimeType.startsWith('audio/')) {
+            return '🎵 Audio';
+        } else {
+            return '📎 Attachment';
+        }
+    };
+
     const getMessagePreview = () => {
         if (!chat.lastMessage) return 'No messages yet';
 
         if (chat.lastMessage.type === 'im.chat.media.embedded') {
-            return '📷 Image';
+            const mediaContent = chat.lastMessage.content;
+            return getMediaTypePreview(mediaContent.mimeType);
         }
 
         return typeof chat.lastMessage.content === 'string'
