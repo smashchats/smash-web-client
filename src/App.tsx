@@ -78,7 +78,10 @@ function App() {
     };
 
     useEffect(() => {
-        scrollToBottom();
+        // TODO: find a better way to do this
+        setTimeout(() => {
+            scrollToBottom();
+        }, 200);
     }, [messages]);
 
     useEffect(() => {
@@ -328,7 +331,7 @@ function App() {
     if (!isInitialized) {
         logger.debug('Application not initialized, showing loading state');
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="loading-container">
                 <p>Loading...</p>
             </div>
         );

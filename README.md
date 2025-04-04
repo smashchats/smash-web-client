@@ -23,20 +23,27 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 
 - [x] offline storage and app reload
 - [ ] reload message queues & buffers/parts
+- [ ] message deduplication and re-ordering/sorting
 
 - [x] receiving a profile message from a peer
 - [x] updating the peer's profile
 
 - [x] share embedded media
 - [x] share embedded media in parts (limit any message size at protocol level)
-- [ ] show loader when sending/receiving media parts (+ preview available info)
-- [ ] implement support for video mime types
-
-- [ ] livestream embedded media (snap)
+- [ ] show loader when sending/receiving media parts + preview available info
+- [-] implement support for all browser mime types
+- [-] implement support for video mime types
+- [-] implement support for vocal mime types
+- [-] allow downloading all other unsupported media types
+- [ ] livestream embedded media with postponed decryption (snap)
 - [ ] CDN-hosted media
-- [ ] media types: images, videos, vocals
 
-- [ ] PDS to store backup and settings (multi device - semaphore)
+    - [ ] Preview on mobile isnt sized properly.
+    - [ ] Mobile fix size/spacing/overflow
+
+- [ ] TODO DEBUG why heavy media were breaking app (prior to parts support)
+
+- [ ] PDS to store data, backup and settings (multi device)
 
 - [ ] joining a Neighborhood
 - [ ] discovering other peers in the neighborhood (NBH_PROFILE_LIST)
@@ -45,7 +52,6 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [ ] clearing another user from the neighborhood
 
 - [ ] blocking/unblocking another peer
-- [-] message deduplication and ordering
 
 - [ ] update message status more granular (sending, delivered, received, read, failed, retrying)
 - [ ] report peer to admins

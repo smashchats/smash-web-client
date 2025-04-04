@@ -1,10 +1,10 @@
-import { Check, CheckCheck, Image, X } from 'lucide-react';
+import { Check, CheckCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { IMMediaEmbedded } from 'smash-node-lib';
 
 import { logger } from '../../lib/logger';
 import { smashService } from '../../lib/smash/smash-service';
 import { SmashMessage } from '../../lib/types';
+import { MediaContent } from './MediaContent';
 
 interface ChatMessageProps {
     message: SmashMessage;
@@ -33,110 +33,6 @@ function MessageStatusIndicator({ status }: MessageStatusIndicatorProps) {
                 <span className="text-destructive text-xs">Error</span>
             )}
         </span>
-    );
-}
-
-function MediaContent({ data }: { data: IMMediaEmbedded['data'] }) {
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [showModal, setShowModal] = useState(false);
-    const [convertedImageUrl, setConvertedImageUrl] = useState<string | null>(
-        null,
-    );
-
-    useEffect(() => {
-        const handleHeicImage = async () => {
-            if (
-                data.mimeType === 'image/heic' ||
-                data.mimeType === 'image/heif'
-            ) {
-                try {
-                    setIsLoading(true);
-                    // Here you would add the actual HEIC to JPEG conversion
-                    // For now, we'll show an error message
-                    setError(
-                        'HEIC image format is not supported yet. Please convert to JPEG or PNG before sending.',
-                    );
-                    setIsLoading(false);
-                } catch (err) {
-                    logger.error('Failed to convert HEIC image', {
-                        error: err,
-                    });
-                    setError('Failed to convert HEIC image');
-                    setIsLoading(false);
-                }
-            } else {
-                setConvertedImageUrl(
-                    `data:${data.mimeType};base64,${data.content}`,
-                );
-            }
-        };
-
-        void handleHeicImage();
-    }, [data]);
-
-    const handleImageClick = () => {
-        if (!error) {
-            setShowModal(true);
-        }
-    };
-
-    const handleCloseModal = () => {
-        setShowModal(false);
-    };
-
-    return (
-        <div className="media-content">
-            {data.mimeType.startsWith('image/') && (
-                <>
-                    <div className="media-image-container">
-                        {isLoading && (
-                            <div className="media-loading">
-                                <Image className="w-6 h-6" />
-                            </div>
-                        )}
-                        {error && (
-                            <div className="media-error">
-                                <span>{error}</span>
-                            </div>
-                        )}
-                        {!error && convertedImageUrl && (
-                            <img
-                                src={convertedImageUrl}
-                                alt={data.alt || 'Shared image'}
-                                className="media-image"
-                                onLoad={() => setIsLoading(false)}
-                                onError={() => {
-                                    setIsLoading(false);
-                                    setError('Failed to load image');
-                                }}
-                                onClick={handleImageClick}
-                                style={{
-                                    aspectRatio: data.aspectRatio
-                                        ? `${data.aspectRatio.width} / ${data.aspectRatio.height}`
-                                        : 'auto',
-                                }}
-                            />
-                        )}
-                    </div>
-                    {showModal && convertedImageUrl && (
-                        <div className="image-modal" onClick={handleCloseModal}>
-                            <img
-                                src={convertedImageUrl}
-                                alt={data.alt || 'Shared image'}
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                            <button
-                                className="image-modal-close"
-                                onClick={handleCloseModal}
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                    )}
-                </>
-            )}
-        </div>
     );
 }
 

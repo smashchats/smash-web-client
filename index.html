@@ -5,6 +5,38 @@
         <link rel="icon" type="image/svg+xml" href="/vite.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Smashchats - Simple Web Client</title>
+        <!-- Preload styles to prevent flash of unstyled content -->
+        <link rel="preload" href="/src/styles/index.css" as="style" />
+        <link rel="stylesheet" href="/src/styles/index.css" />
+        <!-- Critical CSS to prevent flash of unstyled content -->
+        <style>
+            :root {
+                --background: #f3f4f6;
+                --text: #ffffff;
+            }
+            body {
+                background-color: var(--background);
+                color: var(--text);
+                margin: 0;
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+            }
+            #root,
+            .app-container,
+            .loading-container {
+                display: flex;
+                height: 100vh;
+                width: 100vw;
+            }
+            .loading-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+            }
+        </style>
     </head>
     <body>
         <div id="root"></div>
