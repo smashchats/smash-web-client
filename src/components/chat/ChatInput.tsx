@@ -1,5 +1,5 @@
 import { Send } from 'lucide-react';
-import { useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
 import { logger } from '../../lib/logger';
@@ -9,6 +9,10 @@ interface ChatInputProps {
     onSendMessage: (message: string | IMMediaEmbedded) => void;
     isLoading?: boolean;
     onFocus?: () => void;
+}
+
+export interface ChatInputRef {
+    focus: () => void;
 }
 
 interface SendButtonProps {
@@ -33,61 +37,69 @@ function SendButton({ isLoading, disabled }: SendButtonProps) {
     );
 }
 
-export function ChatInput({
-    onSendMessage,
-    isLoading = false,
-    onFocus,
-}: ChatInputProps) {
-    const [message, setMessage] = useState('');
-    const [isProcessing, setIsProcessing] = useState(false);
+export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
+    ({ onSendMessage, isLoading = false, onFocus }, ref) => {
+        const [message, setMessage] = useState('');
+        const [isProcessing, setIsProcessing] = useState(false);
+        const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (message.trim() && !isLoading) {
-            logger.debug('Sending message', { messageLength: message.length });
-            onSendMessage(message);
-            setMessage('');
-        }
-    };
+        useImperativeHandle(ref, () => ({
+            focus: () => {
+                textareaRef.current?.focus();
+            },
+        }));
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        const handleSubmit = (e: React.FormEvent) => {
             e.preventDefault();
-            handleSubmit(e);
-        }
-    };
+            if (message.trim() && !isLoading) {
+                logger.debug('Sending message', {
+                    messageLength: message.length,
+                });
+                onSendMessage(message);
+                setMessage('');
+            }
+        };
 
-    const handleMediaSelect = async (mediaMessage: IMMediaEmbedded) => {
-        setIsProcessing(true);
-        try {
-            onSendMessage(mediaMessage);
-        } finally {
-            setIsProcessing(false);
-        }
-    };
+        const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+            }
+        };
 
-    return (
-        <form onSubmit={handleSubmit} className="chat-input-container">
-            <div className="chat-input-wrapper">
-                <MediaUpload
-                    onMediaSelect={handleMediaSelect}
-                    disabled={isLoading || isProcessing}
-                />
-                <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="chat-input"
-                    disabled={isLoading || isProcessing}
-                    rows={1}
-                    onKeyDown={handleKeyDown}
-                    onFocus={onFocus}
-                />
-                <SendButton
-                    isLoading={isLoading || isProcessing}
-                    disabled={!message.trim() || isLoading || isProcessing}
-                />
-            </div>
-        </form>
-    );
-}
+        const handleMediaSelect = async (mediaMessage: IMMediaEmbedded) => {
+            setIsProcessing(true);
+            try {
+                onSendMessage(mediaMessage);
+            } finally {
+                setIsProcessing(false);
+            }
+        };
+
+        return (
+            <form onSubmit={handleSubmit} className="chat-input-container">
+                <div className="chat-input-wrapper">
+                    <MediaUpload
+                        onMediaSelect={handleMediaSelect}
+                        disabled={isLoading || isProcessing}
+                    />
+                    <textarea
+                        ref={textareaRef}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Type a message..."
+                        className="chat-input"
+                        disabled={isLoading || isProcessing}
+                        rows={1}
+                        onKeyDown={handleKeyDown}
+                        onFocus={onFocus}
+                    />
+                    <SendButton
+                        isLoading={isLoading || isProcessing}
+                        disabled={!message.trim() || isLoading || isProcessing}
+                    />
+                </div>
+            </form>
+        );
+    },
+);

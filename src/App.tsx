@@ -12,7 +12,7 @@ import {
 
 import { WelcomeGuide } from './components/WelcomeGuide';
 import { ChatHeader } from './components/chat/ChatHeader';
-import { ChatInput } from './components/chat/ChatInput';
+import { ChatInput, ChatInputRef } from './components/chat/ChatInput';
 import { ChatList } from './components/chat/ChatList';
 import { ChatMessage } from './components/chat/ChatMessage';
 import { Settings } from './components/settings/Settings';
@@ -47,6 +47,7 @@ function App() {
     >({});
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const chatInputRef = useRef<ChatInputRef>(null);
 
     const {
         conversations,
@@ -81,8 +82,8 @@ function App() {
         // TODO: find a better way to do this
         setTimeout(() => {
             scrollToBottom();
-        }, 200);
-    }, [messages]);
+        }, 250);
+    }, [messages.length]);
 
     useEffect(() => {
         const initializeDatabase = async () => {
@@ -260,11 +261,17 @@ function App() {
             await db.addConversation(conversation);
             addNewConversation(conversation);
             setSelectedChat(conversation.id);
+            setIsChatViewActive(true);
 
             logger.debug('Resolving DID document in SmashMessaging', {
                 didId: didDoc.id,
             });
             SmashMessaging.resolve(didDoc);
+
+            // Focus the chat input after creating a new conversation
+            setTimeout(() => {
+                chatInputRef.current?.focus();
+            }, 100);
 
             logger.info('Conversation creation completed successfully', {
                 conversationId: conversation.id,
@@ -280,6 +287,11 @@ function App() {
         setSelectedChat(chatId);
         setIsMobileMenuOpen(false);
         setIsChatViewActive(true);
+
+        // Focus the chat input after the view is updated
+        setTimeout(() => {
+            chatInputRef.current?.focus();
+        }, 100);
     };
 
     const handleCloseChat = () => {
@@ -448,6 +460,7 @@ function App() {
                                     <div ref={messagesEndRef} />
                                 </div>
                                 <ChatInput
+                                    ref={chatInputRef}
                                     onSendMessage={sendMessage}
                                     isLoading={isProcessingMedia}
                                 />
