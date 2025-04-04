@@ -26,15 +26,12 @@ function MessageStatusIndicator({ status }: MessageStatusIndicatorProps) {
                     <div className="spinner__dot"></div>
                 </div>
             )}
-            {status === 'sent' && <Check className="h-3 w-3 opacity-50" />}
-            {status === 'delivered' && (
+            {status === 'delivered' && <Check className="h-3 w-3 opacity-50" />}
+            {status === 'received' && (
                 <CheckCheck className="h-3 w-3 opacity-50" />
             )}
             {status === 'read' && (
                 <CheckCheck className="h-3 w-3 opacity-100" />
-            )}
-            {status === 'failed' && (
-                <span className="text-destructive text-xs">Failed</span>
             )}
             {status === 'error' && (
                 <span className="text-destructive text-xs">Error</span>
@@ -161,14 +158,6 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
     });
 
     const renderMessageContent = () => {
-        logger.debug('Rendering message content', {
-            type: message.type,
-            content:
-                typeof message.content === 'string'
-                    ? message.content
-                    : '[Media Content]',
-        });
-
         switch (message.type) {
             case 'im.chat.media.embedded':
                 if (typeof message.content === 'string') {

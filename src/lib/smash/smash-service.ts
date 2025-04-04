@@ -9,7 +9,7 @@ import {
     IMText,
     IM_CHAT_TEXT,
     IM_MEDIA_EMBEDDED,
-    MessageStatus as NodeLibMessageStatus,
+    MessageStatus,
     SmashUser,
     encapsulateMessage,
     sha256,
@@ -17,7 +17,7 @@ import {
 
 import { db } from '../db';
 import { logger } from '../logger';
-import { MessageStatus, SmashConversation, SmashMessage } from '../types';
+import { SmashConversation, SmashMessage } from '../types';
 
 export type MessageCallback = (message: SmashMessage) => void;
 export type ConversationCallback = (conversation: SmashConversation) => void;
@@ -62,7 +62,7 @@ class SmashService {
 
         this.smashUser.on(
             'status',
-            async (status: NodeLibMessageStatus, messageIds: sha256[]) => {
+            async (status: MessageStatus, messageIds: sha256[]) => {
                 // Debug the incoming status update
                 logger.debug('Received status update from library', {
                     status,
@@ -71,22 +71,16 @@ class SmashService {
 
                 for (const messageId of messageIds) {
                     try {
-                        // Convert library status to our app status
-                        const mappedStatus = this.mapMessageStatus(status);
-
                         // Try to find the message in our database using the SHA256 ID directly
                         const message = await db.getMessage(messageId);
 
                         if (message) {
                             // We found it - update the status
-                            await db.updateMessageStatus(
-                                messageId,
-                                mappedStatus,
-                            );
-                            this.notifyStatusCallbacks(messageId, mappedStatus);
+                            await db.updateMessageStatus(messageId, status);
+                            this.notifyStatusCallbacks(messageId, status);
                             logger.debug('Updated message status', {
                                 messageId,
-                                status: mappedStatus,
+                                status,
                             });
                         } else {
                             // If message isn't found with the SHA256 ID, this is an error
@@ -108,18 +102,6 @@ class SmashService {
                 }
             },
         );
-    }
-
-    private mapMessageStatus(status: NodeLibMessageStatus): MessageStatus {
-        switch (status) {
-            case 'received':
-            case 'delivered':
-                return 'delivered';
-            case 'read':
-                return 'read';
-            default:
-                return 'error';
-        }
     }
 
     private createSmashMessage(
@@ -325,8 +307,8 @@ class SmashService {
         error: unknown,
     ): Promise<void> {
         logger.error('Failed to send message', error);
-        await db.updateMessageStatus(messageId, 'failed');
-        this.notifyStatusCallbacks(messageId, 'failed');
+        await db.updateMessageStatus(messageId, 'error');
+        this.notifyStatusCallbacks(messageId, 'error');
     }
 
     async getMessages(conversationId: string): Promise<SmashMessage[]> {
