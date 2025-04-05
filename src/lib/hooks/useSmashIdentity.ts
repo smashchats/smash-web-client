@@ -45,11 +45,11 @@ const initializeSmashUser = async (
 const initializeChats = async (smashUser: SmashUser) => {
     logger.debug('Initializing chats with existing conversations');
     const conversations = await db.getConversations();
-    const currentTime = new Date().toISOString();
+    const resetTime = new Date(0).toISOString();
     await smashUser.initChats(
         conversations.map((conv) => ({
             with: conv.id as DID,
-            lastMessageTimestamp: currentTime,
+            lastMessageTimestamp: resetTime,
         })),
     );
 };
