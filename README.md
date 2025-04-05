@@ -22,16 +22,18 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] marking messages as read
 
 - [x] offline storage and app reload
-- [ ] reload message queues & buffers/parts
+- [ ] **reload message queues & buffers/parts**
 - [ ] message deduplication and re-ordering/sorting
+
+- FIX EXTRA PADDING BOTTOM CONVERSATION ON MOBILE
 
 - [x] receiving a profile message from a peer
 - [x] updating the peer's profile
 
 - [x] share embedded media
 - [x] share embedded media in parts (limit any message size at protocol level)
-- [ ] show loader when sending/receiving media parts + preview available info
-- [ ] use thumbnail in chat! (avoids loading 100%)
+- [ ] **show loader when sending/receiving media parts + preview available info**
+- [ ] **use thumbnail in chat! (avoids loading 100%)**
 - [x] implement support for all browser mime types
 - [x] implement support for video mime types
 - [x] implement support for vocal mime types
@@ -39,20 +41,18 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [ ] livestream embedded media with postponed decryption (snap)
 - [ ] CDN-hosted media
 
-    - [ ] Preview on mobile isnt sized properly.
-    - [ ] Mobile fix size/spacing/overflow
-    - [ ] Install Tailwind and refactor styles
-    - [ ] Manual code review
+- [ ] refactor styles with Tailwind
+- [ ] manual code review
 
-- [ ] TODO DEBUG why heavy media were breaking app (prior to parts support)
+- [ ] **DEBUG SME deconnects at times**
 
-- [ ] PDS to store data, backup and settings (multi device)
+- [ ] **PDS to store data, backup and settings (+ allow for multi device and recovery)**
 
-- [ ] joining a Neighborhood
-- [ ] discovering other peers in the neighborhood (NBH_PROFILE_LIST)
-- [ ] smashing another user from the neighborhood
-- [ ] passing another user from the neighborhood
-- [ ] clearing another user from the neighborhood
+- [ ] **joining a Neighborhood**
+- [ ] **discovering other peers in the neighborhood (NBH_PROFILE_LIST)**
+- [ ] **smashing another user from the neighborhood**
+- [ ] **passing another user from the neighborhood**
+- [ ] **clearing another user from the neighborhood**
 
 - [ ] blocking/unblocking another peer
 
