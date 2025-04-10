@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DID, IMPeerIdentity, SmashUser } from 'smash-node-lib';
+import { DIDString, IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
 import { SMEConfig, StoredProfile, db } from '../db';
 import { logger } from '../logger';
@@ -45,10 +45,10 @@ const initializeSmashUser = async (
 const initializeChats = async (smashUser: SmashUser) => {
     logger.debug('Initializing chats with existing conversations');
     const conversations = await db.getConversations();
-    const resetTime = new Date(0).toISOString();
+    const resetTime = new Date().toISOString();
     await smashUser.initChats(
         conversations.map((conv) => ({
-            with: conv.id as DID,
+            with: conv.id as DIDString,
             lastMessageTimestamp: resetTime,
         })),
     );
