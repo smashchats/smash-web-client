@@ -209,7 +209,7 @@
         flex: 1;
         overflow-y: auto;
         padding-right: var(--spacing-md);
-        margin-right: calc(var(--spacing-md) * -1);
+        /* margin-right: calc(var(--spacing-md) * -1); */
         -webkit-overflow-scrolling: touch;
     }
 

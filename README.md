@@ -20,12 +20,15 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] receiving a text message from a peer
 - [x] handling message status updates
 - [x] marking messages as read
+- [ ] add total badge count to navbar
 
 - [x] offline storage and app reload
 - [ ] **reload message queues & buffers/parts**
 - [ ] message deduplication and re-ordering/sorting
 
-- FIX EXTRA PADDING BOTTOM CONVERSATION ON MOBILE
+- [ ] **FIX FAVICON QUALITY (becomes launcher splash on mobile)**
+    - check how to load multiple qualities
+- [x] **FIX EXTRA PADDING BOTTOM CONVERSATION ON MOBILE**
 
 - [x] receiving a profile message from a peer
 - [x] updating the peer's profile
@@ -37,6 +40,7 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] implement support for all browser mime types
 - [x] implement support for video mime types
 - [x] implement support for vocal mime types
+    - [ ] add an easy mic recorder option
 - [x] allow downloading all other unsupported media types
 - [ ] livestream embedded media with postponed decryption (snap)
 - [ ] CDN-hosted media
