@@ -15,9 +15,13 @@ export function AudioRecorder({
 }: AudioRecorderProps) {
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<number | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const pressTimerRef = useRef<number | null>(null);
+    const isHoldingRef = useRef(false);
 
     const getMimeType = () => {
         // Try WebM first (for Chrome, Firefox, Edge)
@@ -32,7 +36,7 @@ export function AudioRecorder({
         return 'audio/webm';
     };
 
-    const startRecording = useCallback(async () => {
+    const requestPermission = useCallback(async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -41,6 +45,27 @@ export function AudioRecorder({
                     sampleRate: 44100,
                 },
             });
+            streamRef.current = stream;
+            setHasPermission(true);
+            return true;
+        } catch (err) {
+            logger.error('Failed to get microphone permission', { error: err });
+            setHasPermission(false);
+            return false;
+        }
+    }, []);
+
+    const startRecording = useCallback(async () => {
+        if (!hasPermission) {
+            const granted = await requestPermission();
+            if (!granted) return;
+        }
+
+        try {
+            const stream = streamRef.current;
+            if (!stream) {
+                throw new Error('No media stream available');
+            }
 
             const mimeType = getMimeType();
             const mediaRecorder = new MediaRecorder(stream, {
@@ -74,7 +99,6 @@ export function AudioRecorder({
                 onRecordingComplete(message);
 
                 // Clean up
-                stream.getTracks().forEach((track) => track.stop());
                 setRecordingTime(0);
                 if (timerRef.current) {
                     window.clearInterval(timerRef.current);
@@ -91,8 +115,9 @@ export function AudioRecorder({
             }, 1000);
         } catch (err) {
             logger.error('Failed to start recording', { error: err });
+            setIsRecording(false);
         }
-    }, [onRecordingComplete]);
+    }, [hasPermission, onRecordingComplete, requestPermission]);
 
     const stopRecording = useCallback(() => {
         if (mediaRecorderRef.current && isRecording) {
@@ -101,13 +126,21 @@ export function AudioRecorder({
         }
     }, [isRecording]);
 
+    // Request permission on mount
     useEffect(() => {
+        requestPermission();
         return () => {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach((track) => track.stop());
+            }
             if (timerRef.current) {
                 window.clearInterval(timerRef.current);
             }
+            if (pressTimerRef.current) {
+                window.clearTimeout(pressTimerRef.current);
+            }
         };
-    }, []);
+    }, [requestPermission]);
 
     const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
@@ -115,16 +148,50 @@ export function AudioRecorder({
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const handlePressStart = useCallback(
+        async (e: React.MouseEvent | React.TouchEvent) => {
+            e.preventDefault();
+            if (disabled) return;
+
+            isHoldingRef.current = true;
+            pressTimerRef.current = window.setTimeout(async () => {
+                if (isHoldingRef.current) {
+                    await startRecording();
+                }
+            }, 200); // 200ms threshold for press-and-hold
+        },
+        [disabled, startRecording],
+    );
+
+    const handlePressEnd = useCallback(
+        (e: React.MouseEvent | React.TouchEvent) => {
+            e.preventDefault();
+            isHoldingRef.current = false;
+
+            if (pressTimerRef.current) {
+                window.clearTimeout(pressTimerRef.current);
+                pressTimerRef.current = null;
+            }
+
+            if (isRecording) {
+                stopRecording();
+            } else if (!isHoldingRef.current) {
+                // If it was a quick press (not a hold), toggle recording
+                startRecording();
+            }
+        },
+        [isRecording, startRecording, stopRecording],
+    );
+
     return (
         <div className={`audio-recorder ${disabled ? 'disabled' : ''}`}>
             <button
                 className="audio-recorder-button"
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-                onMouseLeave={stopRecording}
-                onTouchStart={startRecording}
-                onTouchEnd={stopRecording}
-                disabled={disabled || isRecording}
+                onMouseDown={handlePressStart}
+                onMouseUp={handlePressEnd}
+                onTouchStart={handlePressStart}
+                onTouchEnd={handlePressEnd}
+                disabled={disabled}
             >
                 {isRecording ? (
                     <>
