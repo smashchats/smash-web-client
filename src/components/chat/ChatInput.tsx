@@ -3,6 +3,7 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
 import { logger } from '../../lib/logger';
+import { AudioRecorder } from './AudioRecorder';
 import { MediaUpload } from './MediaUpload';
 
 interface ChatInputProps {
@@ -81,6 +82,10 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 <div className="chat-input-wrapper">
                     <MediaUpload
                         onMediaSelect={handleMediaSelect}
+                        disabled={isLoading || isProcessing}
+                    />
+                    <AudioRecorder
+                        onRecordingComplete={handleMediaSelect}
                         disabled={isLoading || isProcessing}
                     />
                     <textarea

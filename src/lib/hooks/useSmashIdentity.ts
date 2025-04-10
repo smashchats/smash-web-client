@@ -25,7 +25,7 @@ const initializeSmashUser = async (
     const didManager = getDidDocumentManager();
     didManager.set(await identity.getDIDDocument());
 
-    const smashUser = new SmashUser(identity);
+    const smashUser = new SmashUser(identity, 'webclient', 'DEBUG');
 
     if (smeConfig) {
         logger.debug('Configuring endpoints');

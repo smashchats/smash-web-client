@@ -35,6 +35,7 @@ const SUPPORTED_MIME_TYPES = {
         'audio/webm',
         'audio/aac',
         'audio/midi',
+        'audio/mp4',
     ],
 } as const;
 
@@ -73,13 +74,16 @@ const isMimeTypeSupported = (mimeType: string): boolean => {
         // Create a test audio element to check format support
         const audio = document.createElement('audio');
         // canPlayType returns: "", "maybe", or "probably"
-        return !!audio.canPlayType(mimeType);
+        const support = audio.canPlayType(mimeType);
+        // Safari might return "maybe" for formats it can actually play
+        return support === 'probably' || support === 'maybe';
     }
 
     if (mimeType.startsWith('video/')) {
         // Create a test video element to check format support
         const video = document.createElement('video');
-        return !!video.canPlayType(mimeType);
+        const support = video.canPlayType(mimeType);
+        return support === 'probably' || support === 'maybe';
     }
 
     // For other types, fallback to MediaSource check

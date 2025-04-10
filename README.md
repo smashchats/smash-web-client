@@ -27,7 +27,6 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [ ] message deduplication and re-ordering/sorting
 
 - [ ] **FIX FAVICON QUALITY (becomes launcher splash on mobile)**
-    - check how to load multiple qualities
 - [x] **FIX EXTRA PADDING BOTTOM CONVERSATION ON MOBILE**
 
 - [x] receiving a profile message from a peer
