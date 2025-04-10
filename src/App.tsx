@@ -208,6 +208,17 @@ function App() {
         };
     }, [identity, smashUser, conversations, refreshConversations]);
 
+    const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+
+    useEffect(() => {
+        setTotalUnreadCount(
+            conversations.reduce(
+                (acc, conversation) => acc + conversation.unreadCount,
+                0,
+            ),
+        );
+    }, [conversations, setTotalUnreadCount]);
+
     useEffect(() => {
         const loadPeerDidDocument = async () => {
             if (selectedChat) {
@@ -398,6 +409,11 @@ function App() {
                         setCurrentView('messages');
                     }}
                 >
+                    {totalUnreadCount > 0 && (
+                        <span className="chat-badge total-unread-count">
+                            {totalUnreadCount}
+                        </span>
+                    )}
                     <MessageSquare size={24} />
                 </button>
                 <button

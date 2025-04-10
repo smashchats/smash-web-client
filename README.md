@@ -20,7 +20,7 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] receiving a text message from a peer
 - [x] handling message status updates
 - [x] marking messages as read
-- [ ] add total badge count to navbar
+- [x] add total badge count to navbar
 
 - [x] offline storage and app reload
 - [ ] **reload message queues & buffers/parts**
