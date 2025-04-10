@@ -14,8 +14,20 @@ interface UseMessageHandlingProps {
     ) => void;
 }
 
-// Sort messages by timestamp in ascending order
-const sortMessages = (messages: SmashMessage[]): SmashMessage[] => {
+// Valid status transitions for message states
+const validStatusTransitions: Record<
+    SmashMessage['status'],
+    SmashMessage['status'][]
+> = {
+    sending: ['delivered', 'received', 'read', 'error'],
+    delivered: ['received', 'read', 'error', 'sending'],
+    received: ['read'],
+    read: [],
+    error: ['sending', 'delivered', 'received', 'read'],
+};
+
+// Sort messages chronologically
+const sortMessagesByTimestamp = (messages: SmashMessage[]): SmashMessage[] => {
     return [...messages].sort((a, b) => a.timestamp - b.timestamp);
 };
 
@@ -27,34 +39,41 @@ export const useMessageHandling = ({
     const [error, setError] = useState<Error | null>(null);
     const conversationUpdateRef = useRef(onConversationUpdate);
 
-    // Update the ref when the callback changes
+    // Keep ref in sync with latest callback
     useEffect(() => {
         conversationUpdateRef.current = onConversationUpdate;
     }, [onConversationUpdate]);
 
+    // Load messages when chat changes
     useEffect(() => {
         if (!selectedChat) {
+            logger.debug('No chat selected, clearing messages');
             setMessages([]);
             return;
         }
 
         const loadMessages = async () => {
+            logger.info('Loading messages', { conversationId: selectedChat });
+
             try {
-                logger.info('Loading messages for conversation', {
-                    conversationId: selectedChat,
-                });
                 setError(null);
-                const msgs = await smashService.getMessages(selectedChat);
-                setMessages(sortMessages(msgs));
-                logger.debug('Messages loaded successfully', {
-                    count: msgs.length,
+                const loadedMessages =
+                    await smashService.getMessages(selectedChat);
+                setMessages(sortMessagesByTimestamp(loadedMessages));
+
+                logger.info('Messages loaded successfully', {
+                    conversationId: selectedChat,
+                    messageCount: loadedMessages.length,
                 });
             } catch (err) {
                 const error =
                     err instanceof Error
                         ? err
                         : new Error('Failed to load messages');
-                logger.error('Failed to load messages', error);
+                logger.error('Failed to load messages', {
+                    conversationId: selectedChat,
+                    error: error.message,
+                });
                 setError(error);
             }
         };
@@ -62,26 +81,43 @@ export const useMessageHandling = ({
         loadMessages();
     }, [selectedChat]);
 
+    // Handle incoming messages and status updates
     useEffect(() => {
         const handleNewMessage = (message: SmashMessage) => {
-            // Only handle incoming messages (not our own)
-            if (message.sender === CURRENT_USER) return;
+            // Ignore own messages
+            if (message.sender === CURRENT_USER) {
+                logger.debug('Ignoring own message', { messageId: message.id });
+                return;
+            }
 
-            logger.info('Received new message', { messageId: message.id });
+            logger.info('New message received', {
+                messageId: message.id,
+                conversationId: message.conversationId,
+            });
 
-            // Only add the message if it belongs to the current conversation
+            // Only handle messages for current chat
             if (message.conversationId === selectedChat) {
                 setMessages((prev) => {
-                    // Check if we already have this message to avoid duplicates
-                    if (!prev.some((m) => m.id === message.id)) {
-                        const updated = [...prev, message];
-                        return sortMessages(updated);
+                    // Avoid duplicates
+                    if (prev.some((m) => m.id === message.id)) {
+                        logger.debug('Duplicate message ignored', {
+                            messageId: message.id,
+                        });
+                        return prev;
                     }
-                    return prev;
+
+                    const updated = sortMessagesByTimestamp([...prev, message]);
+                    logger.debug('Message added to conversation', {
+                        messageId: message.id,
+                        totalMessages: updated.length,
+                    });
+                    return updated;
                 });
+
                 conversationUpdateRef.current(message.conversationId, message);
             } else {
-                logger.debug('Received message for different conversation', {
+                logger.debug('Message for different conversation', {
+                    messageId: message.id,
                     messageConversationId: message.conversationId,
                     currentConversationId: selectedChat,
                 });
@@ -90,79 +126,109 @@ export const useMessageHandling = ({
 
         const handleMessageStatusUpdate = (
             messageId: string,
-            status: SmashMessage['status'],
+            newStatus: SmashMessage['status'],
         ) => {
-            logger.debug('Message status updated in hook', {
+            logger.debug('Processing status update', {
                 messageId,
-                status,
+                newStatus,
             });
 
             setMessages((prev) => {
-                // Only update if the message exists in our current state
-                const hasMessage = prev.some((msg) => msg.id === messageId);
+                const message = prev.find((msg) => msg.id === messageId);
 
-                if (hasMessage) {
-                    return prev.map((msg) =>
-                        msg.id === messageId ? { ...msg, status } : msg,
-                    );
-                } else {
-                    // If no message found with this ID, just leave the state as is
-                    logger.debug('No message found with ID for status update', {
+                if (!message) {
+                    logger.debug('Message not found for status update', {
                         messageId,
-                        status,
-                        messageCount: prev.length,
                     });
                     return prev;
                 }
+
+                const isValidTransition =
+                    validStatusTransitions[message.status]?.includes(newStatus);
+
+                if (!isValidTransition) {
+                    logger.warn('Invalid status transition ignored', {
+                        messageId,
+                        currentStatus: message.status,
+                        attemptedStatus: newStatus,
+                    });
+                    return prev;
+                }
+
+                logger.info('Updating message status', {
+                    messageId,
+                    fromStatus: message.status,
+                    toStatus: newStatus,
+                });
+
+                return prev.map((msg) =>
+                    msg.id === messageId ? { ...msg, status: newStatus } : msg,
+                );
             });
         };
 
-        // Set up message handling
+        // Set up event listeners
+        logger.debug('Setting up message handlers', { selectedChat });
         smashService.onMessageReceived(handleNewMessage);
         smashService.onMessageStatusUpdated(handleMessageStatusUpdate);
 
         return () => {
-            // Cleanup listeners
-            logger.debug('Cleaning up message handlers');
+            logger.debug('Cleaning up message handlers', { selectedChat });
             smashService.offMessageReceived(handleNewMessage);
             smashService.offMessageStatusUpdated(handleMessageStatusUpdate);
         };
     }, [selectedChat]);
 
     const sendMessage = async (content: string | IMMediaEmbedded) => {
-        if (!selectedChat) return;
+        if (!selectedChat) {
+            logger.warn('Attempted to send message with no chat selected');
+            return;
+        }
+
+        const contentType = typeof content === 'string' ? 'text' : 'media';
+        logger.info('Sending message', {
+            conversationId: selectedChat,
+            type: contentType,
+        });
 
         try {
-            logger.info('Sending message', {
-                conversationId: selectedChat,
-                type: typeof content === 'string' ? 'text' : 'media',
-            });
             setError(null);
-
             const message = await smashService.sendMessage(
                 selectedChat as DIDString,
                 content,
             );
 
             setMessages((prev) => {
-                // Check if we already have this message to avoid duplicates
-                if (!prev.some((m) => m.id === message.id)) {
-                    return sortMessages([...prev, message]);
+                if (prev.some((m) => m.id === message.id)) {
+                    logger.debug('Duplicate message prevented', {
+                        messageId: message.id,
+                    });
+                    return prev;
                 }
-                return prev;
+
+                const updated = sortMessagesByTimestamp([...prev, message]);
+                logger.debug('Message added to conversation', {
+                    messageId: message.id,
+                    totalMessages: updated.length,
+                });
+                return updated;
             });
 
             conversationUpdateRef.current(selectedChat, message);
 
-            logger.debug('Message sending initiated', {
+            logger.info('Message sent successfully', {
                 messageId: message.id,
+                conversationId: selectedChat,
             });
         } catch (err) {
             const error =
                 err instanceof Error
                     ? err
                     : new Error('Failed to send message');
-            logger.error('Failed to send message', error);
+            logger.error('Failed to send message', {
+                conversationId: selectedChat,
+                error: error.message,
+            });
             setError(error);
         }
     };

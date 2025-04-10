@@ -394,21 +394,14 @@ test.describe('Messaging Features', () => {
 
             console.log('Verifying message content');
             const messagesContainer = page.locator('.messages-container');
-            await expect(messagesContainer).toBeVisible();
             await expect(
                 messagesContainer.locator('.message-content .message-text'),
             ).toHaveText('Test message for delivered status');
 
             console.log('Waiting for delivered status');
-            await page.waitForTimeout(2000);
-
-            const messageStatus = messagesContainer.locator(
-                '.message.outgoing .message-content .message-meta .message-status',
+            const statusIcon = messagesContainer.locator(
+                '.message.outgoing .message-content .message-meta .message-status .lucide-check-check',
             );
-            await expect(messageStatus).toBeVisible();
-
-            // check for delivered status indicator
-            const statusIcon = messageStatus.locator('.lucide-check-check');
             await expect(statusIcon).toBeVisible();
             await expect(statusIcon).toHaveCSS('opacity', '0.5');
         });
@@ -432,19 +425,16 @@ test.describe('Messaging Features', () => {
 
             console.log('Verifying initial sent status');
             const messagesContainer = page.locator('.messages-container');
-            await expect(messagesContainer).toBeVisible();
             await expect(
                 messagesContainer.locator('.message-content .message-text'),
             ).toHaveText('Test message for read status');
 
             console.log('Waiting for read status');
-            await page.waitForTimeout(2000);
-
-            const readStatus = messagesContainer.locator(
+            const readStatusIcon = messagesContainer.locator(
                 '.message.outgoing .message-content .message-meta .message-status .lucide-check-check',
             );
-            await expect(readStatus).toBeVisible();
-            await expect(readStatus).toHaveCSS('opacity', '1');
+            await expect(readStatusIcon).toBeVisible();
+            await expect(readStatusIcon).toHaveCSS('opacity', '1');
         });
     });
 
