@@ -24,14 +24,16 @@ export function AudioRecorder({
     const isHoldingRef = useRef(false);
 
     const getMimeType = () => {
-        // Try WebM first (for Chrome, Firefox, Edge)
-        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-            return 'audio/webm;codecs=opus';
-        }
-        // Fallback to MP4 for Safari
+        // Try MP4 first (for Chrome, Edge, safari, react-native)
         if (MediaRecorder.isTypeSupported('audio/mp4')) {
             return 'audio/mp4';
         }
+
+        // Fallback to opus for Firefox, Edge, Chrome
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            return 'audio/webm;codecs=opus';
+        }
+
         // Last resort fallback
         return 'audio/webm';
     };
