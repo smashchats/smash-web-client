@@ -45,11 +45,12 @@ const initializeSmashUser = async (
 const initializeChats = async (smashUser: SmashUser) => {
     logger.debug('Initializing chats with existing conversations');
     const conversations = await db.getConversations();
-    const resetTime = new Date().toISOString();
     await smashUser.initChats(
         conversations.map((conv) => ({
             with: conv.id as DIDString,
-            lastMessageTimestamp: resetTime,
+            lastMessageTimestamp: '2020-04-25T18:27:04.827Z',
+            // TODO: add lastMessageTimestamp
+            // without session context saved , we trigger reset on all restarts
         })),
     );
 };
