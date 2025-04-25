@@ -1,4 +1,5 @@
 import { Check, Copy } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 import { IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
@@ -250,6 +251,16 @@ export function Settings({
                         <div className="form-group">
                             <label>Your DID Document</label>
                             <div className="did-document-container">
+                                {didDocumentString && (
+                                    <div className="qr-code-container">
+                                        <QRCodeSVG
+                                            value={didDocumentString}
+                                            size={200}
+                                            level="H"
+                                            className="qr-code"
+                                        />
+                                    </div>
+                                )}
                                 <button
                                     className={`button ${didCopied ? 'button--success' : 'button--primary'} did-copy-button`}
                                     onClick={handleCopyDID}
