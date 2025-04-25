@@ -1,6 +1,13 @@
 import { MessageSquare, Settings as SettingsIcon, Users } from 'lucide-react';
 import { Upload } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+    Suspense,
+    lazy,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from 'react';
 import {
     DID,
     DIDDocument,
@@ -10,12 +17,8 @@ import {
     SmashMessaging,
 } from 'smash-node-lib';
 
-import { WelcomeGuide } from './components/WelcomeGuide';
 import { ChatHeader } from './components/chat/ChatHeader';
 import { ChatInput, ChatInputRef } from './components/chat/ChatInput';
-import { ChatList } from './components/chat/ChatList';
-import { ChatMessage } from './components/chat/ChatMessage';
-import { Settings } from './components/settings/Settings';
 import { CURRENT_USER, DEFAULT_SME_CONFIG, View } from './config/constants';
 import { useConversationHandling } from './hooks/useConversationHandling';
 import { useMessageHandling } from './hooks/useMessageHandling';
@@ -24,6 +27,31 @@ import { useSmashIdentity } from './lib/hooks/useSmashIdentity';
 import { logger } from './lib/logger';
 import { getDidDocumentManager } from './lib/smash/smash-init';
 import { SmashConversation } from './lib/types';
+
+// Lazy load components
+const Settings = lazy(() =>
+    import('./components/settings/Settings').then((module) => ({
+        default: module.Settings,
+    })),
+);
+
+const WelcomeGuideLazy = lazy(() =>
+    import('./components/WelcomeGuide').then((module) => ({
+        default: module.WelcomeGuide,
+    })),
+);
+
+const ChatListLazy = lazy(() =>
+    import('./components/chat/ChatList').then((module) => ({
+        default: module.ChatList,
+    })),
+);
+
+const ChatMessageLazy = lazy(() =>
+    import('./components/chat/ChatMessage').then((module) => ({
+        default: module.ChatMessage,
+    })),
+);
 
 function App() {
     const {
@@ -363,21 +391,23 @@ function App() {
     if (!identity && isInitialized) {
         logger.debug('No identity found, showing welcome guide');
         return (
-            <WelcomeGuide
-                onCreateIdentity={async (newIdentity) => {
-                    setIsLoading(true);
-                    try {
-                        await setIdentity(newIdentity, DEFAULT_SME_CONFIG);
-                        logger.info(
-                            'New identity created and set successfully',
-                        );
-                    } finally {
-                        setIsLoading(false);
-                    }
-                }}
-                isLoading={isLoading}
-                error={conversationError || messageError}
-            />
+            <Suspense fallback={<div>Loading Welcome Guide...</div>}>
+                <WelcomeGuideLazy
+                    onCreateIdentity={async (newIdentity) => {
+                        setIsLoading(true);
+                        try {
+                            await setIdentity(newIdentity, DEFAULT_SME_CONFIG);
+                            logger.info(
+                                'New identity created and set successfully',
+                            );
+                        } finally {
+                            setIsLoading(false);
+                        }
+                    }}
+                    isLoading={isLoading}
+                    error={conversationError || messageError}
+                />
+            </Suspense>
         );
     }
 
@@ -439,13 +469,15 @@ function App() {
             {currentView === 'messages' && (
                 <main className="chat-container">
                     <div className="chat-list-container">
-                        <ChatList
-                            conversations={conversations}
-                            selectedChat={selectedChat}
-                            onSelectChat={handleSelectChat}
-                            onCreateConversation={handleCreateConversation}
-                            peerProfiles={peerProfiles}
-                        />
+                        <Suspense fallback={<div>Loading Chat List...</div>}>
+                            <ChatListLazy
+                                conversations={conversations}
+                                selectedChat={selectedChat}
+                                onSelectChat={handleSelectChat}
+                                onCreateConversation={handleCreateConversation}
+                                peerProfiles={peerProfiles}
+                            />
+                        </Suspense>
                     </div>
 
                     <div
@@ -462,16 +494,25 @@ function App() {
                                 )}
                                 <div className="messages-container">
                                     {messages.map((message) => (
-                                        <ChatMessage
-                                            key={message.id}
-                                            message={message}
-                                            isOwnMessage={
-                                                message.sender === CURRENT_USER
+                                        <Suspense
+                                            fallback={
+                                                <div>
+                                                    Loading Chat Message...
+                                                </div>
                                             }
-                                            peerProfile={
-                                                peerProfiles[message.sender]
-                                            }
-                                        />
+                                        >
+                                            <ChatMessageLazy
+                                                key={message.id}
+                                                message={message}
+                                                isOwnMessage={
+                                                    message.sender ===
+                                                    CURRENT_USER
+                                                }
+                                                peerProfile={
+                                                    peerProfiles[message.sender]
+                                                }
+                                            />
+                                        </Suspense>
                                     ))}
                                     <div ref={messagesEndRef} />
                                 </div>
@@ -501,15 +542,17 @@ function App() {
 
             {currentView === 'settings' && (
                 <main className="main-area">
-                    <Settings
-                        onLogout={handleLogout}
-                        profile={profile}
-                        onUpdateProfile={updateProfile}
-                        smeConfig={smeConfig}
-                        onUpdateSME={updateSMEConfig}
-                        identity={identity}
-                        smashUser={smashUser}
-                    />
+                    <Suspense fallback={<div>Loading Settings...</div>}>
+                        <Settings
+                            onLogout={handleLogout}
+                            profile={profile}
+                            onUpdateProfile={updateProfile}
+                            smeConfig={smeConfig}
+                            onUpdateSME={updateSMEConfig}
+                            identity={identity}
+                            smashUser={smashUser}
+                        />
+                    </Suspense>
                 </main>
             )}
 

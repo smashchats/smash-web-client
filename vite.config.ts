@@ -8,6 +8,11 @@ export default defineConfig({
         react(),
         nodePolyfills({
             include: ['crypto', 'buffer', 'stream', 'util', 'events'],
+            globals: {
+                Buffer: true,
+                global: true,
+                process: true,
+            },
         }),
         tailwindcss(),
     ],
@@ -32,6 +37,11 @@ export default defineConfig({
             'util',
             '@protobufjs/inquire',
         ],
+        exclude: [
+            'vite-plugin-node-polyfills/shims/buffer',
+            'vite-plugin-node-polyfills/shims/global',
+            'vite-plugin-node-polyfills/shims/process',
+        ],
         force: true,
     },
     build: {
@@ -40,5 +50,21 @@ export default defineConfig({
             include: [/node_modules/],
             transformMixedEsModules: true,
         },
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'react-vendor': ['react', 'react-dom'],
+                    'smash-lib': ['smash-node-lib'],
+                    'ui-components': ['lucide-react'],
+                    'crypto-vendor': [
+                        'crypto-browserify',
+                        '@peculiar/webcrypto',
+                    ],
+                    'stream-vendor': ['stream-browserify', 'events'],
+                    'protobuf-vendor': ['@protobufjs/inquire'],
+                },
+            },
+        },
+        chunkSizeWarningLimit: 1000,
     },
 });

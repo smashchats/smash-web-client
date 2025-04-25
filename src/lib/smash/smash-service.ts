@@ -84,7 +84,7 @@ class SmashService {
                             });
                         } else {
                             // If message isn't found with the SHA256 ID, this is an error
-                            logger.error(
+                            logger.warn(
                                 'Could not find message for status update',
                                 {
                                     messageId,
