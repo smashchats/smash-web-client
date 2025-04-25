@@ -17,40 +17,34 @@ interface MessageStatusIndicatorProps {
 }
 
 function MessageStatusIndicator({ status }: MessageStatusIndicatorProps) {
-    return (
-        <span className="message-status">
-            {status === 'sending' && (
-                <div className="dots-container">
-                    <div className="spinner__dot"></div>
-                    <div className="spinner__dot"></div>
-                    <div className="spinner__dot"></div>
-                </div>
-            )}
-            {status === 'delivered' && <Check className="opacity-50" />}
-            {status === 'received' && <CheckCheck className="opacity-50" />}
-            {status === 'read' && <CheckCheck className="opacity-100" />}
-            {status === 'error' && (
-                <span className="text-destructive text-xs">Error</span>
-            )}
-        </span>
-    );
+    const statusIcons = {
+        sending: (
+            <div className="dots-container">
+                <div className="spinner__dot"></div>
+                <div className="spinner__dot"></div>
+                <div className="spinner__dot"></div>
+            </div>
+        ),
+        delivered: <Check className="opacity-50" />,
+        received: <CheckCheck className="opacity-50" />,
+        read: <CheckCheck className="opacity-100" />,
+        error: <span className="text-destructive text-xs">Error</span>,
+    };
+
+    return <span className="message-status">{statusIcons[status]}</span>;
 }
 
 export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
+    const messageRef = useRef<HTMLDivElement>(null);
+    const [hasUserInteracted, setHasUserInteracted] = useState(false);
+
     const formatTime = (timestamp: number) => {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString([], {
+        return new Date(timestamp).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
         });
     };
 
-    // Use ref for the message element
-    const messageRef = useRef<HTMLDivElement>(null);
-    // Track if the user has interacted with the conversation
-    const [hasUserInteracted, setHasUserInteracted] = useState(false);
-
-    // Track user interaction with the conversation
     useEffect(() => {
         const handleInteraction = () => {
             if (!hasUserInteracted) {
@@ -59,21 +53,18 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
             }
         };
 
-        // Listen for user interactions
-        window.addEventListener('mousemove', handleInteraction);
-        window.addEventListener('keydown', handleInteraction);
-        window.addEventListener('click', handleInteraction);
-        window.addEventListener('scroll', handleInteraction);
+        const interactionEvents = ['mousemove', 'keydown', 'click', 'scroll'];
+        interactionEvents.forEach((event) =>
+            window.addEventListener(event, handleInteraction),
+        );
 
         return () => {
-            window.removeEventListener('mousemove', handleInteraction);
-            window.removeEventListener('keydown', handleInteraction);
-            window.removeEventListener('click', handleInteraction);
-            window.removeEventListener('scroll', handleInteraction);
+            interactionEvents.forEach((event) =>
+                window.removeEventListener(event, handleInteraction),
+            );
         };
     }, [hasUserInteracted]);
 
-    // Mark message as read when it becomes visible and user has interacted
     useEffect(() => {
         if (!isOwnMessage && message.status !== 'read' && hasUserInteracted) {
             const element = messageRef.current;
@@ -89,42 +80,32 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
                                     sender: message.sender,
                                 },
                             );
-                            // Check if service is initialized before marking as read
-                            try {
-                                void smashService.markMessageAsRead(message.id);
-                            } catch (error) {
-                                logger.warn(
-                                    'Failed to mark message as read - service not initialized',
-                                    {
-                                        messageId: message.id,
-                                        error,
-                                    },
-                                );
-                                // Retry after a short delay
-                                setTimeout(() => {
-                                    try {
-                                        void smashService.markMessageAsRead(
-                                            message.id,
-                                        );
-                                    } catch (retryError) {
-                                        logger.error(
-                                            'Failed to mark message as read after retry',
-                                            {
-                                                messageId: message.id,
-                                                error: retryError,
-                                            },
-                                        );
-                                    }
-                                }, 1000);
-                            }
-                            // Unobserve after marking as read
+                            const markAsRead = () => {
+                                try {
+                                    void smashService.markMessageAsRead(
+                                        message.id,
+                                    );
+                                } catch (error) {
+                                    logger.error(
+                                        'Failed to mark message as read',
+                                        {
+                                            messageId: message.id,
+                                            error,
+                                        },
+                                    );
+                                }
+                            };
+
+                            markAsRead();
+                            setTimeout(markAsRead, 1000); // Retry after 1 second
+
                             observer.unobserve(entry.target);
                         }
                     });
                 },
                 {
-                    threshold: 0.5, // Message is considered read when 50% visible
-                    rootMargin: '50px', // Start observing slightly before the message comes into view
+                    threshold: 0.5,
+                    rootMargin: '50px',
                 },
             );
 
@@ -146,6 +127,22 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
         hasUserInteracted,
     ]);
 
+    const hasAudioContent =
+        message.type === 'im.chat.media.embedded' &&
+        typeof message.content !== 'string' &&
+        message.content.mimeType.startsWith('audio/');
+
+    useEffect(() => {
+        if (hasAudioContent) {
+            const timer = setTimeout(() => {
+                setHasUserInteracted((prev) => !prev);
+                setTimeout(() => setHasUserInteracted((prev) => !prev), 50);
+            }, 100);
+
+            return () => clearTimeout(timer);
+        }
+    }, [hasAudioContent, message.id]);
+
     logger.debug('Rendering chat message', {
         messageId: message.id,
         isOwnMessage,
@@ -156,12 +153,11 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
     const renderMessageContent = () => {
         switch (message.type) {
             case 'im.chat.media.embedded':
-                if (typeof message.content === 'string') {
-                    return (
-                        <div className="message-text">{message.content}</div>
-                    );
-                }
-                return <MediaContent data={message.content} />;
+                return typeof message.content === 'string' ? (
+                    <div className="message-text">{message.content}</div>
+                ) : (
+                    <MediaContent data={message.content} />
+                );
             case 'im.chat.text':
                 return (
                     <div className="message-text">
@@ -180,12 +176,6 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
                 );
         }
     };
-
-    // Check if message contains audio content
-    const hasAudioContent =
-        message.type === 'im.chat.media.embedded' &&
-        typeof message.content !== 'string' &&
-        message.content.mimeType.startsWith('audio/');
 
     return (
         <div

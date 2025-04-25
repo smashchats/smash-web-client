@@ -39,7 +39,7 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - [x] implement support for all browser mime types
 - [x] implement support for video mime types
 - [x] implement support for vocal mime types
-    - [ ] add an easy mic recorder option
+- [x] add an easy mic recorder option
 - [x] allow downloading all other unsupported media types
 - [ ] livestream embedded media with postponed decryption (snap)
 - [ ] CDN-hosted media

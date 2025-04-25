@@ -10,6 +10,11 @@ interface AudioRecorderProps {
     chatInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
+// Define the WebKit AudioContext type
+interface WebKitAudioContext extends AudioContext {
+    createGainNode(): GainNode;
+}
+
 export function AudioRecorder({
     onRecordingComplete,
     disabled = false,
@@ -25,19 +30,79 @@ export function AudioRecorder({
     const pressTimerRef = useRef<number | null>(null);
     const isHoldingRef = useRef(false);
 
-    const getMimeType = () => {
-        // Try MP4 first (for Chrome, Edge, safari, react-native)
-        if (MediaRecorder.isTypeSupported('audio/mp4')) {
-            return 'audio/mp4';
-        }
-
-        // Fallback to opus for Firefox, Edge, Chrome
+    const getRecordingMimeType = () => {
+        // Use WebM with Opus codec for best compatibility
         if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
             return 'audio/webm;codecs=opus';
         }
-
-        // Last resort fallback
+        // Fallback to basic WebM
         return 'audio/webm';
+    };
+
+    const convertBlobToWav = async (blob: Blob): Promise<Blob> => {
+        const AudioContextClass =
+            window.AudioContext ||
+            (
+                window as unknown as {
+                    webkitAudioContext: new () => WebKitAudioContext;
+                }
+            ).webkitAudioContext;
+        const audioContext = new AudioContextClass();
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        // Create WAV file
+        const numberOfChannels = audioBuffer.numberOfChannels;
+        const length = audioBuffer.length * numberOfChannels * 2;
+        const buffer = new ArrayBuffer(44 + length);
+        const view = new DataView(buffer);
+
+        // WAV header
+        const writeString = (
+            view: DataView,
+            offset: number,
+            string: string,
+        ) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + length, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, numberOfChannels, true);
+        view.setUint32(24, audioBuffer.sampleRate, true);
+        view.setUint32(28, audioBuffer.sampleRate * numberOfChannels * 2, true);
+        view.setUint16(32, numberOfChannels * 2, true);
+        view.setUint16(34, 16, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, length, true);
+
+        // Write audio data
+        const offset = 44;
+        const channelData = [];
+        for (let i = 0; i < numberOfChannels; i++) {
+            channelData.push(audioBuffer.getChannelData(i));
+        }
+
+        let index = 0;
+        while (index < audioBuffer.length) {
+            for (let i = 0; i < numberOfChannels; i++) {
+                const sample = channelData[i][index] * 0x7fff;
+                view.setInt16(
+                    offset + (index * numberOfChannels + i) * 2,
+                    sample < 0 ? Math.ceil(sample) : Math.floor(sample),
+                    true,
+                );
+            }
+            index++;
+        }
+
+        return new Blob([buffer], { type: 'audio/wav' });
     };
 
     const requestPermission = useCallback(async () => {
@@ -47,6 +112,7 @@ export function AudioRecorder({
                     echoCancellation: true,
                     noiseSuppression: true,
                     sampleRate: 44100,
+                    channelCount: 1,
                 },
             });
             streamRef.current = stream;
@@ -71,9 +137,9 @@ export function AudioRecorder({
                 throw new Error('No media stream available');
             }
 
-            const mimeType = getMimeType();
+            const recordingMimeType = getRecordingMimeType();
             const mediaRecorder = new MediaRecorder(stream, {
-                mimeType,
+                mimeType: recordingMimeType,
             });
 
             mediaRecorderRef.current = mediaRecorder;
@@ -86,34 +152,29 @@ export function AudioRecorder({
             };
 
             mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunksRef.current, {
-                    type: mimeType,
-                });
+                try {
+                    const audioBlob = new Blob(audioChunksRef.current, {
+                        type: recordingMimeType,
+                    });
 
-                // For Safari compatibility, ensure we use a playback-friendly MIME type
-                const playbackMimeType = mimeType.startsWith('audio/mp4')
-                    ? 'audio/mp4'
-                    : 'audio/webm';
+                    // Convert to WAV for better compatibility
+                    const wavBlob = await convertBlobToWav(audioBlob);
+                    const message = await IMMediaEmbedded.fromFile(wavBlob);
+                    onRecordingComplete(message);
 
-                const playbackBlob = new Blob([audioBlob], {
-                    type: playbackMimeType,
-                });
-
-                const message = await IMMediaEmbedded.fromFile(playbackBlob);
-                onRecordingComplete(message);
-
-                // Clean up
-                setRecordingTime(0);
-                if (timerRef.current) {
-                    window.clearInterval(timerRef.current);
-                    timerRef.current = null;
+                    setRecordingTime(0);
+                    if (timerRef.current) {
+                        window.clearInterval(timerRef.current);
+                        timerRef.current = null;
+                    }
+                } catch (err) {
+                    logger.error('Failed to process recording', { error: err });
                 }
             };
 
             mediaRecorder.start();
             setIsRecording(true);
 
-            // Start timer
             timerRef.current = window.setInterval(() => {
                 setRecordingTime((prev) => prev + 1);
             }, 1000);
@@ -130,7 +191,6 @@ export function AudioRecorder({
         }
     }, [isRecording]);
 
-    // Clean up on unmount
     useEffect(() => {
         return () => {
             if (streamRef.current) {
@@ -156,17 +216,17 @@ export function AudioRecorder({
             e.preventDefault();
             if (disabled) return;
 
-            // Keep chat input focused to prevent keyboard from closing
-            if (chatInputRef?.current) {
-                chatInputRef.current.focus();
-            }
+            const wasFocused = document.activeElement === chatInputRef?.current;
 
             isHoldingRef.current = true;
             pressTimerRef.current = window.setTimeout(async () => {
                 if (isHoldingRef.current) {
                     await startRecording();
+                    if (wasFocused && chatInputRef?.current) {
+                        chatInputRef.current.focus();
+                    }
                 }
-            }, 200); // 200ms threshold for press-and-hold
+            }, 200);
         },
         [disabled, startRecording, chatInputRef],
     );
@@ -176,6 +236,8 @@ export function AudioRecorder({
             e.preventDefault();
             isHoldingRef.current = false;
 
+            const wasFocused = document.activeElement === chatInputRef?.current;
+
             if (pressTimerRef.current) {
                 window.clearTimeout(pressTimerRef.current);
                 pressTimerRef.current = null;
@@ -184,12 +246,10 @@ export function AudioRecorder({
             if (isRecording) {
                 stopRecording();
             } else if (!isHoldingRef.current) {
-                // If it was a quick press (not a hold), toggle recording
                 startRecording();
             }
 
-            // Keep chat input focused after recording
-            if (chatInputRef?.current) {
+            if (wasFocused && chatInputRef?.current) {
                 chatInputRef.current.focus();
             }
         },

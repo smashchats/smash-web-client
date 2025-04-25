@@ -69,24 +69,19 @@ const getMimeTypeDescription = (mimeType: string): string => {
 const isMimeTypeSupported = (mimeType: string): boolean => {
     if (typeof window === 'undefined') return false;
 
-    // For audio and video, use a different approach than MediaSource
+    // For audio, check support regardless of format
     if (mimeType.startsWith('audio/')) {
-        // Create a test audio element to check format support
         const audio = document.createElement('audio');
-        // canPlayType returns: "", "maybe", or "probably"
         const support = audio.canPlayType(mimeType);
-        // Safari might return "maybe" for formats it can actually play
         return support === 'probably' || support === 'maybe';
     }
 
     if (mimeType.startsWith('video/')) {
-        // Create a test video element to check format support
         const video = document.createElement('video');
         const support = video.canPlayType(mimeType);
         return support === 'probably' || support === 'maybe';
     }
 
-    // For other types, fallback to MediaSource check
     return window.MediaSource?.isTypeSupported(mimeType) ?? false;
 };
 
@@ -306,9 +301,28 @@ export function MediaContent({ data }: MediaContentProps) {
                         src={mediaUrl!}
                         controls
                         className="media-audio"
-                        onLoadedData={() => setIsLoading(false)}
-                        onError={() => {
+                        preload="metadata"
+                        onLoadedMetadata={() => {
                             setIsLoading(false);
+                            // Force duration update by accessing the duration property
+                            if (audioRef.current) {
+                                const duration = audioRef.current.duration;
+                                logger.debug('Audio duration loaded', {
+                                    duration,
+                                });
+                            }
+                        }}
+                        onDurationChange={() => {
+                            if (audioRef.current) {
+                                const duration = audioRef.current.duration;
+                                logger.debug('Audio duration changed', {
+                                    duration,
+                                });
+                            }
+                        }}
+                        onError={(e) => {
+                            setIsLoading(false);
+                            logger.error('Failed to load audio', { error: e });
                             setError('Failed to load audio');
                         }}
                     />
