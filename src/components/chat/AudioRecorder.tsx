@@ -7,11 +7,13 @@ import { logger } from '../../lib/logger';
 interface AudioRecorderProps {
     onRecordingComplete: (message: IMMediaEmbedded) => void;
     disabled?: boolean;
+    chatInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 export function AudioRecorder({
     onRecordingComplete,
     disabled = false,
+    chatInputRef,
 }: AudioRecorderProps) {
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
@@ -126,9 +128,8 @@ export function AudioRecorder({
         }
     }, [isRecording]);
 
-    // Request permission on mount
+    // Clean up on unmount
     useEffect(() => {
-        requestPermission();
         return () => {
             if (streamRef.current) {
                 streamRef.current.getTracks().forEach((track) => track.stop());
@@ -140,7 +141,7 @@ export function AudioRecorder({
                 window.clearTimeout(pressTimerRef.current);
             }
         };
-    }, [requestPermission]);
+    }, []);
 
     const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
@@ -153,6 +154,11 @@ export function AudioRecorder({
             e.preventDefault();
             if (disabled) return;
 
+            // Keep chat input focused to prevent keyboard from closing
+            if (chatInputRef?.current) {
+                chatInputRef.current.focus();
+            }
+
             isHoldingRef.current = true;
             pressTimerRef.current = window.setTimeout(async () => {
                 if (isHoldingRef.current) {
@@ -160,7 +166,7 @@ export function AudioRecorder({
                 }
             }, 200); // 200ms threshold for press-and-hold
         },
-        [disabled, startRecording],
+        [disabled, startRecording, chatInputRef],
     );
 
     const handlePressEnd = useCallback(
@@ -179,8 +185,13 @@ export function AudioRecorder({
                 // If it was a quick press (not a hold), toggle recording
                 startRecording();
             }
+
+            // Keep chat input focused after recording
+            if (chatInputRef?.current) {
+                chatInputRef.current.focus();
+            }
         },
-        [isRecording, startRecording, stopRecording],
+        [isRecording, startRecording, stopRecording, chatInputRef],
     );
 
     return (

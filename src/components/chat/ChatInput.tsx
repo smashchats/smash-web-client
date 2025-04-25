@@ -87,6 +87,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                     <AudioRecorder
                         onRecordingComplete={handleMediaSelect}
                         disabled={isLoading || isProcessing}
+                        chatInputRef={textareaRef}
                     />
                     <textarea
                         ref={textareaRef}
