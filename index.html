@@ -1,68 +1,82 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <link
-            rel="icon"
-            type="image/png"
-            sizes="32x32"
-            href="/favicon-32x32.png"
-        />
-        <link
-            rel="icon"
-            type="image/png"
-            sizes="96x96"
-            href="/favicon-96x96.png"
-        />
-        <link
-            rel="icon"
-            type="image/png"
-            sizes="192x192"
-            href="/favicon-192x192.png"
-        />
-        <link
-            rel="icon"
-            type="image/png"
-            sizes="512x512"
-            href="/favicon-512x512.png"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Smashchats - Simple Web Client</title>
-        <!-- Preload styles to prevent flash of unstyled content -->
-        <link rel="preload" href="/src/styles/index.css" as="style" />
-        <link rel="stylesheet" href="/src/styles/index.css" />
-        <!-- Critical CSS to prevent flash of unstyled content -->
-        <style>
-            :root {
-                --background: #f3f4f6;
-                --text: #ffffff;
-            }
-            body {
-                background-color: var(--background);
-                color: var(--text);
-                margin: 0;
-                font-family:
-                    system-ui,
-                    -apple-system,
-                    sans-serif;
-            }
-            #root,
-            .app-container,
-            .loading-container {
-                display: flex;
-                height: 100vh;
-                width: 100vw;
-            }
-            .loading-container {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="root"></div>
-        <script type="module" src="/src/main.tsx"></script>
-    </body>
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
+    <!-- PWA Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#111827" />
+    <meta name="description" content="A minimal web client implementation of the Smash Protocol" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Smashchats" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/favicon-192x192.png" />
+
+    <!-- Web Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <title>Smashchats - Simple Web Client</title>
+    <!-- Preload styles to prevent flash of unstyled content -->
+    <link rel="preload" href="/src/styles/index.css" as="style" />
+    <link rel="stylesheet" href="/src/styles/index.css" />
+    <!-- Critical CSS to prevent flash of unstyled content -->
+    <style>
+        :root {
+            --background: #f3f4f6;
+            --text: #ffffff;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            font-family:
+                system-ui,
+                -apple-system,
+                sans-serif;
+            -webkit-touch-callout: none;
+            /* Disable callout (context menu) on long press */
+            -webkit-user-select: none;
+            /* Disable text selection */
+            user-select: none;
+            /* Disable text selection */
+            overscroll-behavior: none;
+            /* Prevent pull-to-refresh and bounce effects */
+            -webkit-overflow-scrolling: touch;
+            /* Improve scroll performance */
+            touch-action: manipulation;
+            /* Disable double-tap-to-zoom */
+        }
+
+        #root,
+        .app-container,
+        .loading-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .loading-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- Service Worker Registration -->
+    <script src="/register-sw.js"></script>
+</body>
+
 </html>

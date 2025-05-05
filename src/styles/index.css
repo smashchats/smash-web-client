@@ -12,6 +12,11 @@
         url('/fonts/inter.woff2') format('woff2');
 }
 
+/* Mobile PWA optimizations */
+:root {
+    --vh: 1vh; /* This value is updated by JavaScript for mobile viewports */
+}
+
 /* Import all CSS files in the correct order */
 @import './variables.css';
 @import './themes.css';
@@ -26,5 +31,42 @@
 @import './components/settings.css';
 @import './components/welcome.css';
 @import './components/ui.css';
+
+/* PWA optimizations */
+@media (display-mode: standalone) {
+    /* Apply these styles only when running as PWA */
+    body {
+        /* Prevent pull-to-refresh and overscroll effects */
+        overscroll-behavior-y: none;
+        /* Remove highlight when tapping */
+        -webkit-tap-highlight-color: transparent;
+        /* Prevent iOS rubber band effect */
+        position: fixed;
+        width: 100%;
+        height: 100vh;
+        height: calc(var(--vh, 1vh) * 100);
+    }
+
+    #root,
+    .app-container {
+        height: 100vh;
+        height: calc(var(--vh, 1vh) * 100);
+    }
+
+    /* Disable text selection by default */
+    * {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    /* Allow text selection in inputs and content areas */
+    input,
+    textarea,
+    [contenteditable='true'],
+    .selectable-text {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+}
 
 @import 'tailwindcss';

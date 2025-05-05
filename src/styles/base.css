@@ -18,11 +18,15 @@ body {
     background-color: var(--color-background);
     box-sizing: border-box;
     overflow-x: hidden;
+    touch-action: manipulation; /* Disable double-tap-to-zoom */
+    overscroll-behavior: contain; /* Prevent browser pull-to-refresh */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
 }
 
 @media (max-width: 768px) {
     html {
         height: -webkit-fill-available; /* Mobile Safari specific fix */
+        touch-action: manipulation; /* Prevent zooming */
     }
 
     /* Viewport height adjustments for mobile */
@@ -31,12 +35,50 @@ body {
         height: 100vh;
         /* Prevent content from being obscured by the keyboard */
         position: relative;
+        /* Mobile optimizations */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        -webkit-user-select: none; /* Prevent text selection */
+        user-select: none; /* Prevent text selection */
+        -webkit-touch-callout: none; /* Disable context menu on long press */
+        overscroll-behavior-y: none; /* Prevent pull-to-refresh */
     }
 
     /* Input focus adjustments for mobile */
     input:focus,
     textarea:focus {
         font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+
+    /* Allow text selection in input elements */
+    input[type='text'],
+    input[type='search'],
+    textarea {
+        -webkit-user-select: text;
+        user-select: text;
+        touch-action: pan-x pan-y; /* Allow scrolling within inputs */
+    }
+
+    /* Disable pull-to-refresh and navigation swipes */
+    body,
+    .app-container,
+    .main-area,
+    .chat-container {
+        overscroll-behavior: none;
+    }
+
+    /* Improve touch target size for better UX */
+    button,
+    a,
+    input[type='checkbox'],
+    input[type='radio'] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Fast tap response on mobile */
+    a,
+    button {
+        touch-action: manipulation;
     }
 }
 
