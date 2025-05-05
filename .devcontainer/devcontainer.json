@@ -11,6 +11,16 @@
             ]
         }
     },
+    "portsAttributes": {
+        "5173": {
+            "open": true,
+            "protocol": "http"
+        }
+    },
+    "forwardPorts": [
+        5173
+    ],
+    "appPort": 5173,
     "mounts": [
         "source=${localEnv:HOME}${localEnv:USERPROFILE}/.radicle,target=/home/node/.radicle,type=bind",
         "source=ubuntu-24.04-radicle,target=/home/node/.radicle/bin,type=volume",
