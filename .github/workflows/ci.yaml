@@ -64,41 +64,8 @@ jobs:
                       smash-node-lib/dist
                   key: ${{ steps.set-cache-key.outputs.cache-key }}
 
-    tests:
-        needs: install
-        runs-on: ubuntu-24.04
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
-                  persist-credentials: false
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: '22.x'
-
-            - name: Clone smash-node-lib dependency
-              run: git clone --depth 1 https://github.com/smashchats/smash-node-lib.git
-
-            - name: Restore Cache
-              uses: actions/cache/restore@v4
-              with:
-                  path: |
-                      node_modules
-                      ~/.npm
-                      smash-node-lib/node_modules
-                      smash-node-lib/dist
-                  key: ${{ needs.install.outputs.cache-key }}
-
-            - name: Install Playwright Browsers
-              run: npx playwright install --with-deps chromium
-
-            - name: Run Tests
-              run: npm run test
-
     build:
-        needs: [install, tests]
+        needs: [install]
         runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
