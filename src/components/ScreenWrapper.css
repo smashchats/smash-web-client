@@ -1,0 +1,15 @@
+.screen-wrapper {
+    width: 100vw;
+}
+
+.screen-wrapper-content {
+    width: 100vw;
+    height: calc(100vh - 62px);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.screen-wrapper-content.avoid-bottom-nav {
+    padding-bottom: var(--bottom-nav-height);
+}

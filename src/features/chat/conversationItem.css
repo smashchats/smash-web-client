@@ -1,0 +1,125 @@
+/* ConversationItem Styles */
+.conversation-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.2s ease;
+    color: var(--color-text);
+}
+
+.conversation-item:hover {
+    background-color: var(--color-background-hover);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    color: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.conversation-content {
+    flex-grow: 1;
+    text-decoration: none;
+    color: var(--color-text);
+    min-width: 0; /* Helps with text truncation */
+}
+
+.conversation-header {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.conversation-title {
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.conversation-time {
+    font-size: 12px;
+    color: var(--color-text-light);
+    opacity: 0.8;
+}
+
+.conversation-message {
+    font-size: 14px;
+    color: var(--color-text-light);
+    margin: 4px 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    opacity: 0.9;
+}
+
+.conversation-actions {
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+}
+
+.unread-badge {
+    background-color: var(--color-primary);
+    color: var(--color-background);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    margin-right: 8px;
+    font-weight: 500;
+}
+
+.photo-button {
+    padding: 12px;
+    color: var(--color-text-light);
+    background: none;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.photo-button:hover {
+    color: var(--color-primary);
+    background-color: var(--color-secondary);
+    opacity: 1;
+}
+
+/* Dark theme specific adjustments */
+@media (prefers-color-scheme: dark) {
+    .conversation-item {
+        border-bottom-color: var(--color-border);
+    }
+
+    .conversation-item:hover {
+        background-color: var(--color-surface);
+    }
+
+    .conversation-message {
+        color: var(--color-text-light);
+    }
+
+    .conversation-time {
+        color: var(--color-text-light);
+    }
+
+    .photo-button {
+        color: var(--color-text-light);
+    }
+
+    .photo-button:hover {
+        color: var(--color-accent);
+        background-color: var(--color-surface);
+    }
+}

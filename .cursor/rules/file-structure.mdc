@@ -1,0 +1,78 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+The file structure looks like this. This is only an example, and things can move around. But this is important to keep in mind so that you don't suggest, for instance, creating a `pages` directory when all our page-like components are within `features/<name>`.
+
+```
+src/
+├── app/
+│   ├── App.tsx                         # Main layout + route definitions
+│   ├── i18n.ts                         # i18next setup
+│   ├── pwa.ts                          # Vite-PWA registration logic
+│   └── routes.tsx                      # React Router config
+│
+├── features/
+│   ├── auth/
+│   │   ├── Login.tsx                   # Simple login UI
+│   │   └── useAuth.ts                  # Hook wrapping SDK or mock auth
+│   │
+│   ├── camera/
+│   │   ├── CameraView.tsx              # Fullscreen camera interface
+│   │   ├── useCamera.ts                # Hook to handle constraints, state
+│   │   ├── mediaRecorder.ts            # Wrapper around MediaRecorder
+│   │   └── permissions.ts              # Camera/mic permission utils
+│   │
+│   ├── chat/
+│   │   ├── ChatView.tsx                # Main chat screen
+│   │   ├── MessageInput.tsx           # Text input + media controls
+│   │   ├── MessageList.tsx            # List of messages
+│   │   ├── MessageBubble.tsx          # UI for each message
+│   │   ├── chatStore.ts                # Zustand store (UI state only)
+│   │   ├── chatDb.ts                   # Dexie wrapper (IndexedDB schema + helpers)
+│   │   └── useChatSync.ts              # Logic to sync SDK data to local DB
+│   │
+│   └── stories/
+│       ├── StoryView.tsx              # Fullscreen media view
+│       ├── useStories.ts              # State + data sync
+│       └── StoryThumbnail.tsx         # Preview in UI
+│
+├── lib/
+│   ├── sdk.ts                          # Thin wrapper over your provided backend SDK
+│   ├── fileUtils.ts                   # Blob utils (e.g., createObjectURL, revoke)
+│   ├── storageQuota.ts                # StorageManager API usage
+│   └── logger.ts                      # Optional: centralized logging
+│
+├── components/
+│   ├── Button.tsx
+│   ├── Icon.tsx
+│   ├── Loader.tsx
+│   └── Modal.tsx
+│
+├── hooks/
+│   ├── usePermissions.ts              # Checks + requests camera/mic access
+│   └── useMediaQuery.ts               # Responsive helpers
+│
+├── styles/
+│   ├── globals.css                    # Tailwind or custom CSS
+│   └── theme.css                      # Optional: future theming
+│
+├── types/
+│   └── index.ts                       # Shared types/interfaces
+│
+├── main.tsx                           # Vite entrypoint
+└── vite-env.d.ts
+```
+
+## Structure Rationale
+
+| Folder      | Purpose                                            |
+| ----------- | -------------------------------------------------- |
+| app/        | Core app scaffolding — routes, layout, init logic  |
+| features/   | Split by business logic (camera, chat, auth, etc.) |
+| lib/        | Low-level reusable helpers not tied to features    |
+| components/ | Shared dumb UI components                          |
+| hooks/      | Custom React hooks used app-wide                   |
+| styles/     | Global + atomic CSS                                |
+| types/      | Centralized types for reuse and clarity            |

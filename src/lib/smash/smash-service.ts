@@ -1,23 +1,23 @@
 import {
-    DID,
-    DIDString,
-    EmbeddedBase64Media,
-    EncapsulatedIMProtoMessage,
-    IMMediaEmbedded,
-    IMMediaEmbeddedMessage,
-    IMProtoMessage,
+    type DID,
+    type DIDString,
+    type EmbeddedBase64Media,
+    type EncapsulatedIMProtoMessage,
+    type IMMediaEmbedded,
+    type IMMediaEmbeddedMessage,
+    type IMProtoMessage,
     IMText,
     IM_CHAT_TEXT,
     IM_MEDIA_EMBEDDED,
-    MessageStatus,
-    SmashUser,
+    type MessageStatus,
+    type SmashUser,
     encapsulateMessage,
-    sha256,
+    type sha256,
 } from 'smash-node-lib';
 
+import { type SmashConversation, type SmashMessage } from '../../types/smash';
 import { db } from '../db';
 import { logger } from '../logger';
-import { SmashConversation, SmashMessage } from '../types';
 
 export type MessageCallback = (message: SmashMessage) => void;
 export type ConversationCallback = (conversation: SmashConversation) => void;
@@ -39,9 +39,8 @@ class SmashService {
         return SmashService.instance;
     }
 
-    async init(smashUser: SmashUser): Promise<void> {
+    init(smashUser: SmashUser) {
         this.smashUser = smashUser;
-        await db.init();
 
         this.setupMessageListeners();
         this.setupStatusListener();

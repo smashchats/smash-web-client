@@ -1,0 +1,29 @@
+/* ChatListScreen Styles */
+.chat-list-container {
+    padding: 0;
+    width: 100vw;
+    margin: 0 auto;
+}
+
+.loading-message {
+    color: #6b7280;
+}
+
+.error-message {
+    color: #ef4444;
+}
+
+.empty-message {
+    color: #6b7280;
+    font-style: italic;
+    text-align: center;
+    font-size: 1.2rem;
+    max-width: 60%;
+    margin: 0 auto;
+}
+
+.conversation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}

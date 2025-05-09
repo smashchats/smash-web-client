@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { DIDString, IMPeerIdentity, SmashUser } from 'smash-node-lib';
+import { type DIDString, type IMPeerIdentity, SmashUser } from 'smash-node-lib';
 
-import { SMEConfig, StoredProfile, db } from '../db';
+import { type SMEConfig, db } from '../db';
 import { logger } from '../logger';
 import {
     getDidDocumentManager,
     initializeSmashMessaging,
 } from '../smash/smash-init';
 import { smashService } from '../smash/smash-service';
+import type { StoredProfile } from '../types';
 
 interface SmashIdentityState {
     identity: IMPeerIdentity | null;
@@ -37,7 +38,7 @@ const initializeSmashUser = async (
         didManager.set(await smashUser.getDIDDocument());
     }
 
-    await smashService.init(smashUser);
+    smashService.init(smashUser);
 
     return smashUser;
 };
@@ -69,7 +70,6 @@ export function useSmashIdentity() {
         const loadIdentity = async () => {
             try {
                 logger.info('Initializing database');
-                await db.init();
                 logger.debug('Loading stored identity');
                 const stored = await db.getIdentity();
 
@@ -79,7 +79,7 @@ export function useSmashIdentity() {
                         initializeSmashMessaging();
 
                         const identity = await SmashUser.importIdentity(
-                            stored.serializedIdentity,
+                            stored.serialized,
                         );
                         logger.info('Successfully imported identity', {
                             did: identity.did,
@@ -98,7 +98,7 @@ export function useSmashIdentity() {
                         setState((prev) => ({
                             ...prev,
                             identity,
-                            profile: stored.profile,
+                            profile: stored.profile ?? null,
                             smeConfig: stored.smeConfig,
                             smashUser,
                             isInitialized: true,
@@ -139,13 +139,21 @@ export function useSmashIdentity() {
     ) => {
         try {
             logger.info('Setting up new identity');
-            const smeConfig = initialSMEConfig || state.smeConfig;
+            const smeConfig = initialSMEConfig ?? state.smeConfig;
+            if (!smeConfig) throw new Error('Missing SME config');
 
             const smashUser = await initializeSmashUser(identity, smeConfig);
             await initializeChats(smashUser);
 
             const serializedIdentity = await identity.serialize();
-            await db.setIdentity(serializedIdentity, state.profile, smeConfig);
+            await db.identity.put({
+                id: 'current',
+                serialized: serializedIdentity,
+                smeConfig,
+                profile: state.profile ?? undefined,
+                createdAt: Date.now(),
+                lastUsedAt: Date.now(),
+            });
 
             setState((prev) => ({
                 ...prev,
@@ -162,9 +170,10 @@ export function useSmashIdentity() {
     };
 
     const updateProfile = async (profile: StoredProfile) => {
+        logger.debug('Updating profile');
         try {
-            logger.debug('Updating profile');
-            await db.updateProfile(profile);
+            await db.identity.update('current', { profile });
+            if (state.smashUser) await state.smashUser.updateMeta(profile);
             setState((prev) => ({ ...prev, profile, error: null }));
 
             if (state.smashUser) {
@@ -178,16 +187,24 @@ export function useSmashIdentity() {
     };
 
     const updateSMEConfig = async (config: SMEConfig) => {
+        if (!state.identity) {
+            setState((s) => ({ ...s, error: new Error('No identity') }));
+            return;
+        }
         try {
-            if (!state.identity) {
-                throw new Error('No identity available');
-            }
-
             const smashUser = await initializeSmashUser(state.identity, config);
             await initializeChats(smashUser);
 
             const serializedIdentity = await state.identity.serialize();
-            await db.setIdentity(serializedIdentity, state.profile, config);
+
+            await db.identity.put({
+                id: 'current',
+                serialized: serializedIdentity,
+                smeConfig: config,
+                profile: state.profile ?? undefined,
+                createdAt: Date.now(),
+                lastUsedAt: Date.now(),
+            });
 
             setState((prev) => ({
                 ...prev,
@@ -205,6 +222,7 @@ export function useSmashIdentity() {
     const clearIdentity = async () => {
         try {
             logger.info('Cleaning up before logout');
+            await db.deleteDatabase();
 
             if (state.smashUser) {
                 logger.debug('Closing SmashUser connections');
@@ -212,10 +230,6 @@ export function useSmashIdentity() {
                 logger.debug('Closing smash service');
                 await smashService.close();
             }
-
-            await db.init();
-            await db.clearIdentity();
-            await db.deleteDatabase();
 
             setState({
                 identity: null,
@@ -228,12 +242,12 @@ export function useSmashIdentity() {
 
             logger.info('Refreshing page');
             setTimeout(() => {
-                window.location.reload();
+                window.location.href = '/';
             }, 100);
         } catch (error) {
             logger.error('Error during logout', error);
             setState((prev) => ({ ...prev, error: error as Error }));
-            window.location.reload();
+            window.location.href = '/';
         }
     };
 

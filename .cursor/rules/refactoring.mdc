@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- You should avoid repeating code at all costs. Everytime you do, a kitten chokes on it.
+- When a function becomes a little bit too much complicated, it should be split.
+- Consider for new helper functions if a hook is something we might want to have.
+- Is there any other file using something similar? Might be a good time to refactor what you're doing.

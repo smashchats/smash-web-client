@@ -6,16 +6,15 @@ export const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
 // Error types to help users understand clipboard issues
-export enum ClipboardErrorType {
-    PermissionDenied = 'PERMISSION_DENIED',
-    NotSupported = 'NOT_SUPPORTED',
-    PermissionNotGranted = 'PERMISSION_NOT_GRANTED',
-    Unknown = 'UNKNOWN',
-}
+export type ClipboardError =
+    | 'PERMISSION_DENIED'
+    | 'NOT_SUPPORTED'
+    | 'PERMISSION_NOT_GRANTED'
+    | 'UNKNOWN';
 
 export interface ClipboardResult {
     success: boolean;
-    errorType?: ClipboardErrorType;
+    errorType?: ClipboardError;
     errorMessage?: string;
 }
 
@@ -123,7 +122,7 @@ export async function copyToClipboard(text: string): Promise<ClipboardResult> {
 
         return {
             success: false,
-            errorType: ClipboardErrorType.NotSupported,
+            errorType: 'NOT_SUPPORTED',
             errorMessage: 'Clipboard API is not supported in this browser',
         };
     }
@@ -134,7 +133,7 @@ export async function copyToClipboard(text: string): Promise<ClipboardResult> {
         if (!hasPermission) {
             return {
                 success: false,
-                errorType: ClipboardErrorType.PermissionNotGranted,
+                errorType: 'PERMISSION_NOT_GRANTED',
                 errorMessage:
                     'Clipboard write permission not granted. Try again with a direct user action.',
             };
@@ -199,7 +198,7 @@ export async function copyToClipboard(text: string): Promise<ClipboardResult> {
                     'Permission to access clipboard was denied. You may need to grant clipboard permission in your browser settings.';
                 return {
                     success: false,
-                    errorType: ClipboardErrorType.PermissionDenied,
+                    errorType: 'PERMISSION_DENIED',
                     errorMessage,
                 };
             }
@@ -207,14 +206,14 @@ export async function copyToClipboard(text: string): Promise<ClipboardResult> {
             // Other error types
             return {
                 success: false,
-                errorType: ClipboardErrorType.Unknown,
+                errorType: 'UNKNOWN',
                 errorMessage: error.message || 'Unknown clipboard error',
             };
         }
 
         return {
             success: false,
-            errorType: ClipboardErrorType.Unknown,
+            errorType: 'UNKNOWN',
             errorMessage: 'Failed to copy to clipboard',
         };
     }

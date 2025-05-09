@@ -1,0 +1,79 @@
+.welcome-overlay {
+    background: rgba(0, 0, 0, 0.6);
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-index-modal-backdrop);
+}
+
+.welcome-content {
+    background: var(--color-background);
+    padding: var(--spacing-xl);
+    max-width: var(--max-width-sm);
+    margin: 10vh auto;
+    border-radius: var(--border-radius-xl);
+    z-index: var(--z-index-modal);
+    position: relative;
+    text-align: center;
+    box-shadow: var(--shadow-xl);
+}
+
+.welcome-content h2 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--spacing-sm);
+}
+
+.description {
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.feature {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    text-align: left;
+}
+
+.feature-icon {
+    color: var(--color-text);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.feature-content h3 {
+    font-size: var(--font-size-base);
+    margin: 0;
+}
+
+.feature-content p {
+    margin: var(--spacing-xs) 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+}
+
+.welcome-guide-input-field {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-base);
+    margin: var(--spacing-md) 0;
+}
+
+.welcome-guide-alert-error {
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-sm);
+    background-color: var(--color-error-background);
+    border: var(--border-width) solid var(--color-error);
+    border-radius: var(--border-radius-md);
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+}

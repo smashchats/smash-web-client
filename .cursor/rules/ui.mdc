@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- All UI you implement is clean and sober.
+- You don't use emojis. You use lucide-react icons.
+- Tailwind css is available. Use tailwind classes when available. Don't hesitate to refactor historic styles that are inline or in a separate file. 
+- there are variables in [globals.css](mdc:src/styles/globals.css) that you must use in all components and screens styles.
+- you must reuse components in [components](mdc:src/components).

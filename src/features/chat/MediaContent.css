@@ -1,0 +1,214 @@
+.media-content {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    background-color: transparent;
+}
+
+.media-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    color: inherit;
+    opacity: 0.7;
+}
+
+.media-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    color: var(--color-error);
+    text-align: center;
+    padding: var(--spacing-md);
+    background-color: rgba(239, 68, 68, 0.1);
+    border-radius: var(--border-radius-md);
+}
+
+.media-unsupported {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    gap: var(--spacing-sm);
+    color: inherit;
+    opacity: 0.7;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: var(--border-radius-md);
+}
+
+.message.outgoing .media-unsupported {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.media-image {
+    display: block;
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.media-image:hover {
+    transform: scale(0.98);
+}
+
+.media-video {
+    display: block;
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: var(--border-radius-md);
+}
+
+.media-audio {
+    width: 100%;
+    min-width: 300px;
+    padding: 0;
+    margin: 0;
+    background-color: transparent !important;
+    border-radius: var(--border-radius-md);
+    min-height: 36px;
+    height: 36px;
+}
+
+/* Style the audio player controls */
+.media-audio::-webkit-media-controls-panel {
+    background-color: transparent;
+    padding: 0;
+}
+
+.media-audio::-webkit-media-controls-current-time-display,
+.media-audio::-webkit-media-controls-time-remaining-display {
+    color: inherit;
+    font-size: var(--font-size-xs);
+    font-family: var(--font-sans);
+}
+
+.media-audio::-webkit-media-controls-timeline {
+    height: 2px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.media-audio::-webkit-media-controls-volume-slider {
+    display: none;
+}
+
+.media-audio::-webkit-media-controls-mute-button {
+    display: none;
+}
+
+/* Ensure message content with audio has proper spacing */
+.message.has-audio .message-content {
+    gap: var(--spacing-xs);
+}
+
+/* Set wider message bubbles when they contain audio */
+.message.has-audio {
+    min-width: 260px;
+    max-width: 320px;
+    padding: var(--spacing-sm);
+}
+
+.message.outgoing .media-audio::-webkit-media-controls-current-time-display,
+.message.outgoing .media-audio::-webkit-media-controls-time-remaining-display,
+.message.outgoing .media-audio::-webkit-media-controls-play-button {
+    color: white;
+}
+
+.message.outgoing .media-audio::-webkit-media-controls-timeline {
+    filter: invert(1);
+}
+
+@media (max-width: 768px) {
+    .media-audio {
+        min-width: 220px;
+        width: 100%;
+    }
+
+    /* Ensure audio messages have enough space on mobile */
+    .message.has-audio {
+        min-width: 240px;
+        max-width: 95%;
+    }
+}
+
+.media-download {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius-full);
+    background-color: var(--color-background);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    opacity: 0;
+    box-shadow: var(--shadow-md);
+}
+
+.media-download:hover {
+    background-color: var(--color-primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.media-content:hover .media-download {
+    opacity: 1;
+}
+
+/* Media Modal */
+.media-modal {
+    position: fixed;
+    inset: 0;
+    background-color: var(--color-overlay);
+    backdrop-filter: blur(4px);
+    z-index: var(--z-index-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+}
+
+.media-modal img,
+.media-modal video {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+}
+
+.media-modal-close {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-xl);
+    box-shadow: var(--shadow-md);
+}
+
+.media-modal-close:hover {
+    background-color: var(--color-surface);
+    transform: scale(1.1);
+}

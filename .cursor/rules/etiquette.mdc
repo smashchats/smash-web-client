@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Writing beautiful code is important. It needs to be easily readable by a junior engineer, with the flattest learning-curve possible.
+- All component props are wrapped around `Readonly<T>`.
+- We're writting functional code whenever possible.
+- Short files are easier to read and understand, hence this is one of our goals.
+- Variable names should be as explicit as possible. We don't write `i` when we can write `index`. We're not lazy. It's better to have a 40-character name for a variable than something we won't understand the next day.

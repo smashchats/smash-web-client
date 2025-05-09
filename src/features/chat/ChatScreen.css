@@ -1,0 +1,37 @@
+.messages-container:hover {
+    scrollbar-color: var(--color-primary) transparent;
+}
+.messages-container {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    scroll-behavior: smooth;
+    /* Hide scrollbar for chat messages but keep functionality */
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.messages-content {
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    min-height: 100%;
+}
+
+.messages-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: var(--border-radius-xl);
+}

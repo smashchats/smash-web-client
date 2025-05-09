@@ -1,615 +1,120 @@
-import { DBSchema, IDBPDatabase, openDB } from 'idb';
-import { DIDDocument, IIMPeerIdentity } from 'smash-node-lib';
+import Dexie, { type Table } from 'dexie';
+import type { DIDDocument, DIDString } from 'smash-node-lib';
 
-import { logger } from './logger';
-import { SmashConversation, SmashMessage } from './types';
-
-interface StoredPeerProfile extends StoredProfile {
-    id: string;
-}
-
-const STORE_NAMES = [
-    'messages',
-    'conversations',
-    'identity',
-    'didDocuments',
-    'peerProfiles',
-] as const;
-
-type StoreNames = (typeof STORE_NAMES)[number];
-
-type MessageIndexNames = 'by-conversation' | 'by-timestamp';
-type ConversationIndexNames = 'by-updated';
-type IndexNames = MessageIndexNames | ConversationIndexNames;
-
-interface SmashDBSchema extends DBSchema {
-    messages: {
-        key: string;
-        value: SmashMessage;
-        indexes: {
-            'by-conversation': string;
-            'by-timestamp': number;
-        };
-    };
-    conversations: {
-        key: string;
-        value: SmashConversation;
-        indexes: {
-            'by-updated': number;
-        };
-    };
-    identity: {
-        key: 'current';
-        value: {
-            serializedIdentity: IIMPeerIdentity;
-            profile: StoredProfile | null;
-            smeConfig: SMEConfig | null;
-        };
-    };
-    didDocuments: {
-        key: string;
-        value: DIDDocument;
-    };
-    peerProfiles: {
-        key: string;
-        value: StoredPeerProfile;
-    };
-}
-
-export interface StoredProfile {
-    title: string;
-    description: string;
-    avatar: string;
-}
+import type { SmashConversation, SmashMessage } from '../types/smash';
+import type { StoredIdentity, StoredProfile } from './types';
 
 export interface SMEConfig {
     url: string;
     smePublicKey: string;
 }
 
-export async function initDB() {
-    return SmashDB.getInstance().init();
+export interface StoredPeerProfile extends StoredProfile {
+    id: DIDString;
 }
 
-interface StoreConfig {
-    keyPath: string | null;
-    indexes?: Array<{
-        name: string & IndexNames; // This ensures the name is both a string (for IDB) and our IndexNames type
-        keyPath: string;
-    }>;
-}
+class AppDB extends Dexie {
+    messages!: Table<SmashMessage, string>; // id = sha256
+    conversations!: Table<SmashConversation, string>; // id = UUID or hash
+    didDocuments!: Table<DIDDocument, DIDString>; // id = did
+    peerProfiles!: Table<StoredPeerProfile, DIDString>; // id = did
+    identity!: Table<StoredIdentity, string>; // singleton, id = "current"
 
-type StoreConfigs = {
-    [K in StoreNames]: StoreConfig;
-};
+    constructor() {
+        super('AppDB');
 
-class SmashDB {
-    private static instance: SmashDB;
-    private db: IDBPDatabase<SmashDBSchema> | null = null;
-    private readonly dbName = 'smash-db';
-
-    private readonly stores: StoreConfigs = {
-        messages: {
-            keyPath: 'id',
-            indexes: [
-                { name: 'by-conversation', keyPath: 'conversationId' },
-                { name: 'by-timestamp', keyPath: 'timestamp' },
-            ],
-        },
-        conversations: {
-            keyPath: 'id',
-            indexes: [{ name: 'by-updated', keyPath: 'updatedAt' }],
-        },
-        identity: { keyPath: null },
-        didDocuments: { keyPath: 'id' },
-        peerProfiles: { keyPath: 'id' },
-    } as const;
-
-    private constructor() {}
-
-    static getInstance(): SmashDB {
-        if (!SmashDB.instance) {
-            SmashDB.instance = new SmashDB();
-        }
-        return SmashDB.instance;
-    }
-
-    private checkConnection() {
-        if (!this.db) {
-            logger.error('Database not initialized');
-            throw new Error('Database not initialized');
-        }
-    }
-
-    async init(): Promise<void> {
-        if (this.db) {
-            logger.debug('Database already initialized');
-            return;
-        }
-
-        try {
-            logger.info('Initializing database', { name: this.dbName });
-
-            // Step 1: First open with no version => get current version if DB exists
-            const tempDb = await openDB<SmashDBSchema>(this.dbName);
-            const currentVersion = tempDb.version;
-            logger.info(`Opened DB at existing version: ${currentVersion}`);
-
-            // Check for missing stores
-            const missingStores: StoreNames[] = [];
-            for (const storeName of STORE_NAMES) {
-                if (!tempDb.objectStoreNames.contains(storeName)) {
-                    missingStores.push(storeName);
-                }
-            }
-
-            // Close it if we're going to reopen with an upgrade
-            tempDb.close();
-
-            // If we have nothing to create, re-open without specifying version
-            if (missingStores.length === 0) {
-                logger.info(
-                    'No missing stores, opening the existing DB handle again.',
-                );
-                this.db = await openDB<SmashDBSchema>(this.dbName);
-            } else {
-                // Step 2: Reopen with currentVersion + 1 to allow store creation
-                logger.info('Missing stores:', missingStores);
-                logger.info(
-                    `Upgrading to version ${currentVersion + 1} to create missing stores.`,
-                );
-                this.db = await openDB<SmashDBSchema>(
-                    this.dbName,
-                    currentVersion + 1,
-                    {
-                        upgrade: (db) => {
-                            logger.info(
-                                'Running upgrade callback to create missing stores',
-                            );
-                            for (const storeName of missingStores) {
-                                logger.debug('Creating store', { storeName });
-                                const config = this.stores[storeName];
-                                const store = db.createObjectStore(
-                                    storeName as StoreNames,
-                                    {
-                                        keyPath: config.keyPath,
-                                    },
-                                );
-
-                                // Create indexes if any exist
-                                if (config.indexes) {
-                                    for (const index of config.indexes) {
-                                        // Type assertion for IDB strict types
-                                        (
-                                            store.createIndex as (
-                                                name: string,
-                                                keyPath: string,
-                                            ) => void
-                                        )(index.name, index.keyPath);
-                                        logger.debug('Created index', {
-                                            storeName,
-                                            indexName: index.name,
-                                        });
-                                    }
-                                }
-                            }
-                            logger.info(
-                                'Database upgrade completed for missing stores',
-                            );
-                        },
-                        blocked: () => {
-                            logger.warn(
-                                'Database upgrade blocked by other connections',
-                            );
-                        },
-                        blocking: () => {
-                            logger.warn(
-                                'Connection blocking database upgrade, closing DB',
-                            );
-                            this.close();
-                        },
-                        terminated: () => {
-                            logger.error(
-                                'Database connection terminated unexpectedly',
-                            );
-                            this.db = null;
-                        },
-                    },
-                );
-            }
-
-            // Step 3: Validate all the stores (be sure everything is present now)
-            for (const storeName of STORE_NAMES) {
-                if (!this.db.objectStoreNames.contains(storeName)) {
-                    const error = `Required store ${storeName} is missing after upgrade`;
-                    logger.error(error);
-                    throw new Error(error);
-                }
-            }
-
-            logger.info('Database initialization completed successfully');
-        } catch (error) {
-            logger.error('Database initialization failed', { error });
-            this.db = null;
-            throw error;
-        }
-    }
-
-    // Identity Management
-    async getIdentity(): Promise<{
-        serializedIdentity: IIMPeerIdentity;
-        profile: StoredProfile | null;
-        smeConfig: SMEConfig | null;
-    } | null> {
-        this.checkConnection();
-        logger.debug('Getting current identity');
-        const result = await this.db!.get('identity', 'current');
-        return result ?? null;
-    }
-
-    async setIdentity(
-        serializedIdentity: IIMPeerIdentity,
-        profile: StoredProfile | null = null,
-        smeConfig: SMEConfig | null = null,
-    ): Promise<void> {
-        this.checkConnection();
-        logger.debug('Setting identity');
-        await this.db!.put(
-            'identity',
-            { serializedIdentity, profile, smeConfig },
-            'current',
-        );
-        logger.debug('Identity set successfully');
-    }
-
-    async updateProfile(profile: StoredProfile): Promise<void> {
-        this.checkConnection();
-        logger.debug('Updating profile');
-
-        const current = await this.getIdentity();
-        if (!current) {
-            logger.error('No identity found for profile update');
-            throw new Error('No identity found');
-        }
-
-        await this.setIdentity(
-            current.serializedIdentity,
-            profile,
-            current.smeConfig,
-        );
-        logger.debug('Profile updated successfully');
-    }
-
-    async updateSMEConfig(smeConfig: SMEConfig): Promise<void> {
-        this.checkConnection();
-        logger.debug('Updating SME config');
-
-        const current = await this.getIdentity();
-        if (!current) {
-            logger.error('No identity found for SME config update');
-            throw new Error('No identity found');
-        }
-
-        await this.setIdentity(
-            current.serializedIdentity,
-            current.profile,
-            smeConfig,
-        );
-        logger.debug('SME config updated successfully');
-    }
-
-    async clearIdentity(): Promise<void> {
-        this.checkConnection();
-        logger.info('Clearing identity and related data');
-
-        // Create a transaction that includes all stores
-        const tx = this.db!.transaction(STORE_NAMES, 'readwrite');
-
-        // Clear all stores in parallel
-        await Promise.all(
-            STORE_NAMES.map((storeName) => tx.objectStore(storeName).clear()),
-        );
-
-        await tx.done;
-        logger.info('All database stores cleared successfully');
-    }
-
-    async deleteDatabase(): Promise<void> {
-        logger.info('Deleting entire database');
-
-        // Close the current connection if it exists
-        if (this.db) {
-            this.db.close();
-            this.db = null;
-        }
-
-        // Return a promise that resolves when the database is deleted
-        return new Promise((resolve, reject) => {
-            const request = window.indexedDB.deleteDatabase(this.dbName);
-
-            request.onerror = (event) => {
-                const error = new Error(
-                    `Failed to delete database: ${this.dbName}`,
-                );
-                logger.error('Database deletion failed', { error, event });
-                reject(error);
-            };
-
-            request.onsuccess = () => {
-                logger.info('Database deleted successfully');
-                resolve();
-            };
-
-            request.onblocked = (event) => {
-                logger.warn('Database deletion blocked by other connections', {
-                    event,
-                });
-                // Still resolve as this is usually just a temporary state
-                resolve();
-            };
+        this.version(1).stores({
+            messages: 'id,conversationId,timestamp',
+            conversations: 'id,updatedAt',
+            didDocuments: 'id',
+            peerProfiles: 'id',
+            identity: 'id,lastUsedAt',
         });
     }
 
-    // Message Management
-    async addMessage(message: SmashMessage): Promise<void> {
-        this.checkConnection();
-        logger.debug('Adding message', { messageId: message.id });
-
-        await this.db!.put('messages', message);
-
-        const conversation = (await this.db!.get(
-            'conversations',
-            message.conversationId,
-        )) || {
-            id: message.conversationId,
-            title: `Chat with ${message.sender}`,
-            unreadCount: 0,
-            participants: [message.sender],
-            type: 'direct' as const,
-            lastMessage: message,
-            updatedAt: message.timestamp,
-        };
-
-        conversation.lastMessage = message;
-        conversation.updatedAt = message.timestamp;
-
-        await this.db!.put('conversations', conversation);
-        logger.debug('Message added successfully', { messageId: message.id });
+    // Identity
+    async setIdentity(identity: StoredIdentity) {
+        await this.identity.put(identity, 'current');
     }
 
-    async updateMessageStatus(
-        messageId: string,
-        status: SmashMessage['status'],
-    ): Promise<void> {
-        this.checkConnection();
-        logger.debug('Updating message status', { messageId, status });
-
-        const message = await this.db!.get('messages', messageId);
-        if (!message) {
-            logger.warn('Message not found for status update', { messageId });
-            return;
-        }
-
-        message.status = status;
-        await this.db!.put('messages', message);
-
-        const conversation = await this.db!.get(
-            'conversations',
-            message.conversationId,
-        );
-        if (conversation?.lastMessage?.id === messageId) {
-            conversation.lastMessage = message;
-            await this.db!.put('conversations', conversation);
-        }
-
-        logger.debug('Message status updated successfully', { messageId });
+    async getIdentity(): Promise<StoredIdentity | undefined> {
+        return this.identity.get('current');
     }
 
-    async getMessages(
-        conversationId: string,
-        limit = 50,
-    ): Promise<SmashMessage[]> {
-        this.checkConnection();
-        logger.debug('Getting messages', { conversationId, limit });
-
-        const messages = await this.db!.getAllFromIndex(
-            'messages',
-            'by-conversation',
-            conversationId,
-        );
-
-        logger.debug('Retrieved messages', {
-            conversationId,
-            count: messages.length,
-            returning: Math.min(messages.length, limit),
-        });
-
-        return messages.slice(-limit);
+    async clearIdentity() {
+        await this.identity.clear();
     }
 
-    async getMessage(messageId: string): Promise<SmashMessage | undefined> {
-        this.checkConnection();
-        logger.debug('Getting message', { messageId });
-        return this.db!.get('messages', messageId);
+    // Messages
+    async addMessage(message: SmashMessage) {
+        return this.messages.put(message);
     }
 
-    // Conversation Management
-    async addConversation(conversation: SmashConversation): Promise<void> {
-        await this.init();
-        this.checkConnection();
-        logger.debug('Adding conversation', {
-            conversationId: conversation.id,
-        });
-        await this.db!.put('conversations', conversation);
-        logger.debug('Conversation added successfully', {
-            conversationId: conversation.id,
-        });
+    async getMessages(conversationId: string): Promise<SmashMessage[]> {
+        return this.messages
+            .where('conversationId')
+            .equals(conversationId)
+            .sortBy('timestamp');
     }
 
-    async updateConversation(conversation: SmashConversation): Promise<void> {
-        await this.init();
-        this.checkConnection();
-        logger.debug('Updating conversation', {
-            conversationId: conversation.id,
-        });
-        await this.db!.put('conversations', conversation);
-        logger.debug('Conversation updated successfully', {
-            conversationId: conversation.id,
-        });
+    async getMessage(id: string): Promise<SmashMessage | undefined> {
+        return this.messages.get(id);
+    }
+
+    async updateMessageStatus(id: string, status: SmashMessage['status']) {
+        await this.messages.update(id, { status });
+    }
+
+    // Conversations
+    async getConversation(id: string): Promise<SmashConversation | undefined> {
+        return this.conversations.get(id);
     }
 
     async getConversations(): Promise<SmashConversation[]> {
-        this.checkConnection();
-        logger.debug('Getting all conversations');
-        const conversations = await this.db!.getAllFromIndex(
-            'conversations',
-            'by-updated',
-        );
-        logger.debug('Retrieved conversations', {
-            count: conversations.length,
-        });
-        return conversations;
+        return this.conversations.orderBy('updatedAt').reverse().toArray();
     }
 
-    async getConversation(id: string): Promise<SmashConversation | undefined> {
-        await this.init();
-        this.checkConnection();
-        logger.debug('Getting conversation', { conversationId: id });
-        const conversation = await this.db!.get('conversations', id);
-        logger.debug(
-            conversation ? 'Found conversation' : 'Conversation not found',
-            {
-                conversationId: id,
-            },
-        );
-        return conversation;
+    async addConversation(convo: SmashConversation) {
+        return this.conversations.put(convo);
     }
 
-    async markConversationAsRead(conversationId: string): Promise<void> {
-        this.checkConnection();
-        logger.debug('Marking conversation as read', { conversationId });
-
-        const conversation = await this.db!.get(
-            'conversations',
-            conversationId,
-        );
-        if (!conversation) {
-            logger.warn('Conversation not found for marking as read', {
-                conversationId,
-            });
-            return;
-        }
-
-        conversation.unreadCount = 0;
-        await this.db!.put('conversations', conversation);
-        logger.debug('Conversation marked as read', { conversationId });
+    async updateConversation(convo: SmashConversation) {
+        return this.conversations.put(convo);
     }
 
-    async updateConversationUnreadCount(
-        conversationId: string,
-        unreadCount: number,
-    ): Promise<void> {
-        this.checkConnection();
-        logger.debug('Updating conversation unread count', {
-            conversationId,
-            unreadCount,
-        });
-
-        const conversation = await this.db!.get(
-            'conversations',
-            conversationId,
-        );
-        if (!conversation) {
-            logger.warn('Conversation not found for unread count update', {
-                conversationId,
-            });
-            return;
-        }
-
-        conversation.unreadCount = unreadCount;
-        await this.db!.put('conversations', conversation);
-        logger.debug('Conversation unread count updated', { conversationId });
+    // DID Documents
+    async addDIDDocument(doc: DIDDocument) {
+        return this.didDocuments.put(doc);
     }
 
-    // DID Document Management
-    async addDIDDocument(didDocument: DIDDocument): Promise<void> {
-        this.checkConnection();
-        logger.debug('Adding DID document', { did: didDocument.id });
-        await this.db!.put('didDocuments', didDocument);
-        logger.debug('DID document added successfully', {
-            did: didDocument.id,
-        });
-    }
-
-    async getDIDDocument(did: string): Promise<DIDDocument | undefined> {
-        this.checkConnection();
-        logger.debug('Getting DID document', { did });
-        return this.db!.get('didDocuments', did);
+    async getDIDDocument(did: DIDString): Promise<DIDDocument | undefined> {
+        return this.didDocuments.get(did);
     }
 
     async getAllDIDDocuments(): Promise<DIDDocument[]> {
-        this.checkConnection();
-        logger.debug('Getting all DID documents');
-        const documents = await this.db!.getAll('didDocuments');
-        logger.debug('Retrieved DID documents', { count: documents.length });
-        return documents;
+        return this.didDocuments.toArray();
     }
 
-    async clearDIDDocuments(): Promise<void> {
-        this.checkConnection();
-        logger.debug('Clearing all DID documents');
-        await this.db!.clear('didDocuments');
-        logger.debug('DID documents cleared successfully');
+    // Peer Profiles
+    async setPeerProfile(id: DIDString, profile: StoredProfile) {
+        return this.peerProfiles.put({ ...profile, id });
     }
 
-    // Peer Profile Management
-    async setPeerProfile(
-        peerId: string,
-        profile: StoredProfile,
-    ): Promise<void> {
-        this.checkConnection();
-        logger.debug('Setting peer profile', { peerId });
-        const storedProfile: StoredPeerProfile = { ...profile, id: peerId };
-        await this.db!.put('peerProfiles', storedProfile);
-        logger.debug('Peer profile set successfully', { peerId });
-    }
-
-    async getPeerProfile(peerId: string): Promise<StoredProfile | undefined> {
-        this.checkConnection();
-        logger.debug('Getting peer profile', { peerId });
-        const profile = await this.db!.get('peerProfiles', peerId);
-        if (profile) {
-            // Destructure without id since we don't need it
-            const { ...rest } = profile;
-            return rest;
-        }
-        return undefined;
+    async getPeerProfile(
+        id: DIDString,
+    ): Promise<StoredPeerProfile | undefined> {
+        return this.peerProfiles.get(id);
     }
 
     async getAllPeerProfiles(): Promise<Record<string, StoredProfile>> {
-        this.checkConnection();
-        logger.debug('Getting all peer profiles');
-        const profiles = await this.db!.getAll('peerProfiles');
-        logger.debug('Retrieved peer profiles', { count: profiles.length });
-        return profiles.reduce(
-            (acc, { id, ...rest }) => {
-                acc[id] = rest;
-                return acc;
-            },
-            {} as Record<string, StoredProfile>,
-        );
+        const all = await this.peerProfiles.toArray();
+        return Object.fromEntries(all.map((p) => [p.id, p]));
     }
 
-    async close(): Promise<void> {
-        if (!this.db) {
-            logger.debug('Database already closed');
-            return;
-        }
-        logger.info('Closing database connection');
-        this.db.close();
-        this.db = null;
-        logger.debug('Database connection closed successfully');
+    // Cleanup
+    async deleteDatabase() {
+        await this.delete();
     }
 }
 
-export const db = SmashDB.getInstance();
+export const db = new AppDB();

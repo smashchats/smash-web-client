@@ -1,0 +1,112 @@
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message {
+    max-width: 70%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-xl);
+    animation: messageAppear 0.3s ease;
+    line-height: var(--line-height-normal);
+    font-size: var(--font-size-base);
+    word-break: break-word;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.message.outgoing {
+    background-color: var(--color-message-sent);
+    color: white;
+    border-bottom-right-radius: var(--spacing-xs);
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.message.incoming {
+    background-color: var(--color-message-received);
+    color: var(--color-text);
+    border-bottom-left-radius: var(--spacing-xs);
+    align-self: flex-start;
+    margin-right: auto;
+    border: var(--border-width) solid var(--color-border);
+}
+
+.message-sender {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-xs);
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    width: 100%;
+}
+
+.message-text {
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    white-space: pre-wrap;
+}
+
+.message-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-xs);
+}
+
+/* Align meta information based on message type */
+.message.outgoing .message-meta {
+    justify-content: flex-end;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message.incoming .message-meta {
+    justify-content: flex-start;
+    color: var(--color-text-light);
+}
+
+.message-time {
+    font-size: var(--font-size-xs);
+    opacity: 0.8;
+}
+
+.message-status {
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-xs);
+}
+
+.message.outgoing .message-status {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message.incoming .message-status {
+    color: var(--color-text-light);
+}
+
+/* Image Message Styles */
+.message-content img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.message-content img:hover {
+    transform: scale(0.98);
+}

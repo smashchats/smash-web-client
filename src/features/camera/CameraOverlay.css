@@ -1,0 +1,83 @@
+.camera-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: var(--z-index-mobile-chat-overlay);
+    pointer-events: none;
+}
+
+.camera-overlay-capture-button {
+    position: absolute;
+    bottom: var(--spacing-5xl);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 64px;
+    border-radius: var(--border-radius-full);
+    background-color: transparent;
+    border: 5px solid var(--color-white);
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.camera-overlay-floating-bar {
+    position: absolute;
+    bottom: var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: 0 var(--spacing-md);
+    width: auto;
+    min-width: 250px;
+    height: 48px;
+    border-radius: var(--border-radius-3xl);
+    pointer-events: auto;
+}
+
+.camera-overlay-icon-button {
+    background-color: var(--color-background-tertiary);
+    border: none;
+    border-radius: var(--border-radius-3xl);
+    width: 60px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    padding: 0;
+    transition: background-color var(--transition-fast);
+}
+
+.camera-overlay-icon-button:hover {
+    background-color: var(--color-background-hover);
+}
+
+.camera-overlay-send-button {
+    background-color: var(--color-background-tertiary);
+    border: none;
+    border-radius: var(--border-radius-3xl);
+    display: flex;
+    align-items: center;
+    height: 40px;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.camera-overlay-send-button:hover {
+    background-color: var(--color-background-hover);
+}
+
+.camera-overlay-send-text {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    font-family: var(--font-sans);
+}

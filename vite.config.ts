@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
     plugins: [
@@ -15,56 +16,73 @@ export default defineConfig({
             },
         }),
         tailwindcss(),
+        VitePWA({
+            registerType: 'autoUpdate',
+            includeAssets: ['favicon.svg', 'robots.txt'],
+            manifest: {
+                name: 'SmashChats',
+                short_name: 'Smash',
+                start_url: '/',
+                display: 'standalone',
+                orientation: 'portrait-primary',
+                background_color: '#000000',
+                theme_color: '#000000',
+                icons: [
+                    {
+                        src: '/favicon-32x32.png',
+                        sizes: '32x32',
+                        type: 'image/png',
+                    },
+                    {
+                        src: '/favicon-96x96.png',
+                        sizes: '96x96',
+                        type: 'image/png',
+                    },
+                    {
+                        src: '/favicon-192x192.png',
+                        sizes: '192x192',
+                        type: 'image/png',
+                        purpose: 'any',
+                    },
+                    {
+                        src: '/favicon-512x512.png',
+                        sizes: '512x512',
+                        type: 'image/png',
+                        purpose: 'any maskable',
+                    },
+                ],
+                protocol_handlers: [
+                    {
+                        protocol: 'web+smash',
+                        url: '/deep-link?q=%s',
+                    },
+                ],
+                shortcuts: [
+                    {
+                        name: 'Camera',
+                        short_name: 'Camera',
+                        url: '/camera',
+                        description: 'Take a photo',
+                        icons: [
+                            {
+                                src: '/favicon-96x96.png',
+                                sizes: '96x96',
+                                type: 'image/png',
+                            },
+                        ],
+                    },
+                ],
+            },
+            devOptions: {
+                enabled: true,
+                type: 'module',
+            },
+        }),
     ],
     server: {
         host: true,
         hmr: {
             protocol: 'ws',
         },
-    },
-    resolve: {
-        alias: {
-            crypto: 'crypto-browserify',
-            stream: 'stream-browserify',
-            events: 'events',
-        },
-    },
-    optimizeDeps: {
-        include: [
-            '@peculiar/webcrypto',
-            'crypto-browserify',
-            'stream-browserify',
-            'util',
-            '@protobufjs/inquire',
-        ],
-        exclude: [
-            'vite-plugin-node-polyfills/shims/buffer',
-            'vite-plugin-node-polyfills/shims/global',
-            'vite-plugin-node-polyfills/shims/process',
-        ],
-        force: true,
-    },
-    build: {
-        target: 'esnext',
-        commonjsOptions: {
-            include: [/node_modules/],
-            transformMixedEsModules: true,
-        },
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    'react-vendor': ['react', 'react-dom'],
-                    'smash-lib': ['smash-node-lib'],
-                    'ui-components': ['lucide-react'],
-                    'crypto-vendor': [
-                        'crypto-browserify',
-                        '@peculiar/webcrypto',
-                    ],
-                    'stream-vendor': ['stream-browserify', 'events'],
-                    'protobuf-vendor': ['@protobufjs/inquire'],
-                },
-            },
-        },
-        chunkSizeWarningLimit: 1000,
     },
 });

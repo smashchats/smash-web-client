@@ -1,8 +1,8 @@
 import { Crypto } from '@peculiar/webcrypto';
 import {
     DIDDocManager,
-    IIMPeerIdentity,
-    IMPeerIdentity,
+    type IIMPeerIdentity,
+    type IMPeerIdentity,
     SmashMessaging,
 } from 'smash-node-lib';
 
