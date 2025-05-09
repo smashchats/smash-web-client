@@ -74,6 +74,11 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 - error toast not handling close event
 - unhandled duplicate connection to SME
 
+## Other todos
+
+- [ ] input field in welcome guide doesn't populate name in meta
+- [ ] "Start New Conversation" dialog doesn't have the same colours as the app
+
 ## Getting Started
 
 1. Install dependencies:
