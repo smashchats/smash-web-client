@@ -12,6 +12,7 @@ import CameraView, { type CameraViewHandle } from './CameraView';
 import CapturePreview from './CapturePreview';
 import DiscussionSelection from './DiscussionSelection';
 import type { CameraMode } from './cameraModes';
+import { useCamera } from './useCamera';
 
 export default function CameraScreen() {
     const [searchParams] = useSearchParams();
@@ -19,6 +20,8 @@ export default function CameraScreen() {
     const [conversation, setConversation] = useState<SmashConversation | null>(
         null,
     );
+    const { videoRef, isFront, multipleDevices, toggleDevice } = useCamera();
+
     const navigate = useNavigate();
     const cameraRef = useRef<CameraViewHandle>(null);
     const [capturedId, setCapturedId] = useState<number | null>(null);
@@ -145,7 +148,11 @@ export default function CameraScreen() {
                     visibility: mode === 'capture' ? 'visible' : 'hidden',
                 }}
             >
-                <CameraView ref={cameraRef} />
+                <CameraView
+                    ref={cameraRef}
+                    shouldMirrorImage={isFront}
+                    videoRef={videoRef!}
+                />
             </div>
 
             {mode === 'preview' && capturedImage && (
@@ -159,6 +166,8 @@ export default function CameraScreen() {
                 onDownload={handleDownload}
                 onBackFromPreview={handleDiscard}
                 conversation={conversation}
+                toggleDevice={toggleDevice}
+                multipleDevices={multipleDevices}
             />
             {mode === 'discussion-selection' && capturedImage && (
                 <DiscussionSelection

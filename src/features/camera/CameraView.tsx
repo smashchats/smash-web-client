@@ -1,80 +1,55 @@
 import { forwardRef, useImperativeHandle } from 'react';
 
-import { useCamera } from './useCamera';
-import { useCaptureMedia } from './useCaptureMedia';
+import './CameraView.css';
 
 export interface CameraViewHandle {
-    captureImage: () => void;
     captureImageToBlob: (callback: (blob: Blob | null) => void) => void;
 }
 
-const CameraView = forwardRef<CameraViewHandle>((_, ref) => {
-    const { videoRef } = useCamera();
-    const { saveMedia } = useCaptureMedia();
+type Props = {
+    shouldMirrorImage: boolean;
+    videoRef: React.RefObject<HTMLVideoElement | null>;
+};
 
-    useImperativeHandle(ref, () => ({
-        captureImage: () => {
-            const video = videoRef.current;
-            if (!video) return;
+const CameraView = forwardRef<CameraViewHandle, Props>(
+    ({ shouldMirrorImage, videoRef }, ref) => {
+        useImperativeHandle(ref, () => ({
+            captureImageToBlob: (callback: (blob: Blob | null) => void) => {
+                const video = videoRef.current;
+                if (!video) return;
 
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
 
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
 
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                if (shouldMirrorImage) {
+                    ctx.scale(-1, 1);
+                    ctx.translate(-canvas.width, 0);
+                }
 
-            canvas.toBlob((blob) => {
-                if (blob) saveMedia(blob, 'image');
-            }, 'image/jpeg');
-        },
-        captureImageToBlob: (callback: (blob: Blob | null) => void) => {
-            const video = videoRef.current;
-            if (!video) return;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+                canvas.toBlob((blob) => {
+                    if (blob) callback(blob);
+                }, 'image/jpeg');
+            },
+        }));
 
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => callback(blob), 'image/jpeg');
-        },
-    }));
-
-    return (
-        <div style={styles.wrapper}>
-            <video
-                ref={videoRef}
-                autoPlay
-                muted
-                playsInline
-                style={styles.video}
-            />
-        </div>
-    );
-});
+        return (
+            <div className="camera-view">
+                <video
+                    className={shouldMirrorImage ? 'mirror' : ''}
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                />
+            </div>
+        );
+    },
+);
 
 export default CameraView;
-
-const styles = {
-    wrapper: {
-        position: 'fixed' as const,
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 0,
-        overflow: 'hidden',
-        background: 'black',
-    },
-    video: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover' as const,
-    },
-};

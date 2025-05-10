@@ -10,7 +10,7 @@
 
 .camera-overlay-capture-button {
     position: absolute;
-    bottom: var(--spacing-5xl);
+    bottom: calc(var(--spacing-5xl) + env(safe-area-inset-bottom) / 1.2);
     left: 50%;
     transform: translateX(-50%);
     width: 64px;
@@ -24,7 +24,7 @@
 
 .camera-overlay-floating-bar {
     position: absolute;
-    bottom: var(--spacing-md);
+    bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom) / 1.2);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
