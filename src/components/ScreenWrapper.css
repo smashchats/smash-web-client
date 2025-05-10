@@ -1,5 +1,6 @@
 .screen-wrapper {
     width: 100vw;
+    padding-top: calc(env(safe-area-inset-top, 15px) / 1.2);
 }
 
 .screen-wrapper-content {

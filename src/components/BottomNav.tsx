@@ -2,6 +2,7 @@ import { Camera, Images, MessageCircle } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useUIStore } from '../lib/uiStore';
+import './BottomNav.css';
 
 export default function BottomNav() {
     const show = useUIStore((s) => s.showBottomNav);
@@ -15,19 +16,11 @@ export default function BottomNav() {
 
     return (
         <nav
+            className="bottom-nav"
             style={{
-                position: 'fixed',
-                bottom: -1,
-                width: '100vw',
-                height: 'var(--bottom-nav-height)',
-                backdropFilter: 'blur(8px)',
                 backgroundColor: isDarkMode
-                    ? 'rgba(0,0,0,0.4)'
-                    : 'rgba(230,230,230,0.4)',
-                display: 'flex',
-                justifyContent: 'space-around',
-                padding: '4px 0',
-                zIndex: 10,
+                    ? 'rgba(0,0,0,0.6)'
+                    : 'rgba(230,230,230,0.6)',
             }}
         >
             <IconButton
@@ -73,12 +66,10 @@ function IconButton({
 
     return (
         <button
+            className="bottom-nav-button"
             onClick={onClick}
             style={{
-                background: 'none',
-                border: 'none',
                 color,
-                fontSize: 8,
             }}
         >
             {children}

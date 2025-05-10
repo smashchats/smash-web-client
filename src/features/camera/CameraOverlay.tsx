@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, Send } from 'lucide-react';
+import { ArrowLeft, Download, Send, SwitchCamera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import Button from '../../components/Button';
@@ -14,6 +14,8 @@ type Props = {
     onDownload: () => void;
     onBackFromPreview?: () => void;
     conversation: SmashConversation | null;
+    toggleDevice: () => void;
+    multipleDevices: boolean;
 };
 
 export default function CameraOverlay({
@@ -23,6 +25,8 @@ export default function CameraOverlay({
     onDownload,
     onBackFromPreview,
     conversation,
+    toggleDevice,
+    multipleDevices,
 }: Readonly<Props>) {
     const navigate = useNavigate();
 
@@ -50,6 +54,14 @@ export default function CameraOverlay({
                 <FloatingButton
                     icon={<ArrowLeft size={24} />}
                     onClick={handleBack}
+                    colorMode="auto"
+                />
+            )}
+            {mode === 'capture' && multipleDevices && (
+                <FloatingButton
+                    position="top-right"
+                    icon={<SwitchCamera size={24} />}
+                    onClick={toggleDevice}
                     colorMode="auto"
                 />
             )}

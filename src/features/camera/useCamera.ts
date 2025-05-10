@@ -1,30 +1,97 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// Create a singleton for storing the video element reference
 let globalVideoRef: HTMLVideoElement | null = null;
 
 export function useCamera() {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const [hasPermission, setHasPermission] = useState(false);
+    const [devices, setDevices] = useState<{
+        front: MediaDeviceInfo | null;
+        back: MediaDeviceInfo | null;
+    }>({ front: null, back: null });
+    const [isFront, setIsFront] = useState(true);
 
-    const startCamera = useCallback(async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'user',
-                    width: { ideal: window.innerWidth },
-                    height: { ideal: window.innerHeight },
-                },
-                audio: false,
-            });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                // Store the reference globally
-                globalVideoRef = videoRef.current;
+    const multipleDevices = useMemo(() => {
+        return (
+            Boolean(devices.front && devices.back) &&
+            devices.front?.deviceId !== devices.back?.deviceId
+        );
+    }, [devices]);
+
+    useEffect(() => {
+        async function requestPermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                });
+                setHasPermission(true);
+                stream.getTracks().forEach((track) => track.stop());
+            } catch (err) {
+                console.error(
+                    'Permission denied or error accessing camera',
+                    err,
+                );
             }
-        } catch (err) {
-            console.error('Camera error', err);
         }
+        requestPermission();
     }, []);
+
+    useEffect(() => {
+        if (!hasPermission) return;
+
+        async function loadDevices() {
+            const allDevices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = allDevices.filter(
+                (d) => d.kind === 'videoinput',
+            );
+
+            const front = videoDevices.find((d) =>
+                /front|selfie|facetime/i.test(d.label),
+            );
+            const back = videoDevices.find((d) =>
+                /back|rear|environment/i.test(d.label),
+            );
+
+            const fallbackFront = videoDevices[0] || null;
+            const fallbackBack =
+                videoDevices.length > 1 ? videoDevices[1] : fallbackFront;
+
+            setDevices({
+                front: front || fallbackFront,
+                back: back || fallbackBack,
+            });
+        }
+
+        loadDevices();
+    }, [hasPermission]);
+
+    const toggleDevice = useCallback(() => {
+        setIsFront((prev) => !prev);
+    }, []);
+
+    const getCameraStream = useCallback(
+        async (useFront: boolean) => {
+            const deviceId = useFront
+                ? devices.front?.deviceId
+                : devices.back?.deviceId;
+            if (!deviceId) return;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId },
+                    audio: false,
+                });
+
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                    globalVideoRef = videoRef.current;
+                }
+            } catch (err) {
+                console.error('Error getting camera stream', err);
+            }
+        },
+        [devices],
+    );
 
     const stopCamera = useCallback(() => {
         if (videoRef.current?.srcObject) {
@@ -38,29 +105,38 @@ export function useCamera() {
 
     const capturePhoto = useCallback(() => {
         const videoElement = globalVideoRef || videoRef.current;
-        if (!videoElement) {
-            console.error('No video element available for capture');
-            return null;
-        }
+        if (!videoElement) return null;
 
         const canvas = document.createElement('canvas');
         canvas.width = videoElement.videoWidth;
         canvas.height = videoElement.videoHeight;
 
         const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            console.error('Could not get canvas context');
-            return null;
+        if (!ctx) return null;
+
+        if (isFront) {
+            ctx.scale(-1, 1);
+            ctx.translate(-canvas.width, 0);
         }
 
         ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
         return canvas.toDataURL('image/jpeg');
-    }, []);
+    }, [isFront]);
 
     useEffect(() => {
-        startCamera();
-        return () => stopCamera();
-    }, [startCamera, stopCamera]);
+        if ((isFront && devices.front) || (!isFront && devices.back)) {
+            getCameraStream(isFront);
+        }
 
-    return { videoRef, capturePhoto };
+        return () => stopCamera();
+    }, [devices, isFront, getCameraStream, stopCamera]);
+
+    return {
+        videoRef,
+        capturePhoto,
+        devices,
+        isFront,
+        toggleDevice,
+        multipleDevices,
+    };
 }

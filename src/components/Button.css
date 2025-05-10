@@ -123,24 +123,24 @@ button:not([disabled]):focus {
 
 .button-position-top-left {
     position: absolute;
-    top: var(--spacing-lg);
+    top: calc(var(--spacing-lg) + env(safe-area-inset-top));
     left: var(--spacing-lg);
 }
 
 .button-position-top-right {
     position: absolute;
-    top: var(--spacing-lg);
+    top: calc(var(--spacing-lg) + env(safe-area-inset-top));
     right: var(--spacing-lg);
 }
 
 .button-position-bottom-left {
     position: absolute;
-    bottom: var(--spacing-lg);
+    bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom));
     left: var(--spacing-lg);
 }
 
 .button-position-bottom-right {
     position: absolute;
-    bottom: var(--spacing-lg);
+    bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom));
     right: var(--spacing-lg);
 }
