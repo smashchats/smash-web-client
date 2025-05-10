@@ -1,7 +1,7 @@
 import type { Translation } from '../../app/i18n';
 
 export const welcome_en: Translation = {
-    title: 'Welcome to Smash',
+    title: 'Welcome to Smashchats',
     description: 'A decentralized, private-first messaging app.',
     features: {
         'end-to-end-encrypted': {

@@ -20,8 +20,8 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.svg', 'robots.txt'],
             manifest: {
-                name: 'SmashChats',
-                short_name: 'Smash',
+                name: 'Smashchats',
+                short_name: 'Smashchats',
                 start_url: '/',
                 display: 'standalone',
                 orientation: 'portrait-primary',
