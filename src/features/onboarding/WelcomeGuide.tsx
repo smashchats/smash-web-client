@@ -58,7 +58,7 @@ export function WelcomeGuide() {
             const identity = await generateIdentity();
             if (!identity) throw new Error('No identity generated');
             await setIdentity(identity, DEFAULT_SME_CONFIG);
-            navigate('/chats');
+            navigate('/chats', { replace: true });
         } catch (error) {
             setGenerationError(
                 error instanceof Error

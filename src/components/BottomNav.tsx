@@ -24,7 +24,7 @@ export default function BottomNav() {
             }}
         >
             <IconButton
-                onClick={() => navigate('/chats')}
+                onClick={() => navigate('/chats', { replace: true })}
                 active={location.pathname.startsWith('/chat')}
                 isDarkMode={isDarkMode}
             >
@@ -38,14 +38,14 @@ export default function BottomNav() {
             </IconButton>
 
             <IconButton
-                onClick={() => navigate('/camera')}
+                onClick={() => navigate('/camera', { replace: true })}
                 active={location.pathname === '/camera'}
                 isDarkMode={isDarkMode}
             >
                 <Camera />
             </IconButton>
             <IconButton
-                onClick={() => navigate('/gallery')}
+                onClick={() => navigate('/gallery', { replace: true })}
                 active={location.pathname === '/gallery'}
                 isDarkMode={isDarkMode}
             >

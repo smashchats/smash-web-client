@@ -34,7 +34,7 @@ export default function ChatScreen() {
     const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
     const handleCloseChat = () => {
-        navigate('/chats');
+        navigate(-1);
     };
 
     useEffect(() => {
@@ -47,7 +47,7 @@ export default function ChatScreen() {
     };
 
     return (
-        <ScreenWrapper title="Chat" showBottomNav={false} backTo="/chats">
+        <ScreenWrapper title="Chat" showBottomNav={false} backArrow>
             <div className="chat-screen-container">
                 {peerDidDocument && (
                     <ChatHeader

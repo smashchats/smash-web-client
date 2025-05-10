@@ -137,7 +137,7 @@ export default function CameraScreen() {
         setCapturedImage(null);
         setCapturedId(null);
         setCapturedBlob(null);
-        navigate('/chats');
+        navigate('/chats', { replace: true });
     };
 
     return (

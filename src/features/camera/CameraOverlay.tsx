@@ -41,7 +41,7 @@ export default function CameraOverlay({
         } else if (mode === 'discussion-selection') {
             setMode('preview');
         } else {
-            navigate('/chats');
+            navigate(-1);
         }
     };
 

@@ -7,7 +7,7 @@ import { SmeConfiguration } from './components/SmeConfiguration';
 
 export default function ProfileScreen() {
     return (
-        <ScreenWrapper title="Profile" backTo="/chats">
+        <ScreenWrapper title="Profile" backArrow>
             <div className="settings-container">
                 <DidDocumentSection />
                 <ProfileSettings />

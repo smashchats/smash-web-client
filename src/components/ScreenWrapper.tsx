@@ -15,7 +15,7 @@ type ScreenWrapperProps = {
     title: string;
     shouldAvoidBottomNav?: boolean;
     showBottomNav?: boolean;
-    backTo?: string;
+    backArrow?: boolean;
     headerStyle?: React.CSSProperties;
     contentStyle?: React.CSSProperties;
 };
@@ -25,7 +25,7 @@ export default function ScreenWrapper({
     title,
     shouldAvoidBottomNav = true,
     showBottomNav = true,
-    backTo,
+    backArrow = false,
     headerStyle,
     contentStyle,
 }: Readonly<ScreenWrapperProps>) {
@@ -51,11 +51,11 @@ export default function ScreenWrapper({
     // @ts-expect-error - This is a valid type
     const right = slots.find((slot) => slot.type === ScreenHeaderRightSlot);
 
-    if (backTo) {
+    if (backArrow) {
         left = (
             <ScreenHeaderLeftSlot>
                 <ArrowLeft
-                    onClick={() => navigate(backTo)}
+                    onClick={() => navigate(-1)}
                     style={{ cursor: 'pointer' }}
                 />
             </ScreenHeaderLeftSlot>
