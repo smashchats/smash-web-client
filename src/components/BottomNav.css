@@ -1,0 +1,19 @@
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    position: fixed;
+    bottom: -1px;
+    width: 100vw;
+    padding: 4px 0;
+    z-index: 10;
+    min-height: calc(
+        var(--bottom-nav-height) + env(safe-area-inset-bottom, 15px) / 2
+    );
+    padding-bottom: calc(env(safe-area-inset-bottom, 15px) / 2);
+}
+
+.bottom-nav-button {
+    background: none;
+    border: none;
+    font-size: 8px;
+}

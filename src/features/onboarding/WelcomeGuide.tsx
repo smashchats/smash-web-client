@@ -124,6 +124,12 @@ export function WelcomeGuide() {
                                 className="welcome-guide-input-field"
                                 placeholder={t('create-identity.placeholder')}
                                 value={displayName}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleCreateIdentity();
+                                    }
+                                }}
                                 onChange={handleNameChange}
                                 disabled={isGenerating}
                             />
