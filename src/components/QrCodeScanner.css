@@ -1,0 +1,8 @@
+#html5qr-code-full-region {
+    width: 100%;
+    height: 100%;
+}
+
+#html5qr-code-full-region video:nth-child(2) {
+    display: none !important;
+}
