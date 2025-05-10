@@ -74,4 +74,18 @@ body,
     }
 }
 
+/* Portrait mode */
+@media (orientation: portrait) {
+    :root {
+        --bottom-offset: 0px;
+    }
+}
+
+/* Landscape mode */
+@media (orientation: landscape) {
+    :root {
+        --bottom-offset: calc(-1 * env(safe-area-inset-bottom, 15px));
+    }
+}
+
 @import 'tailwindcss';

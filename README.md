@@ -76,6 +76,9 @@ This web client demonstrates the core functionality of the [Smash Protocol](http
 
 - [ ] input field in welcome guide doesn't populate name in meta
 - [ ] "Start New Conversation" dialog doesn't have the same colours as the app
+- [ ] long "loading identity"
+- [ ] chatinput blurs after sending message, shouldn't be like this
+- [ ] chatmessagesScreen should scroll to bottom / keep scrolled at bottom
 
 ## Getting Started
 

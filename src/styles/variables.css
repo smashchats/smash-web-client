@@ -1,5 +1,6 @@
-/* Colors */
 :root {
+    --bottom-offset: 0;
+
     /* Base colors */
     --color-background: #ffffff;
     --color-foreground: #1a1a2e;

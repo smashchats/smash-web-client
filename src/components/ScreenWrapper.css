@@ -5,6 +5,8 @@
 
 .screen-wrapper-content {
     width: 100vw;
+    padding-left: calc(env(safe-area-inset-left, 15px) / 1.2);
+    padding-right: calc(env(safe-area-inset-right, 15px) / 1.2);
     height: calc(100vh - 62px);
     overflow-y: scroll;
     overflow-x: hidden;

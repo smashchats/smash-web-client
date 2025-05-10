@@ -1,11 +1,12 @@
 .chat-input-container {
-    /* position: relative; */
-    /* width: 100%; */
-    padding: var(--spacing-sm) var(--spacing-md);
     position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    width: 100vw;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-left: calc(-1 * env(safe-area-inset-left, 15px) / 1.2);
+    padding-left: calc(env(safe-area-inset-left, 15px) / 1.2);
+    padding-right: calc(env(safe-area-inset-right, 15px) / 1.2);
+    padding-bottom: calc(4px + env(safe-area-inset-bottom, 15px));
+    margin-bottom: var(--bottom-offset);
     background-color: var(--color-background);
     border-top: var(--border-width) solid var(--color-border);
     z-index: var(--z-index-mobile-chat-overlay);

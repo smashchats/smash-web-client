@@ -48,13 +48,7 @@ export default function ChatScreen() {
 
     return (
         <ScreenWrapper title="Chat" showBottomNav={false} backTo="/chats">
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
-                }}
-            >
+            <div className="chat-screen-container">
                 {peerDidDocument && (
                     <ChatHeader
                         didDocument={peerDidDocument}
