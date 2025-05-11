@@ -4,18 +4,13 @@ import type { DIDDocument, DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { messageController } from '../../controllers/messageController';
+import { useChatStore } from '../../hooks/useChatStore';
 import { CURRENT_USER } from '../../lib/smeConfig';
 import { useMessageStore } from '../../state/messageStore';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';
 import './ChatScreen.css';
-
-interface PeerProfile {
-    title: string;
-    description: string;
-    avatar: string;
-}
 
 export default function ChatScreen() {
     const navigate = useNavigate();
@@ -25,10 +20,12 @@ export default function ChatScreen() {
     );
     const messages = rawMessages ?? [];
 
+    const peerProfile = useChatStore((state) =>
+        id ? state.getPeerProfile(id) : undefined,
+    );
+
     const [isProcessingMedia] = useState(false);
     const [peerDidDocument] = useState<DIDDocument | null>(null);
-    const [peerProfile] = useState<PeerProfile | null>(null);
-    const [peerProfiles] = useState<Record<string, PeerProfile>>({});
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -47,7 +44,11 @@ export default function ChatScreen() {
     };
 
     return (
-        <ScreenWrapper title="Chat" showBottomNav={false} backArrow>
+        <ScreenWrapper
+            title={peerProfile?.title ?? 'Chat'}
+            showBottomNav={false}
+            backArrow
+        >
             <div className="chat-screen-container">
                 {peerDidDocument && (
                     <ChatHeader
@@ -68,7 +69,7 @@ export default function ChatScreen() {
                             <ChatMessage
                                 message={message}
                                 isOwnMessage={message.sender === CURRENT_USER}
-                                peerProfile={peerProfiles[message.sender]}
+                                peerProfile={peerProfile}
                             />
                         </Suspense>
                     ))}

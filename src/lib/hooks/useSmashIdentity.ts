@@ -92,6 +92,7 @@ export function useSmashIdentity() {
                         await initializeChats(smashUser);
 
                         if (stored.profile) {
+                            logger.debug('Updating profile', stored.profile);
                             await smashUser.updateMeta(stored.profile);
                         }
 
@@ -170,7 +171,7 @@ export function useSmashIdentity() {
     };
 
     const updateProfile = async (profile: StoredProfile) => {
-        logger.debug('Updating profile');
+        logger.debug('Updating profile', profile);
         try {
             await db.identity.update('current', { profile });
             if (state.smashUser) await state.smashUser.updateMeta(profile);

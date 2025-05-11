@@ -2,12 +2,13 @@ import { create } from 'zustand';
 
 import { logger } from '../lib/logger';
 import { smashService } from '../lib/smash/smash-service';
-import type { SmashConversation, SmashMessage } from '../types/smash';
+import type { Profile, SmashConversation, SmashMessage } from '../types/smash';
 
 interface ConversationState {
     conversations: SmashConversation[];
     error: Error | null;
     isLoading: boolean;
+    profiles: Record<string, Profile>;
     addNewConversation: (conversation: SmashConversation) => void;
     updateConversationWithMessage: (
         conversationId: string,
@@ -15,12 +16,16 @@ interface ConversationState {
     ) => void;
     markConversationAsRead: (conversationId: string) => Promise<void>;
     refreshConversations: () => Promise<void>;
+    getPeerProfile: (peerId: string) => Profile | undefined;
+    setPeerProfile: (peerId: string, profile: Profile) => void;
+    initAllPeers: () => Promise<void>;
 }
 
-export const useChatStore = create<ConversationState>((set) => ({
+export const useChatStore = create<ConversationState>((set, get) => ({
     conversations: [],
     error: null,
     isLoading: false,
+    profiles: {},
 
     addNewConversation: (conversation: SmashConversation) => {
         logger.debug('Adding new conversation', {
@@ -99,6 +104,40 @@ export const useChatStore = create<ConversationState>((set) => ({
             set({ error, isLoading: false });
         }
     },
+
+    getPeerProfile: (peerId: string) => {
+        return get().profiles[peerId];
+    },
+
+    setPeerProfile: (peerId: string, profile: Profile) => {
+        set((state) => ({
+            profiles: {
+                ...state.profiles,
+                [peerId]: profile,
+            },
+        }));
+    },
+
+    initAllPeers: async () => {
+        try {
+            logger.info('Initializing all peer profiles from DB');
+            const profilesFromDb = await smashService.getAllPeerProfiles();
+            set((state) => ({
+                profiles: { ...state.profiles, ...profilesFromDb },
+                error: null,
+            }));
+            logger.debug('Successfully initialized peer profiles', {
+                count: Object.keys(profilesFromDb).length,
+            });
+        } catch (err) {
+            const error =
+                err instanceof Error
+                    ? err
+                    : new Error('Failed to initialize peer profiles');
+            logger.error('Failed to initialize peer profiles', error);
+            set({ error });
+        }
+    },
 }));
 
 // Initialize the store and set up event listeners
@@ -107,6 +146,7 @@ export const initializeChatStore = () => {
 
     // Load initial conversations
     store.refreshConversations();
+    store.initAllPeers();
 
     // Set up conversation update listener
     const handleConversationUpdate = (conversation: SmashConversation) => {

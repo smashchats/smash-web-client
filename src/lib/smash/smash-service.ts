@@ -8,16 +8,20 @@ import {
     type IMProtoMessage,
     IMText,
     IM_CHAT_TEXT,
+    IM_DID_DOCUMENT,
     IM_MEDIA_EMBEDDED,
+    IM_PROFILE,
     type MessageStatus,
     type SmashUser,
     encapsulateMessage,
     type sha256,
 } from 'smash-node-lib';
 
+import { peerController } from '../../controllers/peerController';
 import { type SmashConversation, type SmashMessage } from '../../types/smash';
 import { db } from '../db';
 import { logger } from '../logger';
+import { type StoredProfile } from '../types';
 
 export type MessageCallback = (message: SmashMessage) => void;
 export type ConversationCallback = (conversation: SmashConversation) => void;
@@ -53,6 +57,12 @@ class SmashService {
         this.smashUser.on(
             IM_MEDIA_EMBEDDED,
             this.handleIncomingMessage.bind(this),
+        );
+        this.smashUser.on(IM_DID_DOCUMENT, (senderId, didDocument) =>
+            peerController.handleIncomingDIDDocument(senderId, didDocument),
+        );
+        this.smashUser.on(IM_PROFILE, (senderId, profile) =>
+            peerController.handleIncomingProfile(senderId, profile),
         );
     }
 
@@ -152,9 +162,8 @@ class SmashService {
             messageId: message.sha256,
         });
 
-        const storedMessage = this.createSmashMessage(senderId, message);
-        await this.storeMessage(storedMessage);
-        await this.updateConversation(senderId, storedMessage);
+        const smashMessage = this.createSmashMessage(senderId, message);
+        this.notifyMessageCallbacks(smashMessage);
     }
 
     private async storeMessage(message: SmashMessage): Promise<void> {
@@ -446,6 +455,20 @@ class SmashService {
         }
         await db.close();
         logger.debug('SmashService closed successfully');
+    }
+
+    async getAllPeerProfiles(): Promise<Record<string, StoredProfile>> {
+        logger.debug('Getting all peer profiles from DB');
+        try {
+            const profiles = await db.getAllPeerProfiles();
+            logger.debug('Retrieved all peer profiles from DB', {
+                count: Object.keys(profiles).length,
+            });
+            return profiles;
+        } catch (error) {
+            logger.error('Failed to get all peer profiles from DB', error);
+            throw error;
+        }
     }
 }
 

@@ -2,6 +2,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Camera } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useChatStore } from '../../hooks/useChatStore';
 import type { SmashConversation } from '../../types/smash';
 import './conversationItem.css';
 
@@ -16,13 +17,16 @@ export function ConversationItem({
 }: Readonly<ConversationItemProps>) {
     const { id, title, lastMessage, unreadCount } = conversation;
 
+    const profile = useChatStore((state) => state.getPeerProfile(id));
+
     // Format the relative time (e.g., "5 minutes ago")
     const timeAgo = lastMessage
         ? formatDistanceToNow(new Date(lastMessage.timestamp))
         : 'No messages yet';
 
     // Generate initials for avatar
-    const initials = title
+    const displayName = profile?.title || title;
+    const initials = displayName
         .split(' ')
         .map((word) => word.charAt(0))
         .join('')
@@ -37,7 +41,7 @@ export function ConversationItem({
 
                 {/* Main content */}
                 <div className="conversation-header">
-                    <h3 className="conversation-title">{title}</h3>
+                    <h3 className="conversation-title">{displayName}</h3>
                     <span className="conversation-time">
                         {timeAgo === 'less than a minute'
                             ? 'just now'
