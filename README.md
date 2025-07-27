@@ -19,15 +19,18 @@ This project is meant to be kept in sync with the Smash-Node-Lib development.
 
 > Like Snapchat/Telegram
 
-- quick welcome path (local DID doc)
-- send messages to a peer (scan or did doc)
-- scan to join alpha NBH , adds to list once joined
-- discover peer in alpha NBH and message them
-- pass/smash/trust(with name) and share trust endorsements
-- keep messages (and audio notes)
-- share media and "keep" media (pic/vid)
-- offline and reloads works – keep queues and data
-- _no backups for now_
+- [x] quick welcome path (local DID doc)
+- [-] send messages to a peer (scan or did doc)–badges and storage still broken
+- [ ] _propagate meta profile updates_
+- [ ] scan to join alpha NBH , adds to list once joined
+- [ ] discover peer in alpha NBH and message them
+- [ ] pass/smash/trust(with name) and share trust endorsements
+- [ ] keep messages (and audio notes)
+- [ ] share media and "keep" media (pic/vid)
+- [ ] offline and reloads works – keep queues and data
+- [ ] _UX/UI fixes and adjustments_ + clear TODOs
+- [ ] Ship to alpha testers: PWA – *no backups for now*
+- [ ] simple mobile/browser/pwa notifications
 
 ### Neighborhood 1.0 alpha
 

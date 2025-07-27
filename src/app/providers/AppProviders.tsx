@@ -1,36 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import type { IMPeerIdentity, SMEConfigJSON, SmashUser } from 'smash-node-lib';
+import type { StoredProfile } from '@src/shared/types/db';
 
-import { peerController } from '@src/controllers/peerController';
-import { IdentityProvider, useIdentityContext } from '@src/features/identity';
+import { IdentityProvider } from '@src/features/identity';
 
-function AppContent({ children }: { children: React.ReactNode }) {
-  const { isInitialized } = useIdentityContext();
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    if (isInitialized) {
-      (async () => {
-        await peerController.initAllPeers();
-        setIsReady(true);
-      })();
-    }
-  }, [isInitialized]);
-
-  if (!isReady) {
-    // TODO: nicer loading screen
-    return <div className="loading-screen">Loading identity...</div>;
-  }
-
-  return <>{children}</>;
+interface AppProvidersProps {
+    children: React.ReactNode;
+    identity: IMPeerIdentity | null;
+    smashUser: SmashUser | null;
+    profile: StoredProfile | null;
+    smeConfig: SMEConfigJSON | null;
+    error: Error | null;
 }
 
-export function AppProviders({ children }: { children: React.ReactNode }) {
-  return (
-    <IdentityProvider>
-      <AppContent>
-        {/* Add ThemeProvider, MessagingProvider, etc. here as needed */}
-        {children}
-      </AppContent>
-    </IdentityProvider>
-  );
+export function AppProviders({ 
+    children, 
+    identity,
+    smashUser,
+    profile,
+    smeConfig,
+    error
+}: AppProvidersProps) {
+    return (
+        <IdentityProvider
+            identity={identity}
+            smashUser={smashUser}
+            profile={profile}
+            smeConfig={smeConfig}
+            error={error}
+        >
+            {/* Add ThemeProvider, MessagingProvider, etc. here as needed */}
+            {children}
+        </IdentityProvider>
+    );
 } 

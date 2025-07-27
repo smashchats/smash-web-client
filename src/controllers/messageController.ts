@@ -20,7 +20,11 @@ export const messageController = {
     },
 
     handleIncomingMessage(message: SmashMessage) {
-        db.addMessage(message);
+        logger.info('MessageController: Handling incoming message', {
+            messageId: message.id,
+            conversationId: message.conversationId,
+        });
+        // Message is already stored by smashService, just update UI store
         useMessageStore.getState().addMessage(message.conversationId, message);
     },
 
@@ -52,4 +56,34 @@ export const messageController = {
                 .updateMessageStatus(msg.conversationId, messageId, newStatus);
         });
     },
+};
+
+// Initialize message listeners
+export const initializeMessageController = () => {
+    logger.info('Initializing message controller listeners');
+
+    // Set up message received listener
+    const handleIncomingMessage = (message: SmashMessage) => {
+        messageController.handleIncomingMessage(message);
+    };
+
+    // Set up message status update listener
+    const handleStatusUpdate = (
+        messageId: string,
+        status: SmashMessage['status'],
+    ) => {
+        messageController.handleMessageStatusUpdate(messageId, status);
+    };
+
+    smashService.onMessageReceived(handleIncomingMessage);
+    smashService.onMessageStatusUpdated(handleStatusUpdate);
+
+    logger.info('Message controller listeners initialized');
+
+    // Return cleanup function
+    return () => {
+        logger.debug('Cleaning up message controller listeners');
+        smashService.offMessageReceived(handleIncomingMessage);
+        smashService.offMessageStatusUpdated(handleStatusUpdate);
+    };
 };

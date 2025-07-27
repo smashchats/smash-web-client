@@ -1,30 +1,49 @@
 import { useEffect, useState } from 'react';
+import { useSmashBoot } from '@src/features/identity/hooks/useSmashBoot';
 import { initializeSmashEnvironment } from './config/smash';
 import { AppInitializer } from './providers/AppInitializer';
 import { AppProviders } from './providers/AppProviders';
 import AppRoutes from './routes';
 
 export default function App() {
-  const [isReady, setIsReady] = useState(false);
+  const [isEnvReady, setIsEnvReady] = useState(false);
 
+  // Step 1: Initialize Smash Environment
   useEffect(() => {
     try {
       initializeSmashEnvironment();
-      setIsReady(true);
+      setIsEnvReady(true);
     } catch (err) {
       console.error('Failed to init SmashMessaging environment', err);
     }
   }, []);
 
-  if (!isReady) {
-    // TODO: nicer loading screen
+  // Step 2: Boot identity from storage
+  const { identity, smashUser, profile, smeConfig, isReady, error } = useSmashBoot();
+
+  // Show loading until environment is ready
+  if (!isEnvReady) {
     return <div className="loading-screen">Booting environment...</div>;
   }
 
+  // Show loading until identity boot is complete
+  if (!isReady) {
+    return <div className="loading-screen">Loading identity...</div>;
+  }
+
+  // If no identity, show welcome guide (handled by AppGuard)
+  // If identity exists, show main app with providers
   return (
-    <AppProviders>
+    <AppProviders 
+      identity={identity}
+      smashUser={smashUser}
+      profile={profile}
+      smeConfig={smeConfig}
+      error={error}
+    >
       <AppInitializer />
       <AppRoutes />
     </AppProviders>
   );
 }
+

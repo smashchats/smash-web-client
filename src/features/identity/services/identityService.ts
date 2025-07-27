@@ -23,28 +23,9 @@ export async function generateIdentity(): Promise<IMPeerIdentity> {
     return identity;
 }
 
-export async function storeIdentityToDB(
-    identity: IMPeerIdentity,
-    smeConfig: SMEConfigJSON,
-    profile?: StoredProfile,
-) {
-    const serializedIdentity = JSON.stringify(await identity.serialize());
-    await db.identity.put({
-        id: 'current',
-        serialized: serializedIdentity,
-        smeConfig,
-        profile,
-        createdAt: Date.now(),
-        lastUsedAt: Date.now(),
-    });
-}
-
-export async function loadStoredIdentity() {
-    logger.info('Loading stored identity from DB');
-    return db.getIdentity();
-}
-
-export async function importIdentity(serialized: string) {
+export async function importIdentity(
+    serialized: string,
+): Promise<IMPeerIdentity> {
     logger.info('Importing identity');
     const identity = await SmashMessaging.importIdentity(
         JSON.parse(serialized) as IIMPeerIdentity,
@@ -55,7 +36,7 @@ export async function importIdentity(serialized: string) {
 export async function createSmashUser(
     identity: IMPeerIdentity,
     smeConfig: SMEConfigJSON,
-) {
+): Promise<SmashUser> {
     const didManager = getDIDDocManager();
     didManager.set(await identity.getDIDDocument());
     const smashUser = new SmashUser(identity, 'webclient', 'DEBUG');
@@ -77,6 +58,18 @@ export async function createSmashUser(
     return smashUser;
 }
 
-export async function clearStoredIdentity() {
-    await db.deleteDatabase();
+export async function persistIdentity(
+    identity: IMPeerIdentity,
+    smeConfig: SMEConfigJSON,
+    profile?: StoredProfile,
+): Promise<void> {
+    const serializedIdentity = JSON.stringify(await identity.serialize());
+    await db.identity.put({
+        id: 'current',
+        serialized: serializedIdentity,
+        smeConfig,
+        profile,
+        createdAt: Date.now(),
+        lastUsedAt: Date.now(),
+    });
 }

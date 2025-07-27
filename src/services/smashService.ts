@@ -165,8 +165,26 @@ class SmashService {
             messageId: message.sha256,
         });
 
-        const smashMessage = this.createSmashMessage(senderId, message);
-        this.notifyMessageCallbacks(smashMessage);
+        try {
+            const smashMessage = this.createSmashMessage(senderId, message);
+
+            // Store the message to database
+            await this.storeMessage(smashMessage);
+
+            // Update conversation (creates new one if needed)
+            await this.updateConversation(senderId, smashMessage);
+
+            logger.info('Successfully processed incoming message', {
+                messageId: smashMessage.id,
+                conversationId: smashMessage.conversationId,
+            });
+        } catch (error) {
+            logger.error('Failed to handle incoming message', {
+                senderId,
+                messageId: message.sha256,
+                error,
+            });
+        }
     }
 
     private async storeMessage(message: SmashMessage): Promise<void> {
