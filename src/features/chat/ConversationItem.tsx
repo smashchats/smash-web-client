@@ -1,9 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
-import { Camera } from 'lucide-react';
+import { Camera, Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { useChatStore } from '../../hooks/useChatStore';
-import type { SmashConversation } from '../../types/smash';
+import { useChatStore } from '../../shared/hooks/useChatStore';
+import type { SmashConversation } from '../../shared/types/smash';
 import './conversationItem.css';
 
 interface ConversationItemProps {
@@ -47,6 +47,20 @@ export function ConversationItem({
                             ? 'just now'
                             : timeAgo}
                     </span>
+                    {/* Last message preview */}
+                    <div className="conversation-message">
+                        {lastMessage ? (
+                            lastMessage.type === 'im.chat.text' ? (
+                                lastMessage.content
+                            ) : (
+                                <span className="flex items-center gap-1 text-[13px] text-[var(--color-text-light)]">
+                                    <ImageIcon size={16} className="inline-block align-text-bottom" /> Photo
+                                </span>
+                            )
+                        ) : (
+                            <span className="text-[var(--color-text-light)] opacity-70">No messages yet.</span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="conversation-actions">

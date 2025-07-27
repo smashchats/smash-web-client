@@ -2,8 +2,8 @@ import { Check, Copy, X } from 'lucide-react';
 import { useState } from 'react';
 import type { DIDDocument } from 'smash-node-lib';
 
-import { logger } from '../../lib/logger';
-import { copyToClipboard } from '../../lib/utils';
+import { logger } from '../../shared/utils/logger';
+import { copyToClipboard } from '../../shared/utils/utils';
 import './ChatHeader.css';
 
 interface ChatHeaderProps {

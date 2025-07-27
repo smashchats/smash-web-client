@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-import Button from '../../../components/Button';
-import { logger } from '../../../lib/logger';
-import { useSmash } from '../../../providers/SmashContext';
+import { useIdentityContext } from '@src/features/identity';
+import Button from '@src/shared/components/Button';
+import { logger } from '@src/shared/utils/logger';
 
 interface Profile {
     title: string;
@@ -22,7 +22,7 @@ export function ProfileSettings() {
     const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout>();
     const [successTimeoutId, setSuccessTimeoutId] = useState<NodeJS.Timeout>();
 
-    const { profile, updateProfile } = useSmash();
+    const { profile, updateProfile } = useIdentityContext();
 
     useEffect(() => {
         if (profile) {

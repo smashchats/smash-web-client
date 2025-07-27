@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-import Button from '../../../components/Button';
-import { logger } from '../../../lib/logger';
-import { useSmash } from '../../../providers/SmashContext';
+import { useIdentityContext } from '@src/features/identity';
+import Button from '@src/shared/components/Button';
+import { logger } from '@src/shared/utils/logger';
 
 export function AccountSection() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const { clearIdentity } = useSmash();
+    const { clearIdentity } = useIdentityContext();
 
     const handleLogout = async () => {
         try {

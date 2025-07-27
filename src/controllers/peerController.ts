@@ -6,12 +6,12 @@ import {
     SmashMessaging,
 } from 'smash-node-lib';
 
-import { useChatStore } from '../hooks/useChatStore';
-import { db } from '../lib/db';
-import { logger } from '../lib/logger';
-import { CURRENT_USER } from '../lib/smeConfig';
-import { type StoredProfile } from '../lib/types';
-import type { SmashConversation } from '../types/smash';
+import { CURRENT_USER } from '../app/config/sme';
+import { db } from '../services/db';
+import { useChatStore } from '../shared/hooks/useChatStore';
+import { type StoredProfile } from '../shared/types/db';
+import type { SmashConversation } from '../shared/types/smash';
+import { logger } from '../shared/utils/logger';
 
 export const peerController = {
     async getPeerProfile(did: DIDString) {

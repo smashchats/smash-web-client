@@ -1,36 +1,30 @@
-import { useEffect } from 'react';
-
-import BottomNav from '../components/BottomNav';
-import { initializeChatStore } from '../hooks/useChatStore';
-import { initializeMessaging } from '../init/initializeMessaging';
-import { logger } from '../lib/logger';
-import { smashService } from '../lib/smash/smash-service';
-import { useSmash } from '../providers/SmashContext';
+import { useEffect, useState } from 'react';
+import { initializeSmashEnvironment } from './config/smash';
+import { AppInitializer } from './providers/AppInitializer';
+import { AppProviders } from './providers/AppProviders';
 import AppRoutes from './routes';
 
 export default function App() {
-    const { identity, smashUser } = useSmash();
-    initializeChatStore();
-    initializeMessaging();
+  const [isReady, setIsReady] = useState(false);
 
-    useEffect(() => {
-        if (!identity || !smashUser) return;
+  useEffect(() => {
+    try {
+      initializeSmashEnvironment();
+      setIsReady(true);
+    } catch (err) {
+      console.error('Failed to init SmashMessaging environment', err);
+    }
+  }, []);
 
-        (async () => {
-            try {
-                logger.info('Testing connection to Smash backend...');
-                const conversations = await smashService.getConversations();
-                logger.info('Fetched conversations:', conversations);
-            } catch (err) {
-                logger.error('Failed to fetch conversations from backend', err);
-            }
-        })();
-    }, [identity, smashUser]);
+  if (!isReady) {
+    // TODO: nicer loading screen
+    return <div className="loading-screen">Booting environment...</div>;
+  }
 
-    return (
-        <>
-            <AppRoutes />
-            <BottomNav />
-        </>
-    );
+  return (
+    <AppProviders>
+      <AppInitializer />
+      <AppRoutes />
+    </AppProviders>
+  );
 }

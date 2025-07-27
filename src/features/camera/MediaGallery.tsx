@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { type Media, mediaDB } from '../../lib/mediaStore';
+import { type Media, mediaDB } from '../../services/mediaStore';
 
 export default function MediaGallery() {
     const [mediaItems, setMediaItems] = useState<Media[]>([]);

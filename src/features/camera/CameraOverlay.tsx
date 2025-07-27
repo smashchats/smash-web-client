@@ -1,8 +1,8 @@
 import { ArrowLeft, Download, Send, SwitchCamera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import Button from '../../components/Button';
-import type { SmashConversation } from '../../types/smash';
+ import Button from '@src/shared/components/Button';
+import type { SmashConversation } from '@src/shared/types/smash';
 import './CameraOverlay.css';
 import FloatingButton from './FloatingButton';
 import type { CameraMode } from './cameraModes';

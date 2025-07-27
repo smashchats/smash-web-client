@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import importPlugin from 'eslint-plugin-import';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
@@ -14,7 +15,7 @@ export default tseslint.config(
         ],
     },
     {
-        files: ['**/*.{ts,tsx}'],
+        files: ['**/*.{ts,tsx,js,jsx}'],
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         languageOptions: {
             ecmaVersion: 2020,
@@ -32,6 +33,7 @@ export default tseslint.config(
         plugins: {
             'react-hooks': reactHooks,
             'react-refresh': reactRefresh,
+            import: importPlugin,
         },
         rules: {
             ...reactHooks.configs.recommended.rules,
@@ -40,6 +42,14 @@ export default tseslint.config(
                 'warn',
                 { allowConstantExport: true },
             ],
+        },
+        settings: {
+            'import/resolver': {
+                alias: {
+                    map: [['@src', './src']],
+                    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+                },
+            },
         },
     },
 );

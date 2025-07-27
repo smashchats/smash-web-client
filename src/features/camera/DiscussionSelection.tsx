@@ -1,10 +1,10 @@
 import { ArrowLeft, Check, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { ScreenHeaderLeftSlot } from '../../components/ScreenHeader';
-import ScreenWrapper from '../../components/ScreenWrapper';
-import { useChatStore } from '../../hooks/useChatStore';
-import type { SmashConversation } from '../../types/smash';
+import { ScreenHeaderLeftSlot } from '@src/shared/components/ScreenHeader';
+import ScreenWrapper from '@src/shared/components/ScreenWrapper';
+import { useChatStore } from '@src/shared/hooks/useChatStore';
+import type { SmashConversation } from '@src/shared/types/smash';
 import './DiscussionSelection.css';
 
 type DiscussionSelectionProps = {

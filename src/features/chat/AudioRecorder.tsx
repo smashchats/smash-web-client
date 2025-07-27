@@ -2,7 +2,7 @@ import { Mic, Square } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
-import { logger } from '../../lib/logger';
+import { logger } from '../../shared/utils/logger';
 import './AudioRecorder.css';
 
 interface AudioRecorderProps {

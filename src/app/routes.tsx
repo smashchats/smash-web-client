@@ -7,7 +7,7 @@ import GalleryScreen from '../features/gallery/GalleryScreen';
 import HomeScreen from '../features/home/HomeScreen';
 import WelcomeGuide from '../features/onboarding/WelcomeGuide';
 import ProfileScreen from '../features/profile/ProfileScreen';
-import AppGuard from './AppGuard';
+import AppGuard from './providers/AppGuard';
 
 export default function AppRoutes() {
     return (

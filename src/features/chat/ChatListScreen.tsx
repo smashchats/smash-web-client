@@ -5,11 +5,11 @@ import { type DIDDocument } from 'smash-node-lib';
 import {
     ScreenHeaderLeftSlot,
     ScreenHeaderRightSlot,
-} from '../../components/ScreenHeader';
-import ScreenWrapper from '../../components/ScreenWrapper';
-import { peerController } from '../../controllers/peerController';
-import { useChatStore } from '../../hooks/useChatStore';
-import { logger } from '../../lib/logger';
+} from '@src/shared/components/ScreenHeader';
+import ScreenWrapper from '@src/shared/components/ScreenWrapper';
+import { peerController } from '@src/controllers/peerController';
+import { useChatStore } from '@src/shared/hooks/useChatStore';
+import { logger } from '../../shared/utils/logger';
 import { ConversationItem } from './ConversationItem';
 import { NewConversationDialog } from './NewConversationDialog';
 import './chatListScreen.css';

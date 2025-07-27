@@ -2,10 +2,10 @@ import { Check, Copy } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 
-import Button from '../../../components/Button';
-import { logger } from '../../../lib/logger';
-import { copyToClipboard } from '../../../lib/utils';
-import { useSmash } from '../../../providers/SmashContext';
+import Button from '@src/shared/components/Button';
+import { logger } from '@src/shared/utils/logger';
+import { copyToClipboard } from '@src/shared/utils/utils';
+import { useIdentityContext } from '@src/features/identity';
 
 export function DidDocumentSection() {
     const [didDocumentString, setDidDocumentString] = useState<string | null>(
@@ -15,7 +15,7 @@ export function DidDocumentSection() {
     const [didCopied, setDidCopied] = useState(false);
     const [copyError, setCopyError] = useState<string | null>(null);
 
-    const { smashUser } = useSmash();
+    const { smashUser } = useIdentityContext();
 
     useEffect(() => {
         const loadDIDDocument = async () => {

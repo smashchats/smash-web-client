@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type Media, mediaDB } from '../../lib/mediaStore';
+import { type Media, mediaDB } from '../../services/mediaStore';
 
 export function useCaptureMedia() {
     const saveMedia = useCallback(async (blob: Blob, type: Media['type']) => {

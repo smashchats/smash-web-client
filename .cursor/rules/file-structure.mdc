@@ -1,78 +1,31 @@
 ---
-description: 
-globs: 
 alwaysApply: true
 ---
-The file structure looks like this. This is only an example, and things can move around. But this is important to keep in mind so that you don't suggest, for instance, creating a `pages` directory when all our page-like components are within `features/<name>`.
 
-```
-src/
-├── app/
-│   ├── App.tsx                         # Main layout + route definitions
-│   ├── i18n.ts                         # i18next setup
-│   ├── pwa.ts                          # Vite-PWA registration logic
-│   └── routes.tsx                      # React Router config
-│
-├── features/
-│   ├── auth/
-│   │   ├── Login.tsx                   # Simple login UI
-│   │   └── useAuth.ts                  # Hook wrapping SDK or mock auth
-│   │
-│   ├── camera/
-│   │   ├── CameraView.tsx              # Fullscreen camera interface
-│   │   ├── useCamera.ts                # Hook to handle constraints, state
-│   │   ├── mediaRecorder.ts            # Wrapper around MediaRecorder
-│   │   └── permissions.ts              # Camera/mic permission utils
-│   │
-│   ├── chat/
-│   │   ├── ChatView.tsx                # Main chat screen
-│   │   ├── MessageInput.tsx           # Text input + media controls
-│   │   ├── MessageList.tsx            # List of messages
-│   │   ├── MessageBubble.tsx          # UI for each message
-│   │   ├── chatStore.ts                # Zustand store (UI state only)
-│   │   ├── chatDb.ts                   # Dexie wrapper (IndexedDB schema + helpers)
-│   │   └── useChatSync.ts              # Logic to sync SDK data to local DB
-│   │
-│   └── stories/
-│       ├── StoryView.tsx              # Fullscreen media view
-│       ├── useStories.ts              # State + data sync
-│       └── StoryThumbnail.tsx         # Preview in UI
-│
-├── lib/
-│   ├── sdk.ts                          # Thin wrapper over your provided backend SDK
-│   ├── fileUtils.ts                   # Blob utils (e.g., createObjectURL, revoke)
-│   ├── storageQuota.ts                # StorageManager API usage
-│   └── logger.ts                      # Optional: centralized logging
-│
-├── components/
-│   ├── Button.tsx
-│   ├── Icon.tsx
-│   ├── Loader.tsx
-│   └── Modal.tsx
-│
-├── hooks/
-│   ├── usePermissions.ts              # Checks + requests camera/mic access
-│   └── useMediaQuery.ts               # Responsive helpers
-│
-├── styles/
-│   ├── globals.css                    # Tailwind or custom CSS
-│   └── theme.css                      # Optional: future theming
-│
-├── types/
-│   └── index.ts                       # Shared types/interfaces
-│
-├── main.tsx                           # Vite entrypoint
-└── vite-env.d.ts
-```
+| Concept     | What it does                                                            | Where it lives     |
+| ----------- | ----------------------------------------------------------------------- | ------------------ |
+| `services/` | Holds **pure logic** (classes, singletons, SDK interfaces, data layers) | `services/` folder |
+| `hooks/`    | Holds **stateful logic** & **UI interactions** (React-specific)         | `hooks/` folder    |
+| `context/`  | Provides state from hooks to components tree                            | `providers/`       |
 
-## Structure Rationale
+## Mental Model for Hooks vs Services
 
-| Folder      | Purpose                                            |
-| ----------- | -------------------------------------------------- |
-| app/        | Core app scaffolding — routes, layout, init logic  |
-| features/   | Split by business logic (camera, chat, auth, etc.) |
-| lib/        | Low-level reusable helpers not tied to features    |
-| components/ | Shared dumb UI components                          |
-| hooks/      | Custom React hooks used app-wide                   |
-| styles/     | Global + atomic CSS                                |
-| types/      | Centralized types for reuse and clarity            |
+- ✅ **Services** = Stateless, environment-agnostic, async-capable logic (can be reused in CLI, tests, or web)
+- ✅ **Hooks** = Stateful logic, side-effects, user-triggered flows
+- ❌ Don't put database access or class instances inside hooks
+- ❌ Don’t call hooks in services (violates rules of hooks)
+
+## Best Practices
+
+- Keep services and hooks separate: services for pure logic/data, hooks for React state/effects.
+- Providers (context) should wrap the app and supply state from hooks to the component tree.
+- Use barrel exports (`index.ts`) for each folder to simplify imports.
+- Shared code goes in `shared/` (components, hooks, utils, styles, types).
+- Feature code is colocated in `features/` by domain (screens, hooks, components, types, etc.).
+
+| components/ | Shared dumb UI components |
+| hooks/ | Custom React hooks used app-wide |
+| styles/ | Global + atomic CSS |
+| types/ | Centralized types for reuse and clarity |
+
+the services related to messaging will use [tests files from the Smash-Node-Lib (SmashMessaging) library](mdc:smash-node-lib/tests) as guidance on how to implement messaging functionalities.

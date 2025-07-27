@@ -1,14 +1,88 @@
 # Smash Web Client
 
-A minimal web client implementation of the Smash Protocol using React, TypeScript, and Vite. This project serves as a reference implementation and MVP (Minimum Viable Product) for building web-based Smash Protocol clients.
+A minimal web client implementation of the Smash Protocol using React, TypeScript, and Vite.
+This project serves as a reference implementation and MVP (Minimum Viable Product) for building chat clients powered by the Smash Messaging Protocol.
 
 ## Overview
 
 This web client demonstrates the core functionality of the [Smash Protocol](https://github.com/smashchats/smash-node-lib) - a modular, 1:N social messaging and curated content-sharing protocol. While the [official Smash mobile app](https://github.com/smashchats/smashchats) is recommended for general use, this implementation serves as:
 
-- A reference for developers building web-based Smash clients
-- An MVP showcasing basic Smash Protocol features
-- A foundation for derived Smash-based solutions
+- A reference for developers building Smash clients
+- An MVP showcasing the Smash Messaging Protocol features
+- A foundation for the derived native Smashchats application
+
+This project is meant to be kept in sync with the Smash-Node-Lib development.
+
+## Happy path
+
+### Smashchats web app 0.1 alpha
+
+> Like Snapchat/Telegram
+
+- quick welcome path (local DID doc)
+- send messages to a peer (scan or did doc)
+- scan to join alpha NBH , adds to list once joined
+- discover peer in alpha NBH and message them
+- pass/smash/trust(with name) and share trust endorsements
+- keep messages (and audio notes)
+- share media and "keep" media (pic/vid)
+- offline and reloads works – keep queues and data
+- _no backups for now_
+
+### Neighborhood 1.0 alpha
+
+> Like Snapchat/Telegram/Grindr
+
+NBH
+
+- NBH onboarding + username (DNS) allocation
+- Link with Smash identity
+- Sync profile artefacts with connected Smash user
+- Profile public link (alt to LinkTree) – IG-like
+- Join NBH in Smash app (explain + explain referals)
+- Send Welcome message from NBH and Waitlist (referals) instructions
+- Once in, Discover – on profile "Send a message" link to Waitlist
+
+Smashchats
+
+- Backup & Sync service for profile & kept data & last-7-days events thread (simple hardcoded service)
+- Document protocol & vision (notes & blog posts)
+- _set up automations, background agents, Sonar auto fixes etc in web and lib code repos_
+
+### Neighborhood 1.1 alpha
+
+NBH
+
+- User-based Relationships
+
+Smashchats
+
+- Web of trust
+- Badges & Badge endorsements
+- Document protocol & vision (notes & blog posts)
+
+### Neighborhood 1.0 beta
+
+NBH
+
+- NBH onboarding (improved UX and Smarter)
+- Link BlueSky to Smash identity & show public posts and media on public profile
+- "Send a message" link to smash:// registered App link (or smashchats.com whatever)
+- Crowdfund & Premium options (+ free premium for referals)
+
+Smashchats
+
+- Link ATProto/BlueSky
+- Support App Links (eg, smash://)
+- Document protocol & vision (notes & blog posts)
+- Fundraise
+
+## TODO/Issues
+
+- [ ] go over expected feats and what's working
+- scroll to the bottom of the conversation
+- mark as read
+- smoke tests
 
 ## Features
 

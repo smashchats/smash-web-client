@@ -3,8 +3,8 @@ import { FileText, MessageCirclePlus, Type, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { DIDDocument } from 'smash-node-lib';
 
-import Button from '../../components/Button';
-import { logger } from '../../lib/logger';
+import Button from '@src/shared/components/Button';
+import { logger } from '@src/shared/utils/logger';
 import './NewConversationDialog.css';
 
 type ScanMode = 'qr' | 'file' | 'text';

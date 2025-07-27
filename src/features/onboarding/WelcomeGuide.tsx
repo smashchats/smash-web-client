@@ -5,10 +5,9 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import Button from '../../components/Button';
-import { generateIdentity } from '../../lib/smash/smash-init';
-import { DEFAULT_SME_CONFIG } from '../../lib/smeConfig';
-import { useSmash } from '../../providers/SmashContext';
+import { DEFAULT_SME_CONFIG } from '@src/app/config/sme';
+import { useIdentityContext, generateIdentity } from '@src/features/identity';
+import Button from '@src/shared/components/Button';
 import './WelcomeGuide.css';
 
 export function WelcomeGuide() {
@@ -17,7 +16,7 @@ export function WelcomeGuide() {
     const [generationError, setGenerationError] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const navigate = useNavigate();
-    const { setIdentity, error: identityError } = useSmash();
+    const { setIdentity, error: identityError } = useIdentityContext();
     const { t } = useTranslation('welcome');
 
     const FEATURES = [
@@ -57,8 +56,12 @@ export function WelcomeGuide() {
         try {
             const identity = await generateIdentity();
             if (!identity) throw new Error('No identity generated');
-            await setIdentity(identity, DEFAULT_SME_CONFIG);
-            navigate('/chats', { replace: true });
+            await setIdentity(identity, DEFAULT_SME_CONFIG, { 
+                title: displayName || 'Anonymous User',
+                description: 'Smash user',
+                avatar: ''
+            });
+            navigate('/', { replace: true });
         } catch (error) {
             setGenerationError(
                 error instanceof Error
@@ -69,7 +72,7 @@ export function WelcomeGuide() {
         } finally {
             setIsGenerating(false);
         }
-    }, [setIdentity, navigate, t]);
+    }, [setIdentity, displayName, navigate, t]);
 
     const errorMessage = identityError?.message ?? generationError;
 
@@ -77,10 +80,13 @@ export function WelcomeGuide() {
         <Dialog.Root open modal>
             <Dialog.Portal>
                 <Dialog.Overlay className="welcome-overlay" />
-                <Dialog.Content className="welcome-content">
+                <Dialog.Content className="welcome-content" aria-describedby="welcome-description">
                     <VisuallyHidden>
                         <Dialog.Title>Welcome</Dialog.Title>
                     </VisuallyHidden>
+                    <div id="welcome-description" className="sr-only">
+                        Welcome to Smashchats - A decentralized, private-first messaging app
+                    </div>
 
                     {step === 1 && (
                         <>

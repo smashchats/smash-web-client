@@ -1,8 +1,9 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
+
 - Writing beautiful code is important. It needs to be easily readable by a junior engineer, with the flattest learning-curve possible.
 - All component props are wrapped around `Readonly<T>`.
 - We're writting functional code whenever possible.

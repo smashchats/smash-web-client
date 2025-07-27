@@ -2,7 +2,7 @@ import { Send } from 'lucide-react';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
-import { logger } from '../../lib/logger';
+import { logger } from '../../shared/utils/logger';
 import { AudioRecorder } from './AudioRecorder';
 import './ChatInput.css';
 import { MediaUpload } from './MediaUpload';

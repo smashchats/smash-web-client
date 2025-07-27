@@ -1,0 +1,32 @@
+---
+alwaysApply: false
+---
+
+Controllers and UI logic **must never** interact directly with both the database (e.g., Dexie/IndexedDB) and the in-memory state (e.g., Zustand).
+
+- All persistence and state updates (DB, Zustand, etc.) **must** be handled atomically within service/storage providers.
+- Service/storage providers should expose a single, clean API (e.g., `sendMessage`, `loadMessages`) to the rest of the app.
+- Controllers and UI should only call these provider APIs, and never update Zustand or the DB directly.
+- The provider is responsible for ensuring consistency between all sources of truth, handling errors, and rolling back as needed.
+
+**Rationale:**
+
+- Prevents code duplication and inconsistency.
+- Ensures a single source of truth for persistence logic.
+- Makes the codebase easier to maintain and reason about.
+
+**Example (Correct):**
+
+```ts
+// Controller/UI
+await smashService.sendMessage(...); // smashService handles all updates internally
+```
+
+**Example (Incorrect):**
+
+```ts
+// Controller/UI
+const message = await smashService.sendMessage(...);
+db.addMessage(message);
+useMessageStore.getState().addMessage(conversationId, message);
+```

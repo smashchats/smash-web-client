@@ -3,10 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
 import { messageController } from '../../controllers/messageController';
-import { db } from '../../lib/db';
-import { mediaDB } from '../../lib/mediaStore';
-import { useUIStore } from '../../lib/uiStore';
-import type { SmashConversation } from '../../types/smash';
+import { db } from '../../services/db';
+import { mediaDB } from '../../services/mediaStore';
+import type { SmashConversation } from '@src/shared/types/smash';
+import { useUIStore } from '@src/shared/hooks/useUIStore';
 import CameraOverlay from './CameraOverlay';
 import CameraView, { type CameraViewHandle } from './CameraView';
 import CapturePreview from './CapturePreview';

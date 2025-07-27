@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import Button from '../../components/Button';
+import Button from '@src/shared/components/Button';
 
 type FloatingButtonProps = {
     icon: ReactNode;

@@ -1,25 +1,21 @@
 import { useEffect, useState } from 'react';
 
-import Button from '../../../components/Button';
-import { logger } from '../../../lib/logger';
-import { useSmash } from '../../../providers/SmashContext';
-
-interface SMEConfig {
-    url: string;
-    smePublicKey: string;
-}
+import { useIdentityContext } from '@src/features/identity';
+import Button from '@src/shared/components/Button';
+import { logger } from '@src/shared/utils/logger';
+import type { SMEConfigJSON } from 'smash-node-lib';
 
 type SMEStatus = 'success' | 'error' | 'unsaved' | null;
 
 export function SmeConfiguration() {
-    const [smeFormData, setSmeFormData] = useState<SMEConfig>({
+    const [smeFormData, setSmeFormData] = useState<Partial<SMEConfigJSON>>({
         url: '',
         smePublicKey: '',
     });
     const [isSavingSME, setIsSavingSME] = useState(false);
     const [smeStatus, setSmeStatus] = useState<SMEStatus>(null);
 
-    const { smeConfig, updateSMEConfig } = useSmash();
+    const { smeConfig, updateSMEConfig } = useIdentityContext();
 
     useEffect(() => {
         if (smeConfig) {
@@ -28,7 +24,7 @@ export function SmeConfiguration() {
     }, [smeConfig]);
 
     const handleSMEChange =
-        (field: keyof SMEConfig) =>
+        (field: keyof SMEConfigJSON) =>
         (e: React.ChangeEvent<HTMLInputElement>) => {
             setSmeFormData((prev) => ({ ...prev, [field]: e.target.value }));
             setSmeStatus('unsaved');
@@ -38,7 +34,15 @@ export function SmeConfiguration() {
         try {
             logger.debug('Saving SME configuration', { config: smeFormData });
             setIsSavingSME(true);
-            await updateSMEConfig(smeFormData);
+            // Fill in required fields if missing
+            const fullConfig: SMEConfigJSON = {
+                url: smeFormData.url || '',
+                smePublicKey: smeFormData.smePublicKey || '',
+                keyAlgorithm: { name: 'ECDH', namedCurve: 'P-256' },
+                encryptionAlgorithm: { name: 'AES-GCM', length: 256 },
+                challengeEncoding: 'base64' as const,
+            };
+            await updateSMEConfig(fullConfig);
             setSmeStatus('success');
             setTimeout(() => setSmeStatus(null), 2000);
             logger.info('SME configuration saved successfully');
