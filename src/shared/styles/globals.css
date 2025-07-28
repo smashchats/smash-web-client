@@ -16,9 +16,6 @@
 @import './design-system/tokens.css';
 @import './design-system/utilities.css';
 
-/* Legacy variables (to be migrated) */
-@import './variables.css';
-
 :root {
     --vh: 1vh; /* This value is updated by JavaScript for mobile viewports */
     font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;

@@ -18,14 +18,14 @@ type InputProps = {
 
 const inputVariants: Record<InputVariant, string> = {
     default: 'input-base',
-    error: 'input-base border-red-500 focus:border-red-500 focus:ring-red-500/20',
-    success: 'input-base border-green-500 focus:border-green-500 focus:ring-green-500/20',
+    error: 'input-base input-error',
+    success: 'input-base input-success',
 };
 
 const inputSizes: Record<InputSize, string> = {
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-3 text-base',
-    lg: 'px-4 py-4 text-lg',
+    sm: 'text-sm min-h-9',
+    md: 'text-base min-h-11',
+    lg: 'text-lg min-h-12',
 };
 
 const Input = forwardRef<HTMLInputElement, InputProps>(({
@@ -87,7 +87,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
             {displayedHelperText && (
                 <p className={cn(
                     'text-xs',
-                    hasError ? 'text-red-600' : 'text-muted'
+                    hasError ? 'text-error' : 'text-muted'
                 )}>
                     {displayedHelperText}
                 </p>

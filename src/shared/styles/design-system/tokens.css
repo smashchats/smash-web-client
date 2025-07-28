@@ -24,13 +24,45 @@
         --ds-color-gray-800: #1f2937;
         --ds-color-gray-900: #111827;
 
-        /* Semantic Colors */
+        /* Status Colors */
+        --ds-color-error-50: #fef2f2;
+        --ds-color-error-500: #ef4444;
+        --ds-color-error-600: #dc2626;
+        --ds-color-success-50: #f0fdf4;
+        --ds-color-success-500: #22c55e;
+        --ds-color-success-600: #16a34a;
+        --ds-color-warning-50: #fffbeb;
+        --ds-color-warning-500: #f59e0b;
+        --ds-color-warning-600: #d97706;
+
+        /* Semantic Colors - Light Theme */
         --ds-color-background: #ffffff;
-        --ds-color-foreground: #1f2937;
+        --ds-color-background-secondary: var(--ds-color-gray-50);
+        --ds-color-background-tertiary: var(--ds-color-gray-100);
+        --ds-color-foreground: var(--ds-color-gray-900);
+        --ds-color-foreground-secondary: var(--ds-color-gray-600);
+        --ds-color-foreground-tertiary: var(--ds-color-gray-500);
         --ds-color-surface: #ffffff;
-        --ds-color-surface-secondary: #f9fafb;
-        --ds-color-border: #e5e7eb;
-        --ds-color-border-hover: #d1d5db;
+        --ds-color-surface-secondary: var(--ds-color-gray-50);
+        --ds-color-surface-hover: var(--ds-color-gray-100);
+        --ds-color-border: var(--ds-color-gray-200);
+        --ds-color-border-hover: var(--ds-color-gray-300);
+        --ds-color-border-focus: var(--ds-color-primary-500);
+
+        /* Legacy aliases for backward compatibility */
+        --color-background: var(--ds-color-background);
+        --color-background-primary: var(--ds-color-background);
+        --color-background-secondary: var(--ds-color-background-secondary);
+        --color-background-tertiary: var(--ds-color-background-tertiary);
+        --color-text: var(--ds-color-foreground);
+        --color-text-primary: var(--ds-color-foreground);
+        --color-text-secondary: var(--ds-color-foreground-secondary);
+        --color-text-light: var(--ds-color-foreground-tertiary);
+        --color-text-muted: var(--ds-color-foreground-tertiary);
+        --color-border: var(--ds-color-border);
+        --color-primary: var(--ds-color-primary-600);
+        --color-secondary: var(--ds-color-gray-600);
+        --color-error: var(--ds-color-error-500);
 
         /* Typography Tokens */
         --ds-font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -111,6 +143,8 @@
         --ds-sidebar-width: 18rem; /* 288px */
         --ds-content-max-width: 50rem; /* 800px */
         --ds-chat-sidebar-width: 20rem; /* 320px */
+        --ds-chat-header-height: 4rem; /* 64px */
+        --ds-chat-input-height: 4rem; /* 64px */
 
         /* Responsive Layout Tokens */
         --ds-container-width: 100vw;
@@ -142,6 +176,7 @@
             --ds-nav-type: sidebar;
             --ds-nav-width: var(--ds-sidebar-width);
             --ds-nav-height: 100vh;
+            --ds-sidebar-width: 15rem; /* 240px - smaller on tablets */
         }
     }
 
@@ -149,13 +184,14 @@
         :root {
             --ds-container-padding: var(--ds-space-8);
             --ds-content-max-width: 60rem; /* 960px */
+            --ds-sidebar-width: 18rem; /* 288px - back to normal */
         }
     }
 
     @media (min-width: 1280px) {
         :root {
             --ds-content-max-width: 70rem; /* 1120px */
-            --ds-chat-sidebar-width: 22rem; /* 352px */
+            --ds-chat-sidebar-width: 18rem; /* 288px - keep reasonable width */
         }
     }
 
@@ -163,23 +199,62 @@
     @media (prefers-color-scheme: dark) {
         :root {
             --ds-color-background: #0f0f1a;
+            --ds-color-background-secondary: #1a1a2e;
+            --ds-color-background-tertiary: #2a2a3f;
             --ds-color-foreground: #ffffff;
+            --ds-color-foreground-secondary: var(--ds-color-gray-300);
+            --ds-color-foreground-tertiary: var(--ds-color-gray-400);
             --ds-color-surface: #1a1a2e;
             --ds-color-surface-secondary: #2a2a3f;
+            --ds-color-surface-hover: #3a3a5f;
             --ds-color-border: rgba(255, 255, 255, 0.1);
             --ds-color-border-hover: rgba(255, 255, 255, 0.2);
+            --ds-color-border-focus: var(--ds-color-primary-400);
         }
     }
 }
 
 /* Component Tokens */
 @layer components {
-    /* Message specific tokens */
     :root {
+        /* Message specific tokens */
         --ds-message-sent-bg: var(--ds-color-primary-600);
         --ds-message-sent-text: #ffffff;
         --ds-message-received-bg: var(--ds-color-surface-secondary);
         --ds-message-received-text: var(--ds-color-foreground);
+        --ds-message-max-width: 70%;
+        --ds-message-border-radius: var(--ds-radius-2xl);
+
+        /* Legacy messaging variables for compatibility */
+        --color-message-sent: var(--ds-message-sent-bg);
+        --color-message-received: var(--ds-message-received-bg);
+
+        /* Input tokens */
+        --ds-input-bg: var(--ds-color-surface);
+        --ds-input-border: var(--ds-color-border);
+        --ds-input-border-focus: var(--ds-color-border-focus);
+        --ds-input-text: var(--ds-color-foreground);
+        --ds-input-placeholder: var(--ds-color-foreground-tertiary);
+
+        /* Button tokens */
+        --ds-button-primary-bg: var(--ds-color-primary-600);
+        --ds-button-primary-hover: var(--ds-color-primary-700);
+        --ds-button-primary-active: var(--ds-color-primary-800);
+        --ds-button-primary-text: #ffffff;
+        --ds-color-primary-text: #ffffff;
+        --ds-button-secondary-bg: var(--ds-color-surface-secondary);
+        --ds-button-secondary-hover: var(--ds-color-surface-hover);
+        --ds-button-secondary-text: var(--ds-color-foreground);
+        --ds-button-ghost-hover: var(--ds-color-surface-hover);
+
+        /* Mobile-specific overrides */
+        --bottom-offset: 0px;
+    }
+
+    @media (orientation: landscape) {
+        :root {
+            --bottom-offset: calc(-1 * env(safe-area-inset-bottom, 15px));
+        }
     }
 
     @media (prefers-color-scheme: dark) {

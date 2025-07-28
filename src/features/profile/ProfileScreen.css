@@ -1,15 +1,13 @@
 .qr-code-container {
-    background-color: var(--color-white);
-    padding: var(--spacing-md);
-    box-shadow: var(--shadow-sm);
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: var(--border-radius-md);
+    padding: var(--ds-space-4);
 }
 
 .qr-code {
-    max-width: 100%;
+    max-width: 200px;
+    width: 100%;
     height: auto;
     display: block;
 }
@@ -17,54 +15,65 @@
 .settings-container {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xl);
-    padding: var(--spacing-md);
+    gap: var(--ds-space-8);
+    padding: var(--ds-space-6);
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .settings-section {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--ds-space-4);
 }
 
 .settings-section-title {
-    font-size: var(--font-size-2xl);
-    font-weight: 600;
-    color: var(--color-text-primary);
+    font-size: var(--ds-font-size-xl);
+    font-weight: var(--ds-font-weight-semibold);
+    color: var(--ds-color-foreground);
+    margin: 0 0 var(--ds-space-4) 0;
 }
 
 .settings-card {
-    background: var(--color-background-secondary);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-sm);
+    padding: var(--ds-space-4) 0;
 }
 
 .settings-form {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-lg);
+    gap: var(--ds-space-6);
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--ds-space-2);
 }
 
 .form-group label {
-    font-weight: 500;
-    color: var(--color-text-secondary);
+    font-weight: var(--ds-font-weight-medium);
+    font-size: var(--ds-font-size-sm);
+    color: var(--ds-color-gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
 .form-group input,
 .form-group textarea {
-    padding: var(--spacing-md);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--border-radius-md);
-    background: var(--color-background-primary);
-    color: var(--color-text-primary);
-    font-size: var(--font-size-base);
+    padding: var(--ds-space-3) var(--ds-space-4);
+    border: 1px solid var(--ds-color-border);
+    border-radius: var(--ds-radius-md);
+    background: var(--ds-color-surface);
+    color: var(--ds-color-foreground);
+    font-size: var(--ds-font-size-base);
+    transition: all var(--ds-transition-fast);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--ds-color-primary-600);
+    box-shadow: 0 0 0 3px rgba(147, 97, 216, 0.1);
 }
 
 .form-group textarea {
@@ -73,8 +82,8 @@
 }
 
 .spinner {
-    width: var(--font-size-base);
-    height: var(--font-size-base);
+    width: var(--ds-font-size-base);
+    height: var(--ds-font-size-base);
     border: 2px solid currentColor;
     border-right-color: transparent;
     border-radius: 50%;
@@ -88,36 +97,100 @@
 }
 
 .status-message {
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-sm);
+    padding: var(--ds-space-4);
+    border-radius: var(--ds-radius-md);
+    font-size: var(--ds-font-size-sm);
+    font-weight: var(--ds-font-weight-medium);
 }
 
 .status-message.error {
-    background: var(--color-error);
-    color: var(--color-white);
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
 }
 
 .status-message.success {
-    background: var(--color-success);
-    color: var(--color-white);
+    background: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
 }
 
 .status-message.info {
-    background: var(--color-info);
-    color: var(--color-white);
+    background: #dbeafe;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+}
+
+@media (prefers-color-scheme: dark) {
+    .status-message.error {
+        background: rgba(220, 38, 38, 0.15);
+        color: #fca5a5;
+        border-color: rgba(220, 38, 38, 0.3);
+    }
+
+    .status-message.success {
+        background: rgba(34, 197, 94, 0.15);
+        color: #86efac;
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .status-message.info {
+        background: rgba(37, 99, 235, 0.15);
+        color: #93c5fd;
+        border-color: rgba(37, 99, 235, 0.3);
+    }
 }
 
 .did-document-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--ds-space-4);
 }
 
 .did-help-text {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
+    font-size: var(--ds-font-size-sm);
+    color: var(--ds-color-gray-600);
     text-align: center;
-    margin-top: var(--spacing-sm);
+    margin-top: var(--ds-space-2);
+    line-height: var(--ds-line-height-relaxed);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .settings-container {
+        padding: var(--ds-space-4);
+        gap: var(--ds-space-6);
+    }
+
+    .settings-card {
+        padding: var(--ds-space-4);
+    }
+
+    .settings-section-title {
+        font-size: var(--ds-font-size-xl);
+    }
+
+    .form-group input,
+    .form-group textarea {
+        padding: var(--ds-space-3);
+        font-size: var(--ds-font-size-sm);
+    }
+}
+
+@media (min-width: 768px) {
+    .settings-container {
+        max-width: 600px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .settings-container {
+        max-width: 700px;
+        padding: var(--ds-space-8);
+    }
+
+    .settings-section-title {
+        font-size: var(--ds-font-size-3xl);
+    }
 }

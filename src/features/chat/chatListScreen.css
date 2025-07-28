@@ -35,18 +35,46 @@
     display: flex;
     flex-direction: column;
     gap: var(--ds-space-1);
-    flex: 1;
     overflow-y: auto;
 }
 
 /* Responsive adjustments */
 @media (min-width: 768px) {
     .chat-list-container {
-        padding: var(--ds-space-4);
+        padding: 0;
+        max-width: 100%;
     }
 
     .empty-message {
         font-size: var(--ds-font-size-xl);
         max-width: 400px;
+        padding: var(--ds-space-8);
+    }
+
+    .conversation-list {
+        max-width: 100%;
+    }
+}
+
+@media (min-width: 1024px) {
+    .empty-message {
+        font-size: var(--ds-font-size-2xl);
+        max-width: 500px;
+    }
+}
+
+/* Mobile optimizations */
+@media (max-width: 767px) {
+    .chat-list-container {
+        padding: 0;
+    }
+
+    .conversation-list {
+        gap: 0;
+    }
+
+    .empty-message {
+        padding: var(--ds-space-8) var(--ds-space-6);
+        font-size: var(--ds-font-size-base);
     }
 }

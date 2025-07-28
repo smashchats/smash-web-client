@@ -4,16 +4,25 @@
     position: fixed;
     bottom: -1px;
     width: 100vw;
-    padding: 4px 0;
-    z-index: 10;
+    padding: var(--ds-space-1) 0;
+    z-index: var(--ds-z-fixed);
     min-height: calc(
-        var(--bottom-nav-height) + env(safe-area-inset-bottom, 15px) / 2
+        var(--ds-bottom-nav-height) + env(safe-area-inset-bottom, 15px) / 2
     );
     padding-bottom: calc(env(safe-area-inset-bottom, 15px) / 2);
+    background-color: var(--ds-color-surface);
+    border-top: 1px solid var(--ds-color-border);
 }
 
 .bottom-nav-button {
     background: none;
     border: none;
-    font-size: 8px;
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-color-foreground-secondary);
+    transition: color var(--ds-transition-fast);
+}
+
+.bottom-nav-button:hover,
+.bottom-nav-button.active {
+    color: var(--ds-color-primary-600);
 }

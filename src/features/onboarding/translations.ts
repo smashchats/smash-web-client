@@ -24,9 +24,8 @@ export const welcome_en: Translation = {
     continue: 'Continue',
     'create-identity': {
         title: 'Create Your Identity',
-        description: 'Your identity is your key to the Smash network.',
-        'display-name': 'Your name, an alias...',
-        placeholder: 'Your name (optional)',
+        description: 'Pick a public display name that others will see.',
+        placeholder: 'Your name, an alias... (optional)',
         creating: 'Creating...',
         'create-identity': 'Create Identity',
         'generation-failed': 'Identity generation failed.',
@@ -57,9 +56,8 @@ export const welcome_fr: Translation = {
     continue: 'Continuer',
     'create-identity': {
         title: 'Créer ton identité',
-        description: 'Ton identité est ta clé pour le réseau Smash.',
-        'display-name': 'Un pseudo, ton prénom...',
-        placeholder: 'Ton nom (optionnel)',
+        description: 'Choisis un nom public que tout le monde pourra voir.',
+        placeholder: 'Ton prénom, un pseudo... (optionnel)',
         creating: 'Création en cours...',
         'create-identity': 'Créer ton identité',
         'generation-failed': 'La création de ton identité a échoué.',

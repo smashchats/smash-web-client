@@ -80,13 +80,14 @@ export function WelcomeGuide() {
         <Dialog.Root open modal>
             <Dialog.Portal>
                 <Dialog.Overlay className="welcome-overlay" />
-                <Dialog.Content className="welcome-content" aria-describedby="welcome-description">
-                    <VisuallyHidden>
-                        <Dialog.Title>Welcome</Dialog.Title>
-                    </VisuallyHidden>
-                    <div id="welcome-description" className="sr-only">
-                        Welcome to Smashchats - A decentralized, private-first messaging app
-                    </div>
+                <div className="welcome-content-wrapper">
+                    <Dialog.Content className="welcome-content" aria-describedby="welcome-description">
+                        <VisuallyHidden>
+                            <Dialog.Title>Welcome</Dialog.Title>
+                        </VisuallyHidden>
+                        <div id="welcome-description" className="sr-only">
+                            Welcome to Smashchats - A decentralized, private-first messaging app
+                        </div>
 
                     {step === 1 && (
                         <>
@@ -105,8 +106,8 @@ export function WelcomeGuide() {
                             </div>
 
                             <Button
-                                className="full"
-                                variant="primary"
+                                className="btn-primary"
+                                isFullWidth
                                 onClick={() => setStep(2)}
                             >
                                 {t('continue')}
@@ -119,10 +120,6 @@ export function WelcomeGuide() {
                             <h2>{t('create-identity.title')}</h2>
                             <p className="description">
                                 {t('create-identity.description')}
-                            </p>
-
-                            <p className="description">
-                                {t('create-identity.display-name')}
                             </p>
 
                             <input
@@ -138,6 +135,9 @@ export function WelcomeGuide() {
                                 }}
                                 onChange={handleNameChange}
                                 disabled={isGenerating}
+                                aria-label={t('create-identity.display-name')}
+                                autoComplete="name"
+                                autoFocus
                             />
 
                             {errorMessage && (
@@ -147,10 +147,11 @@ export function WelcomeGuide() {
                             )}
 
                             <Button
-                                className="full"
-                                variant="primary"
+                                className="btn-primary"
+                                isFullWidth
                                 onClick={handleCreateIdentity}
                                 disabled={isGenerating}
+                                isLoading={isGenerating}
                             >
                                 {isGenerating
                                     ? t('create-identity.creating')
@@ -158,7 +159,8 @@ export function WelcomeGuide() {
                             </Button>
                         </>
                     )}
-                </Dialog.Content>
+                    </Dialog.Content>
+                </div>
             </Dialog.Portal>
         </Dialog.Root>
     );

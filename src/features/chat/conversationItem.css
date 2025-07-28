@@ -2,124 +2,214 @@
 .conversation-item {
     display: flex;
     align-items: center;
-    padding: 12px;
-    border-bottom: 1px solid var(--color-border);
-    transition: background-color 0.2s ease;
-    color: var(--color-text);
+    padding: var(--ds-space-3);
+    border-bottom: 1px solid var(--ds-color-border);
+    transition: background-color var(--ds-transition-fast);
+    color: var(--ds-color-foreground);
+    width: 100%;
 }
 
 .conversation-item:hover {
-    background-color: var(--color-background-hover);
+    background-color: var(--ds-color-surface-secondary);
 }
 
 .avatar {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
-    background-color: var(--color-accent);
-    color: var(--color-background);
+    border-radius: var(--ds-radius-full);
+    background-color: var(--ds-color-primary-600);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    margin-right: 12px;
+    font-weight: var(--ds-font-weight-semibold);
+    font-size: var(--ds-font-size-base);
+    margin-right: var(--ds-space-3);
     flex-shrink: 0;
 }
 
 .conversation-content {
     flex-grow: 1;
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--ds-color-foreground);
     min-width: 0; /* Helps with text truncation */
+    display: block;
 }
 
 .conversation-header {
     display: flex;
     flex: 1;
+    flex-direction: column;
+    gap: var(--ds-space-1);
+    min-width: 0;
+}
+
+.conversation-header-row {
+    display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    flex-direction: column;
+    width: 100%;
 }
 
 .conversation-title {
-    font-weight: 500;
-    color: var(--color-text);
+    font-weight: var(--ds-font-weight-medium);
+    font-size: var(--ds-font-size-base);
+    color: var(--ds-color-foreground);
     margin: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.conversation-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-2);
+    flex-shrink: 0;
 }
 
 .conversation-time {
-    font-size: 12px;
-    color: var(--color-text-light);
-    opacity: 0.8;
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-color-foreground-tertiary);
+    flex-shrink: 0;
 }
 
 .conversation-message {
-    font-size: 14px;
-    color: var(--color-text-light);
-    margin: 4px 0 0 0;
+    font-size: var(--ds-font-size-sm);
+    color: var(--ds-color-foreground-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-    opacity: 0.9;
+    margin-top: var(--ds-space-1);
+}
+
+.conversation-message-media {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ds-space-1);
+    color: var(--ds-color-foreground-tertiary);
+    font-style: italic;
+}
+
+.conversation-message-empty {
+    color: var(--ds-color-foreground-tertiary);
+    font-style: italic;
 }
 
 .conversation-actions {
     display: flex;
     align-items: center;
-    margin-left: 8px;
+    justify-content: center;
+    margin-left: var(--ds-space-2);
 }
 
 .unread-badge {
-    background-color: var(--color-primary);
-    color: var(--color-background);
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    margin-right: 8px;
-    font-weight: 500;
+    background-color: var(--ds-color-primary-600);
+    color: #ffffff;
+    font-size: var(--ds-font-size-xs);
+    font-weight: var(--ds-font-weight-medium);
+    padding: var(--ds-space-1) var(--ds-space-2);
+    border-radius: var(--ds-radius-full);
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .photo-button {
-    padding: 12px;
-    color: var(--color-text-light);
-    background: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ds-space-2);
+    color: var(--ds-color-foreground-tertiary);
+    background: transparent;
     border: none;
-    border-radius: 50%;
+    border-radius: var(--ds-radius-full);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--ds-transition-fast);
+    width: 32px;
+    height: 32px;
 }
 
 .photo-button:hover {
-    color: var(--color-primary);
-    background-color: var(--color-secondary);
-    opacity: 1;
+    color: var(--ds-color-primary-600);
+    background-color: var(--ds-color-primary-50);
 }
 
-/* Dark theme specific adjustments */
 @media (prefers-color-scheme: dark) {
+    .photo-button:hover {
+        color: var(--ds-color-primary-400);
+        background-color: rgba(147, 97, 216, 0.15);
+    }
+}
+
+/* The design system tokens automatically handle dark mode */
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
     .conversation-item {
-        border-bottom-color: var(--color-border);
+        padding: var(--ds-space-4);
     }
 
-    .conversation-item:hover {
-        background-color: var(--color-surface);
+    .avatar {
+        width: 52px;
+        height: 52px;
+        margin-right: var(--ds-space-4);
+    }
+
+    .conversation-title {
+        font-size: var(--ds-font-size-lg);
     }
 
     .conversation-message {
-        color: var(--color-text-light);
-    }
-
-    .conversation-time {
-        color: var(--color-text-light);
+        font-size: var(--ds-font-size-base);
     }
 
     .photo-button {
-        color: var(--color-text-light);
+        width: 44px;
+        height: 44px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .conversation-item {
+        padding: var(--ds-space-5);
     }
 
-    .photo-button:hover {
-        color: var(--color-accent);
-        background-color: var(--color-surface);
+    .conversation-actions {
+        gap: var(--ds-space-3);
+    }
+}
+
+/* Mobile optimizations */
+@media (max-width: 767px) {
+    .conversation-item {
+        padding: var(--ds-space-2) var(--ds-space-4);
+        border-bottom: 1px solid var(--ds-color-border);
+    }
+
+    .avatar {
+        width: 44px;
+        height: 44px;
+        font-size: var(--ds-font-size-sm);
+    }
+
+    .conversation-title {
+        font-size: var(--ds-font-size-sm);
+    }
+
+    .conversation-time {
+        font-size: 11px;
+    }
+
+    .conversation-message {
+        font-size: var(--ds-font-size-xs);
+    }
+
+    .photo-button {
+        width: 28px;
+        height: 28px;
+        padding: var(--ds-space-1);
     }
 }

@@ -17,14 +17,14 @@ const buttonVariants: Record<ButtonVariant, string> = {
     primary: 'btn-primary',
     secondary: 'btn-secondary', 
     ghost: 'btn-ghost',
-    danger: 'bg-red-600 hover:bg-red-700 text-white',
-    success: 'bg-green-600 hover:bg-green-700 text-white',
+    danger: 'btn-danger',
+    success: 'btn-success',
 };
 
 const buttonSizes: Record<ButtonSize, string> = {
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2.5 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'text-sm min-h-8',
+    md: 'text-base min-h-11',
+    lg: 'text-lg min-h-12',
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(({

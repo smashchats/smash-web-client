@@ -78,21 +78,17 @@ export function SmeConfiguration() {
                         />
                     </div>
                     <Button
-                        className={`full`}
-                        variant={
-                            smeStatus === 'success' ? 'success' : 'primary'
-                        }
+                        variant={smeStatus === 'success' ? 'success' : 'primary'}
+                        isFullWidth
                         onClick={handleSaveSME}
                         disabled={isSavingSME || smeStatus !== 'unsaved'}
+                        isLoading={isSavingSME}
                     >
-                        {isSavingSME ? (
-                            <>
-                                <div className="spinner" />
-                                <span>Saving...</span>
-                            </>
-                        ) : (
-                            'Save SME Configuration'
-                        )}
+                        {(() => {
+                            if (isSavingSME) return 'Saving...';
+                            if (smeStatus === 'success') return 'Saved!';
+                            return 'Save SME Configuration';
+                        })()}
                     </Button>
                     {smeStatus === 'success' && (
                         <div className="status-message success">

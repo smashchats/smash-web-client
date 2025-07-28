@@ -41,46 +41,49 @@ export function ConversationItem({
 
                 {/* Main content */}
                 <div className="conversation-header">
-                    <h3 className="conversation-title">{displayName}</h3>
-                    <span className="conversation-time">
-                        {timeAgo === 'less than a minute'
-                            ? 'just now'
-                            : timeAgo}
-                    </span>
+                    <div className="conversation-header-row">
+                        <h3 className="conversation-title">{displayName}</h3>
+                        <div className="conversation-meta">
+                            <span className="conversation-time">
+                                {timeAgo === 'less than a minute'
+                                    ? 'just now'
+                                    : timeAgo}
+                            </span>
+                            {/* Quick photo button */}
+                            <button
+                                className="photo-button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    onQuickPhoto?.(id);
+                                }}
+                                aria-label="Take a photo"
+                            >
+                                <Camera size={18} />
+                            </button>
+                        </div>
+                    </div>
                     {/* Last message preview */}
                     <div className="conversation-message">
                         {lastMessage ? (
                             lastMessage.type === 'im.chat.text' ? (
                                 lastMessage.content
                             ) : (
-                                <span className="flex items-center gap-1 text-[13px] text-[var(--color-text-light)]">
-                                    <ImageIcon size={16} className="inline-block align-text-bottom" /> Photo
+                                <span className="conversation-message-media">
+                                    <ImageIcon size={14} /> Photo
                                 </span>
                             )
                         ) : (
-                            <span className="text-[var(--color-text-light)] opacity-70">No messages yet.</span>
+                            <span className="conversation-message-empty">No messages yet</span>
                         )}
                     </div>
                 </div>
 
-                <div className="conversation-actions">
-                    {/* Unread count */}
-                    {unreadCount > 0 && (
+                {/* Unread count */}
+                {unreadCount > 0 && (
+                    <div className="conversation-actions">
                         <span className="unread-badge">{unreadCount}</span>
-                    )}
-
-                    {/* Quick photo button */}
-                    <button
-                        className="photo-button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            onQuickPhoto?.(id);
-                        }}
-                        aria-label="Take a photo"
-                    >
-                        <Camera size={20} />
-                    </button>
-                </div>
+                    </div>
+                )}
             </div>
         </Link>
     );

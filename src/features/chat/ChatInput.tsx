@@ -2,6 +2,7 @@ import { Send } from 'lucide-react';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
+import Button from '@shared/components/Button';
 import { logger } from '../../shared/utils/logger';
 import { AudioRecorder } from './AudioRecorder';
 import './ChatInput.css';
@@ -24,18 +25,17 @@ interface SendButtonProps {
 
 function SendButton({ isLoading, disabled }: Readonly<SendButtonProps>) {
     return (
-        <button
+        <Button
             type="submit"
+            variant="ghost"
+            size="sm"
             disabled={disabled}
+            isLoading={isLoading}
             className="chat-input-send-button"
             aria-label="Send message"
         >
-            {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-                <Send className="w-5 h-5" />
-            )}
-        </button>
+            <Send className="w-5 h-5" />
+        </Button>
     );
 }
 

@@ -87,8 +87,8 @@ export function DidDocumentSection() {
                                 </div>
                             )}
                             <Button
-                                className={`full`}
                                 variant={didCopied ? 'success' : 'primary'}
+                                isFullWidth
                                 onClick={handleCopyDID}
                                 disabled={isLoadingDID || !didDocumentString}
                             >

@@ -2,80 +2,82 @@
     background-color: rgba(0, 0, 0, 0.4);
     position: fixed;
     inset: 0;
-    animation: overlayShow var(--transition-fast) cubic-bezier(0.16, 1, 0.3, 1);
+    animation: overlayShow var(--ds-transition-fast)
+        cubic-bezier(0.16, 1, 0.3, 1);
     backdrop-filter: blur(4px);
-    z-index: var(--z-index-modal-backdrop);
+    z-index: var(--ds-z-modal-backdrop);
 }
 
 .dialog-content {
-    background-color: var(--color-background);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-xl);
+    background-color: var(--ds-color-surface);
+    border-radius: var(--ds-radius-lg);
+    box-shadow: var(--ds-shadow-xl);
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90vw;
-    max-width: var(--max-width-sm);
+    max-width: 480px;
     max-height: 85vh;
-    padding: var(--spacing-lg);
-    animation: contentShow var(--transition-fast) cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: var(--z-index-modal);
+    padding: var(--ds-space-8);
+    animation: contentShow var(--ds-transition-fast)
+        cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: var(--ds-z-modal);
 }
 
 .dialog-title {
-    font-weight: 600;
-    font-size: var(--font-size-xl);
-    color: var(--color-text);
-    margin-bottom: var(--spacing-sm);
+    font-weight: var(--ds-font-weight-semibold);
+    font-size: var(--ds-font-size-xl);
+    color: var(--ds-color-foreground);
+    margin-bottom: var(--ds-space-2);
 }
 
 .dialog-description {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-light);
-    margin-bottom: var(--spacing-lg);
+    font-size: var(--ds-font-size-sm);
+    color: var(--ds-color-foreground-secondary);
+    margin-bottom: var(--ds-space-6);
 }
 
 .scan-mode-selector {
     display: flex;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-    border-bottom: var(--border-width) solid var(--color-border);
-    padding-bottom: var(--spacing-md);
+    gap: var(--ds-space-2);
+    margin-bottom: var(--ds-space-6);
+    border-bottom: 1px solid var(--ds-color-border);
+    padding-bottom: var(--ds-space-4);
 }
 
 .scan-mode-button {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-sm) var(--spacing-md);
+    gap: var(--ds-space-1);
+    padding: var(--ds-space-2) var(--ds-space-4);
     border: none;
     background: none;
-    color: var(--color-text-light);
+    color: var(--ds-color-foreground-secondary);
     cursor: pointer;
-    border-radius: var(--border-radius-md);
-    transition: all var(--transition-fast);
+    border-radius: var(--ds-radius-md);
+    transition: all var(--ds-transition-fast);
 }
 
 .scan-mode-button:hover {
-    background-color: var(--color-surface);
-    color: var(--color-text);
+    background-color: var(--ds-color-surface-hover);
+    color: var(--ds-color-foreground);
 }
 
 .scan-mode-button.active {
-    background-color: var(--color-primary);
-    color: white;
+    background-color: var(--ds-color-primary-600);
+    color: var(--ds-color-primary-text);
 }
 
 .file-upload-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-lg);
-    border: 2px dashed var(--color-border);
-    border-radius: var(--border-radius-lg);
-    background-color: var(--color-surface);
+    gap: var(--ds-space-4);
+    padding: var(--ds-space-6);
+    border: 2px dashed var(--ds-color-border);
+    border-radius: var(--ds-radius-lg);
+    background-color: var(--ds-color-surface-secondary);
 }
 
 .file-upload-button {
@@ -83,62 +85,68 @@
 }
 
 .file-name {
-    color: var(--color-text-light);
-    font-size: var(--font-size-sm);
+    color: var(--ds-color-foreground-secondary);
+    font-size: var(--ds-font-size-sm);
 }
 
 .dialog-input {
     width: 100%;
     min-height: 200px;
-    padding: var(--spacing-md);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--border-radius-md);
-    font-family: monospace;
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-normal);
+    padding: var(--ds-space-4);
+    border: 1px solid var(--ds-color-border);
+    border-radius: var(--ds-radius-md);
+    font-family: var(--ds-font-family-mono);
+    font-size: var(--ds-font-size-sm);
+    line-height: var(--ds-line-height-normal);
+    background-color: var(--ds-color-background);
+    color: var(--ds-color-foreground);
     resize: vertical;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--ds-space-4);
+}
+
+.dialog-input::placeholder {
+    color: var(--ds-color-foreground-tertiary);
 }
 
 .dialog-input:focus {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-light);
+    border-color: var(--ds-color-primary-600);
+    box-shadow: 0 0 0 2px rgba(147, 97, 216, 0.2);
 }
 
 .dialog-error {
-    color: var(--color-error);
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-md);
+    color: var(--ds-color-error);
+    font-size: var(--ds-font-size-sm);
+    margin-bottom: var(--ds-space-4);
 }
 
 .dialog-footer {
     display: flex;
     justify-content: flex-end;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-lg);
+    gap: var(--ds-space-4);
+    margin-top: var(--ds-space-6);
 }
 
 .dialog-close {
     position: absolute;
-    top: var(--spacing-md);
-    right: var(--spacing-md);
+    top: var(--ds-space-4);
+    right: var(--ds-space-4);
     width: 32px;
     height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-text-light);
+    color: var(--ds-color-foreground-secondary);
     background: transparent;
     border: none;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--ds-transition-fast);
 }
 
 .dialog-close:hover {
-    background-color: var(--color-surface);
-    color: var(--color-text);
+    background-color: var(--ds-color-surface-hover);
+    color: var(--ds-color-foreground);
 }
 
 @media (max-width: 768px) {
@@ -153,9 +161,9 @@
         max-height: 100vh;
         display: flex;
         flex-direction: column;
-        padding: var(--spacing-md);
+        padding: var(--ds-space-4);
         overflow-y: auto;
-        z-index: var(--z-index-mobile-chat-overlay);
+        z-index: var(--ds-z-modal);
         position: absolute;
     }
 
@@ -184,19 +192,12 @@
     .dialog-footer {
         position: sticky;
         bottom: 0;
-        background-color: var(--color-background);
-        padding: var(--spacing-md) 0;
+        background-color: var(--ds-color-surface);
+        padding: var(--ds-space-4) 0;
         margin-top: auto;
         z-index: 5;
         width: 100%;
         display: flex;
         justify-content: space-between;
-    }
-
-    .dialog-button {
-        flex: 0 1 auto;
-        min-width: max-content;
-        max-width: none;
-        margin: 0 var(--spacing-xs);
     }
 }

@@ -53,7 +53,8 @@
 }
 
 .gallery-filters {
-    /* TODO: change back to `flex` when we will support other media types */
+    /* Hidden until multiple media type support is implemented */
+    /* Will be changed to `display: flex` when video/audio filters are added */
     display: none;
     justify-content: center;
     padding: 1rem;

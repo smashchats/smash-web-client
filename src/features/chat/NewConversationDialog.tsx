@@ -61,18 +61,18 @@ function DialogContent({
 
             <div className="scan-mode-selector">
                 <button
-                    className={`scan-mode-button ${scanMode === 'file' ? 'active' : ''}`}
-                    onClick={() => onScanModeChange('file')}
-                >
-                    <FileText size={20} />
-                    <span>Upload File</span>
-                </button>
-                <button
                     className={`scan-mode-button ${scanMode === 'text' ? 'active' : ''}`}
                     onClick={() => onScanModeChange('text')}
                 >
                     <Type size={20} />
                     <span>Paste Text</span>
+                </button>
+                <button
+                    className={`scan-mode-button ${scanMode === 'file' ? 'active' : ''}`}
+                    onClick={() => onScanModeChange('file')}
+                >
+                    <FileText size={20} />
+                    <span>Upload File</span>
                 </button>
             </div>
 
@@ -113,7 +113,6 @@ function DialogContent({
                 <Button
                     variant="secondary"
                     onClick={onCancel}
-                    className="dialog-button"
                 >
                     Cancel
                 </Button>
@@ -121,7 +120,6 @@ function DialogContent({
                     variant="primary"
                     onClick={onSubmit}
                     disabled={!didInput.trim()}
-                    className="dialog-button"
                 >
                     Create Conversation
                 </Button>
@@ -143,7 +141,7 @@ export function NewConversationDialog({
     const [didInput, setDidInput] = useState('');
     const [error, setError] = useState<string>();
     const [open, setOpen] = useState(false);
-    const [scanMode, setScanMode] = useState<ScanMode>('file');
+    const [scanMode, setScanMode] = useState<ScanMode>('text');
 
     const validateDIDDocument = (didDoc: DIDDocument): void => {
         if (!didDoc.id || !didDoc.ik || !didDoc.ek || !didDoc.endpoints) {

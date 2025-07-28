@@ -27,18 +27,12 @@ export function AccountSection() {
             <div className="settings-card">
                 <Button
                     variant="danger"
-                    className="full"
+                    isFullWidth
                     onClick={handleLogout}
                     disabled={isLoggingOut}
+                    isLoading={isLoggingOut}
                 >
-                    {isLoggingOut ? (
-                        <>
-                            <div className="spinner" />
-                            <span>Logging out...</span>
-                        </>
-                    ) : (
-                        'Logout'
-                    )}
+                    {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </Button>
             </div>
         </div>

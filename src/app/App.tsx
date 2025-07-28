@@ -3,7 +3,7 @@ import { useSmashBoot } from '@features/identity/hooks/useSmashBoot';
 import { initializeSmashEnvironment } from './config/smash';
 import { AppInitializer } from './providers/AppInitializer';
 import { AppProviders } from './providers/AppProviders';
-import { ResponsiveLayout } from '@shared/components/ResponsiveLayout';
+import LoadingScreen from '@shared/components/LoadingScreen';
 import AppRoutes from './routes';
 
 export default function App() {
@@ -24,12 +24,12 @@ export default function App() {
 
   // Show loading until environment is ready
   if (!isEnvReady) {
-    return <div className="loading-screen">Booting environment...</div>;
+    return <LoadingScreen />;
   }
 
   // Show loading until identity boot is complete
   if (!isReady) {
-    return <div className="loading-screen">Loading identity...</div>;
+    return <LoadingScreen />;
   }
 
   // If no identity, show welcome guide (handled by AppGuard)
@@ -43,9 +43,7 @@ export default function App() {
       error={error}
     >
       <AppInitializer />
-      <ResponsiveLayout>
-        <AppRoutes />
-      </ResponsiveLayout>
+      <AppRoutes />
     </AppProviders>
   );
 }

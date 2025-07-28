@@ -107,26 +107,20 @@ export function ProfileSettings() {
                         />
                     </div>
                     <Button
-                        className={`full`}
+                        variant={saveStatus === 'success' ? 'success' : 'primary'}
+                        isFullWidth
                         onClick={handleManualSave}
-                        variant={
-                            saveStatus === 'success' ? 'success' : 'primary'
-                        }
                         disabled={
                             saveStatus === 'saving' ||
                             saveStatus === 'success' ||
                             saveStatus === null
                         }
+                        isLoading={saveStatus === 'saving'}
                     >
                         {(() => {
                             switch (saveStatus) {
                                 case 'saving':
-                                    return (
-                                        <>
-                                            <div className="spinner" />
-                                            <span>Saving...</span>
-                                        </>
-                                    );
+                                    return 'Saving...';
                                 case 'success':
                                     return 'Saved!';
                                 case 'unsaved':

@@ -31,7 +31,7 @@ export default function BottomNav() {
                 <MessageCircle
                     fill={
                         location.pathname.startsWith('/chat')
-                            ? 'var(--color-primary)'
+                            ? 'var(--ds-color-primary-600)'
                             : 'transparent'
                     }
                 />
@@ -66,7 +66,7 @@ function IconButton({
     active: boolean;
     isDarkMode: boolean;
 }>) {
-    const activeColor = 'var(--color-primary)';
+    const activeColor = 'var(--ds-color-primary-600)';
     const inactiveColor = isDarkMode ? '#aaa' : '#666';
     const color = active ? activeColor : inactiveColor;
 
