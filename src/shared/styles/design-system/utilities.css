@@ -1,0 +1,179 @@
+/* Design System Utilities */
+@layer utilities {
+    /* Layout utilities */
+    .screen-container {
+        @apply flex flex-col h-full;
+    }
+
+    .screen-header {
+        height: var(--ds-header-height);
+        @apply flex items-center justify-between px-4 border-b;
+        border-color: var(--ds-color-border);
+        background-color: var(--ds-color-surface);
+    }
+
+    .screen-content {
+        @apply flex-1 overflow-hidden;
+        background-color: var(--ds-color-background);
+    }
+
+    .screen-footer {
+        height: var(--ds-bottom-nav-height);
+        @apply flex items-center justify-center border-t;
+        border-color: var(--ds-color-border);
+        background-color: var(--ds-color-surface);
+    }
+
+    /* Chat utilities */
+    .message-bubble {
+        @apply px-4 py-2 rounded-2xl max-w-xs;
+        border-radius: var(--ds-radius-xl);
+    }
+
+    .message-sent {
+        @apply ml-auto;
+        background-color: var(--ds-message-sent-bg);
+        color: var(--ds-message-sent-text);
+    }
+
+    .message-received {
+        @apply mr-auto;
+        background-color: var(--ds-message-received-bg);
+        color: var(--ds-message-received-text);
+    }
+
+    /* Button utilities */
+    .btn-primary {
+        @apply px-6 py-3 rounded-lg font-medium transition-colors;
+        background-color: var(--ds-color-primary-600);
+        color: #ffffff;
+        transition: var(--ds-transition-fast);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--ds-color-primary-700);
+    }
+
+    .btn-primary:active {
+        background-color: var(--ds-color-primary-800);
+    }
+
+    .btn-secondary {
+        @apply px-6 py-3 rounded-lg font-medium transition-colors border;
+        background-color: transparent;
+        color: var(--ds-color-foreground);
+        border-color: var(--ds-color-border);
+        transition: var(--ds-transition-fast);
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--ds-color-surface-secondary);
+        border-color: var(--ds-color-border-hover);
+    }
+
+    .btn-ghost {
+        @apply px-4 py-2 rounded-lg font-medium transition-colors;
+        background-color: transparent;
+        color: var(--ds-color-foreground);
+        transition: var(--ds-transition-fast);
+    }
+
+    .btn-ghost:hover {
+        background-color: var(--ds-color-surface-secondary);
+    }
+
+    /* Input utilities */
+    .input-base {
+        @apply px-4 py-3 rounded-lg border transition-colors;
+        background-color: var(--ds-color-surface);
+        border-color: var(--ds-color-border);
+        color: var(--ds-color-foreground);
+        transition: var(--ds-transition-fast);
+    }
+
+    .input-base:focus {
+        outline: none;
+        border-color: var(--ds-color-primary-600);
+        box-shadow: 0 0 0 3px rgb(147 97 216 / 0.1);
+    }
+
+    /* Text utilities */
+    .text-primary {
+        color: var(--ds-color-foreground);
+    }
+
+    .text-secondary {
+        color: var(--ds-color-gray-600);
+    }
+
+    .text-muted {
+        color: var(--ds-color-gray-500);
+    }
+
+    /* Surface utilities */
+    .surface {
+        background-color: var(--ds-color-surface);
+    }
+
+    .surface-secondary {
+        background-color: var(--ds-color-surface-secondary);
+    }
+
+    /* Animation utilities */
+    .slide-in-bottom {
+        animation: slide-in-bottom var(--ds-transition-normal);
+    }
+
+    .fade-in {
+        animation: fade-in var(--ds-transition-fast);
+    }
+
+    .scale-in {
+        animation: scale-in var(--ds-transition-fast);
+    }
+
+    /* Shadow utilities */
+    .shadow-sm {
+        box-shadow: var(--ds-shadow-sm);
+    }
+
+    .shadow-md {
+        box-shadow: var(--ds-shadow-md);
+    }
+
+    .shadow-lg {
+        box-shadow: var(--ds-shadow-lg);
+    }
+}
+
+/* Animations */
+@keyframes slide-in-bottom {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scale-in {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

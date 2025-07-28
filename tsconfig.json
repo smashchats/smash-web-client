@@ -8,6 +8,10 @@
         "baseUrl": ".",
         "paths": {
             "smash-node-lib/*": ["smash-node-lib/*"],
+            "@shared/*": ["src/shared/*"],
+            "@services/*": ["src/services/*"],
+            "@features/*": ["src/features/*"],
+            "@app/*": ["src/app/*"],
             "@src/*": ["src/*"]
         }
     }

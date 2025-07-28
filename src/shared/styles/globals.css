@@ -12,6 +12,11 @@
         url('/fonts/inter.woff2') format('woff2');
 }
 
+/* Design System */
+@import './design-system/tokens.css';
+@import './design-system/utilities.css';
+
+/* Legacy variables (to be migrated) */
 @import './variables.css';
 
 :root {
