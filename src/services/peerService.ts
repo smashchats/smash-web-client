@@ -1,9 +1,9 @@
-import { CURRENT_USER } from '@src/app/config/sme';
-import { db } from '@src/services/db';
-import { useChatStore } from '@src/shared/hooks/useChatStore';
-import { type StoredProfile } from '@src/shared/types/db';
-import type { SmashConversation } from '@src/shared/types/smash';
-import { logger } from '@src/shared/utils/logger';
+import { CURRENT_USER } from '@app/config/sme';
+import { db } from '@services/db';
+import { useChatStore } from '@shared/hooks/useChatStore';
+import { type StoredProfile } from '@shared/types/db';
+import type { SmashConversation } from '@shared/types/smash';
+import { logger } from '@shared/utils/logger';
 import {
     type DIDDocument,
     type DIDString,

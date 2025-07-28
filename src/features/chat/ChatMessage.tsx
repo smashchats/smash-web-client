@@ -1,9 +1,9 @@
 import { Check, CheckCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { smashService } from '@src/services/smashService';
-import type { SmashMessage } from '@src/shared/types/smash';
-import { logger } from '@src/shared/utils/logger';
+import { smashOrchestrator } from '@services/smashOrchestrator';
+import type { SmashMessage } from '@shared/types/smash';
+import { logger } from '@shared/utils/logger';
 import './ChatMessage.css';
 import { MediaContent } from './MediaContent';
 
@@ -82,9 +82,9 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
                                 },
                             );
                             const markAsRead = () => {
-                                logger.debug('Calling smashService.markMessageAsRead', { messageId: message.id });
+                                logger.debug('Calling smashOrchestrator.markMessageAsRead', { messageId: message.id });
                                 try {
-                                    void smashService.markMessageAsRead(
+                                    void smashOrchestrator.markMessageAsRead(
                                         message.id,
                                     );
                                 } catch (error) {

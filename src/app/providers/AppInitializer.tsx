@@ -1,8 +1,8 @@
-import { useIdentityContext } from '@src/features/identity';
-import { useSmashMessaging } from '@src/features/messaging/hooks/useSmashMessaging';
-import { useMessagingHandlers } from '@src/features/messaging/hooks/useMessagingHandlers';
-import { usePeerHandlers } from '@src/features/messaging/hooks/usePeerHandlers';
-import { usePeerInit } from '@src/features/identity/hooks/usePeerInit';
+import { useIdentityContext } from '@features/identity';
+import { useSmashMessaging } from '@features/messaging/hooks/useSmashMessaging';
+import { useMessagingHandlers } from '@features/messaging/hooks/useMessagingHandlers';
+import { usePeerHandlers } from '@features/messaging/hooks/usePeerHandlers';
+import { usePeerInit } from '@features/identity/hooks/usePeerInit';
 
 export function AppInitializer() {
   const { identity, smashUser } = useIdentityContext();

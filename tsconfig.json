@@ -11,8 +11,7 @@
             "@shared/*": ["src/shared/*"],
             "@services/*": ["src/services/*"],
             "@features/*": ["src/features/*"],
-            "@app/*": ["src/app/*"],
-            "@src/*": ["src/*"]
+            "@app/*": ["src/app/*"]
         }
     }
 }

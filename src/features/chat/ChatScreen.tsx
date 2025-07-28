@@ -2,11 +2,11 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { DIDDocument, DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
-import { CURRENT_USER } from '@src/app/config/sme';
-import { messagingService } from '@src/services/messagingService';
-import { useMessageStore } from '@src/shared/hooks/useMessageStore';
-import ScreenWrapper from '@src/shared/components/ScreenWrapper';
-import { useChatStore } from '@src/shared/hooks/useChatStore';
+import { CURRENT_USER } from '@app/config/sme';
+import { messagingService } from '@services/messagingService';
+import { useMessageStore } from '@shared/hooks/useMessageStore';
+import ScreenWrapper from '@shared/components/ScreenWrapper';
+import { useChatStore } from '@shared/hooks/useChatStore';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';

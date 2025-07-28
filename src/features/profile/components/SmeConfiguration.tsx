@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-import { useIdentityContext } from '@src/features/identity';
-import Button from '@src/shared/components/Button';
-import { logger } from '@src/shared/utils/logger';
+import { useIdentityContext } from '@features/identity';
+import Button from '@shared/components/Button';
+import { logger } from '@shared/utils/logger';
 import type { SMEConfigJSON } from 'smash-node-lib';
 
 type SMEStatus = 'success' | 'error' | 'unsaved' | null;

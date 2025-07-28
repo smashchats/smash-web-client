@@ -1,4 +1,4 @@
-import type { StoredProfile } from '@src/shared/types/db';
+import type { StoredProfile } from '@shared/types/db';
 import { createContext } from 'react';
 import type { IMPeerIdentity, SMEConfigJSON, SmashUser } from 'smash-node-lib';
 

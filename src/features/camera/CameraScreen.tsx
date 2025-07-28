@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
-import { messagingService } from '@src/services/messagingService';
-import { useMessageStore } from '@src/shared/hooks/useMessageStore';
-import { db } from '../../services/db';
-import { mediaDB } from '../../services/mediaStore';
-import type { SmashConversation } from '@src/shared/types/smash';
-import { useUIStore } from '@src/shared/hooks/useUIStore';
+import { messagingService } from '@services/messagingService';
+import { useMessageStore } from '@shared/hooks/useMessageStore';
+import { db } from '@services/db';
+import { mediaDB } from '@services/mediaStore';
+import type { SmashConversation } from '@shared/types/smash';
+import { useUIStore } from '@shared/hooks/useUIStore';
 import CameraOverlay from './CameraOverlay';
 import CameraView, { type CameraViewHandle } from './CameraView';
 import CapturePreview from './CapturePreview';

@@ -1,4 +1,4 @@
-import { getDIDDocManager } from '@src/services/didDocService';
+import { getDIDDocManager } from '@services/didDocService';
 import { SmashMessaging } from 'smash-node-lib';
 
 let isInitialized = false;

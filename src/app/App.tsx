@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useSmashBoot } from '@src/features/identity/hooks/useSmashBoot';
+import { useSmashBoot } from '@features/identity/hooks/useSmashBoot';
 import { initializeSmashEnvironment } from './config/smash';
 import { AppInitializer } from './providers/AppInitializer';
 import { AppProviders } from './providers/AppProviders';
-import { ResponsiveLayout } from '@src/shared/components/ResponsiveLayout';
+import { ResponsiveLayout } from '@shared/components/ResponsiveLayout';
 import AppRoutes from './routes';
 
 export default function App() {

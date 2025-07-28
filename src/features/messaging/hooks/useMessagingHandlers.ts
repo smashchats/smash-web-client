@@ -1,9 +1,9 @@
-import { db } from '@src/services/db';
-import { smashService } from '@src/services/smashService';
-import { useChatStore } from '@src/shared/hooks/useChatStore';
-import { useMessageStore } from '@src/shared/hooks/useMessageStore';
-import type { SmashConversation, SmashMessage } from '@src/shared/types/smash';
-import { logger } from '@src/shared/utils/logger';
+import { db } from '@services/db';
+import { smashOrchestrator } from '@services/smashOrchestrator';
+import { useChatStore } from '@shared/hooks/useChatStore';
+import { useMessageStore } from '@shared/hooks/useMessageStore';
+import type { SmashConversation, SmashMessage } from '@shared/types/smash';
+import { logger } from '@shared/utils/logger';
 import { useEffect } from 'react';
 
 /**
@@ -101,18 +101,24 @@ export function useMessagingHandlers() {
         };
 
         // Set up event listeners
-        smashService.onMessageReceived(handleIncomingMessage);
-        smashService.onMessageStatusUpdated(handleMessageStatusUpdate);
-        smashService.onConversationUpdated(handleConversationUpdate);
+        const cleanupMessage = smashOrchestrator.onMessageReceived(
+            handleIncomingMessage,
+        );
+        const cleanupStatus = smashOrchestrator.onMessageStatusUpdated(
+            handleMessageStatusUpdate,
+        );
+        const cleanupConversation = smashOrchestrator.onConversationUpdated(
+            handleConversationUpdate,
+        );
 
         logger.info('Messaging event handlers initialized');
 
         // Return cleanup function
         return () => {
             logger.debug('Cleaning up messaging event handlers');
-            smashService.offMessageReceived(handleIncomingMessage);
-            smashService.offMessageStatusUpdated(handleMessageStatusUpdate);
-            smashService.offConversationUpdated(handleConversationUpdate);
+            cleanupMessage();
+            cleanupStatus();
+            cleanupConversation();
         };
     }, []);
 }

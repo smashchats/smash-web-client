@@ -1,7 +1,7 @@
-import { db } from '@src/services/db';
-import { getDIDDocManager } from '@src/services/didDocService';
-import type { StoredProfile } from '@src/shared/types/db';
-import { logger } from '@src/shared/utils/logger';
+import { db } from '@services/db';
+import { getDIDDocManager } from '@services/didDocService';
+import type { StoredProfile } from '@shared/types/db';
+import { logger } from '@shared/utils/logger';
 import {
     type IIMPeerIdentity,
     type IMPeerIdentity,

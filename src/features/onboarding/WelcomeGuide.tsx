@@ -5,9 +5,9 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { DEFAULT_SME_CONFIG } from '@src/app/config/sme';
-import { useIdentityContext, generateIdentity } from '@src/features/identity';
-import Button from '@src/shared/components/Button';
+import { DEFAULT_SME_CONFIG } from '@app/config/sme';
+import { useIdentityContext, generateIdentity } from '@features/identity';
+import Button from '@shared/components/Button';
 import './WelcomeGuide.css';
 
 export function WelcomeGuide() {

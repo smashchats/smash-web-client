@@ -86,7 +86,6 @@ export default defineConfig({
             '@services': path.resolve(__dirname, 'src/services'),
             '@features': path.resolve(__dirname, 'src/features'),
             '@app': path.resolve(__dirname, 'src/app'),
-            '@src': path.resolve(__dirname, 'src'),
         },
     },
     server: {

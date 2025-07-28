@@ -1,7 +1,7 @@
 // Note: messageController replaced with useMessagingHandlers hook
-import { smashService } from '@src/services/smashService';
-import { initializeChatStore } from '@src/shared/hooks/useChatStore';
-import { logger } from '@src/shared/utils/logger';
+import { smashOrchestrator } from '@services/smashOrchestrator';
+import { initializeChatStore } from '@shared/hooks/useChatStore';
+import { logger } from '@shared/utils/logger';
 import { useEffect, useState } from 'react';
 import type { SmashUser } from 'smash-node-lib';
 
@@ -28,8 +28,8 @@ export function useSmashMessaging(smashUser: SmashUser | null) {
             try {
                 logger.info('Initializing messaging service');
 
-                // Initialize smashService with the smashUser
-                smashService.init(smashUser);
+                // Initialize smashOrchestrator with the smashUser
+                smashOrchestrator.init(smashUser);
 
                 // Initialize chats - for now with empty array
                 // In the future, this could load saved chats from storage

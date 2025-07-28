@@ -5,10 +5,10 @@ import { type DIDDocument } from 'smash-node-lib';
 import {
     ScreenHeaderLeftSlot,
     ScreenHeaderRightSlot,
-} from '@src/shared/components/ScreenHeader';
-import ScreenWrapper from '@src/shared/components/ScreenWrapper';
-import { peerService } from '@src/services/peerService';
-import { useChatStore } from '@src/shared/hooks/useChatStore';
+} from '@shared/components/ScreenHeader';
+import ScreenWrapper from '@shared/components/ScreenWrapper';
+import { peerService } from '@services/peerService';
+import { useChatStore } from '@shared/hooks/useChatStore';
 import { logger } from '../../shared/utils/logger';
 import { ConversationItem } from './ConversationItem';
 import { NewConversationDialog } from './NewConversationDialog';

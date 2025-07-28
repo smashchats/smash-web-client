@@ -2,10 +2,10 @@ import { Check, Copy } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 
-import Button from '@src/shared/components/Button';
-import { logger } from '@src/shared/utils/logger';
-import { copyToClipboard } from '@src/shared/utils/utils';
-import { useIdentityContext } from '@src/features/identity';
+import Button from '@shared/components/Button';
+import { logger } from '@shared/utils/logger';
+import { copyToClipboard } from '@shared/utils/utils';
+import { useIdentityContext } from '@features/identity';
 
 export function DidDocumentSection() {
     const [didDocumentString, setDidDocumentString] = useState<string | null>(

@@ -2,8 +2,8 @@ import type {
     StoredIdentity,
     StoredPeerProfile,
     StoredProfile,
-} from '@src/shared/types/db';
-import type { SmashConversation, SmashMessage } from '@src/shared/types/smash';
+} from '@shared/types/db';
+import type { SmashConversation, SmashMessage } from '@shared/types/smash';
 import Dexie, { type Table } from 'dexie';
 import type { DIDDocument, DIDString } from 'smash-node-lib';
 

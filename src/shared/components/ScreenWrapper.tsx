@@ -2,7 +2,7 @@ import { ArrowLeft } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useUIStore } from '@src/shared/hooks/useUIStore';
+import { useUIStore } from '@shared/hooks/useUIStore';
 import ScreenHeader, {
     ScreenHeaderLeftSlot,
     ScreenHeaderRightSlot,

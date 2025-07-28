@@ -1,4 +1,4 @@
-import ScreenWrapper from '@src/shared/components/ScreenWrapper';
+import ScreenWrapper from '@shared/components/ScreenWrapper';
 import './ProfileScreen.css';
 import { AccountSection } from './components/AccountSection';
 import { DidDocumentSection } from './components/DidDocumentSection';

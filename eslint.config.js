@@ -12,6 +12,12 @@ export default tseslint.config(
             'dist/**/*',
             'node_modules/**/*',
             'dev-dist/**/*',
+            '.expo/**/*',
+            'public/sw.js',
+            'public/workbox-*.js',
+            'coverage/**/*',
+            '*.config.js',
+            '*.config.ts',
         ],
     },
     {
@@ -46,7 +52,12 @@ export default tseslint.config(
         settings: {
             'import/resolver': {
                 alias: {
-                    map: [['@src', './src']],
+                    map: [
+                        ['@shared', './src/shared'],
+                        ['@services', './src/services'],
+                        ['@features', './src/features'],
+                        ['@app', './src/app'],
+                    ],
                     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
                 },
             },

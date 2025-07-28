@@ -1,8 +1,8 @@
-import { smashService } from '@src/services/smashService';
-import { useChatStore } from '@src/shared/hooks/useChatStore';
-import type { SmashMessage } from '@src/shared/types/smash';
-import { logger } from '@src/shared/utils/logger';
-import type { DIDString, IMMediaEmbedded } from 'smash-node-lib';
+import { smashOrchestrator } from '@services/smashOrchestrator';
+import { useChatStore } from '@shared/hooks/useChatStore';
+import type { SmashMessage } from '@shared/types/smash';
+import { logger } from '@shared/utils/logger';
+import type { DIDString } from 'smash-node-lib';
 
 export class MessagingService {
     /**
@@ -10,7 +10,7 @@ export class MessagingService {
      */
     async loadMessages(conversationId: string): Promise<SmashMessage[]> {
         logger.info('Loading messages for conversation', { conversationId });
-        return smashService.getMessages(conversationId);
+        return smashOrchestrator.getMessages(conversationId);
     }
 
     /**
@@ -18,17 +18,20 @@ export class MessagingService {
      */
     async sendMessage(
         conversationId: DIDString,
-        content: string | IMMediaEmbedded,
+        content: string | File,
     ): Promise<SmashMessage> {
         logger.info('Sending message', {
             conversationId,
             contentType: typeof content,
         });
-        const message = await smashService.sendMessage(conversationId, content);
+        const message = await smashOrchestrator.sendMessage(
+            conversationId,
+            content,
+        );
 
         // Update conversation in live state with the new message as last message
         try {
-            const { db } = await import('@src/services/db');
+            const { db } = await import('@services/db');
             const conversation = await db.getConversation(conversationId);
             if (conversation) {
                 const updatedConversation = {
@@ -74,7 +77,7 @@ export class MessagingService {
      */
     async markConversationAsRead(conversationId: string): Promise<void> {
         logger.info('Marking conversation as read', { conversationId });
-        return smashService.markConversationAsRead(conversationId);
+        return smashOrchestrator.markConversationAsRead(conversationId);
     }
 
     /**
@@ -82,7 +85,7 @@ export class MessagingService {
      */
     async getConversations() {
         logger.info('Loading all conversations');
-        return smashService.getConversations();
+        return smashOrchestrator.getConversations();
     }
 }
 

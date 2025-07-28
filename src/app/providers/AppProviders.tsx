@@ -1,8 +1,8 @@
 import React from 'react';
 import type { IMPeerIdentity, SMEConfigJSON, SmashUser } from 'smash-node-lib';
-import type { StoredProfile } from '@src/shared/types/db';
+import type { StoredProfile } from '@shared/types/db';
 
-import { IdentityProvider } from '@src/features/identity';
+import { IdentityProvider } from '@features/identity';
 
 interface AppProvidersProps {
     children: React.ReactNode;

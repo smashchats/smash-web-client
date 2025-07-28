@@ -1,6 +1,6 @@
-import { peerService } from '@src/services/peerService';
-import { useChatStore } from '@src/shared/hooks/useChatStore';
-import { logger } from '@src/shared/utils/logger';
+import { peerService } from '@services/peerService';
+import { useChatStore } from '@shared/hooks/useChatStore';
+import { logger } from '@shared/utils/logger';
 import { useEffect } from 'react';
 import type {
     DIDString,

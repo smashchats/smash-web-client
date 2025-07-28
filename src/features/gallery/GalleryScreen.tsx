@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
-import ScreenWrapper from '@src/shared/components/ScreenWrapper';
+import ScreenWrapper from '@shared/components/ScreenWrapper';
 import {
     type Media,
     getAllMedia,
     getMediaByType,
-} from '@src/services/mediaStore';
+} from '@services/mediaStore';
 import './GalleryScreen.css';
 
 type MediaType = 'all' | 'image' | 'video' | 'audio';

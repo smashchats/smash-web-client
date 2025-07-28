@@ -1,5 +1,5 @@
-import type { StoredProfile } from '@src/shared/types/db';
-import { logger } from '@src/shared/utils/logger';
+import type { StoredProfile } from '@shared/types/db';
+import { logger } from '@shared/utils/logger';
 import { useEffect, useState } from 'react';
 import type { IMPeerIdentity, SMEConfigJSON, SmashUser } from 'smash-node-lib';
 

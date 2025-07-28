@@ -1,12 +1,12 @@
-import { peerService } from '@src/services/peerService';
-import { smashService } from '@src/services/smashService';
-import { useMessageStore } from '@src/shared/hooks/useMessageStore';
+import { peerService } from '@services/peerService';
+import { smashOrchestrator } from '@services/smashOrchestrator';
+import { useMessageStore } from '@shared/hooks/useMessageStore';
 import type {
     Profile,
     SmashConversation,
     SmashMessage,
-} from '@src/shared/types/smash';
-import { logger } from '@src/shared/utils/logger';
+} from '@shared/types/smash';
+import { logger } from '@shared/utils/logger';
 import { create } from 'zustand';
 
 interface ConversationState {
@@ -45,7 +45,7 @@ export const useChatStore = create<ConversationState>((set, get) => ({
     markConversationAsRead: async (conversationId: string) => {
         try {
             logger.info('Marking conversation as read', { conversationId });
-            await smashService.markConversationAsRead(conversationId);
+            await smashOrchestrator.markConversationAsRead(conversationId);
             logger.debug('Conversation marked as read successfully');
         } catch (err) {
             const error =
@@ -61,7 +61,7 @@ export const useChatStore = create<ConversationState>((set, get) => ({
         try {
             logger.info('Loading conversations');
             set({ error: null, isLoading: true });
-            let convos = await smashService.getConversations();
+            let convos = await smashOrchestrator.getConversations();
             logger.debug('Loaded conversations from DB', { convos });
 
             // Load all messages for all conversations
@@ -69,7 +69,9 @@ export const useChatStore = create<ConversationState>((set, get) => ({
                 {};
             await Promise.all(
                 convos.map(async (convo) => {
-                    const messages = await smashService.getMessages(convo.id);
+                    const messages = await smashOrchestrator.getMessages(
+                        convo.id,
+                    );
                     allMessagesByConversation[convo.id] = messages;
                 }),
             );
@@ -182,11 +184,13 @@ export const initializeChatStore = () => {
         }
     };
 
-    smashService.onConversationUpdated(handleConversationUpdate);
+    const cleanup = smashOrchestrator.onConversationUpdated(
+        handleConversationUpdate,
+    );
 
     // Return cleanup function
     return () => {
         logger.debug('Cleaning up conversation handlers');
-        smashService.offConversationUpdated(handleConversationUpdate);
+        cleanup();
     };
 };
