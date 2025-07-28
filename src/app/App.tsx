@@ -3,6 +3,7 @@ import { useSmashBoot } from '@src/features/identity/hooks/useSmashBoot';
 import { initializeSmashEnvironment } from './config/smash';
 import { AppInitializer } from './providers/AppInitializer';
 import { AppProviders } from './providers/AppProviders';
+import { ResponsiveLayout } from '@src/shared/components/ResponsiveLayout';
 import AppRoutes from './routes';
 
 export default function App() {
@@ -42,7 +43,9 @@ export default function App() {
       error={error}
     >
       <AppInitializer />
-      <AppRoutes />
+      <ResponsiveLayout>
+        <AppRoutes />
+      </ResponsiveLayout>
     </AppProviders>
   );
 }

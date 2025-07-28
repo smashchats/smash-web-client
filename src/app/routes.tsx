@@ -1,8 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 
 import CameraScreen from '../features/camera/CameraScreen';
-import ChatListScreen from '../features/chat/ChatListScreen';
-import ChatScreen from '../features/chat/ChatScreen';
+import ResponsiveChatLayout from '../features/chat/ResponsiveChatLayout';
 import GalleryScreen from '../features/gallery/GalleryScreen';
 import HomeScreen from '../features/home/HomeScreen';
 import WelcomeGuide from '../features/onboarding/WelcomeGuide';
@@ -20,8 +19,8 @@ export default function AppRoutes() {
                         <Routes>
                             <Route path="/" element={<HomeScreen />} />
                             <Route path="/camera" element={<CameraScreen />} />
-                            <Route path="/chats" element={<ChatListScreen />} />
-                            <Route path="/chat/:id" element={<ChatScreen />} />
+                            <Route path="/chats" element={<ResponsiveChatLayout />} />
+                            <Route path="/chat/:id" element={<ResponsiveChatLayout />} />
                             <Route
                                 path="/gallery"
                                 element={<GalleryScreen />}

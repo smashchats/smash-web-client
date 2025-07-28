@@ -1,7 +1,7 @@
 import { Camera, Images, MessageCircle } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useUIStore } from '../services/uiStore';
+import { useUIStore } from '../hooks/useUIStore';
 import './BottomNav.css';
 
 export default function BottomNav() {

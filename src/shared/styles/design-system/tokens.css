@@ -98,11 +98,29 @@
         --ds-transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
         --ds-transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 
-        /* Layout Tokens */
+        /* Breakpoint Tokens */
+        --ds-breakpoint-sm: 640px;
+        --ds-breakpoint-md: 768px;
+        --ds-breakpoint-lg: 1024px;
+        --ds-breakpoint-xl: 1280px;
+        --ds-breakpoint-2xl: 1536px;
+
+        /* Layout Tokens - Mobile First */
         --ds-header-height: 3.75rem; /* 60px */
         --ds-bottom-nav-height: 3.5rem; /* 56px */
         --ds-sidebar-width: 18rem; /* 288px */
         --ds-content-max-width: 50rem; /* 800px */
+        --ds-chat-sidebar-width: 20rem; /* 320px */
+
+        /* Responsive Layout Tokens */
+        --ds-container-width: 100vw;
+        --ds-container-max-width: none;
+        --ds-container-padding: var(--ds-space-4);
+
+        /* Navigation Tokens */
+        --ds-nav-type: bottom; /* bottom | sidebar */
+        --ds-nav-width: 100%;
+        --ds-nav-height: var(--ds-bottom-nav-height);
 
         /* Z-index Tokens */
         --ds-z-dropdown: 1000;
@@ -112,6 +130,33 @@
         --ds-z-modal: 1050;
         --ds-z-popover: 1060;
         --ds-z-tooltip: 1070;
+    }
+
+    /* Tablet and Desktop Responsive Tokens */
+    @media (min-width: 768px) {
+        :root {
+            --ds-container-width: calc(100vw - var(--ds-sidebar-width));
+            --ds-container-max-width: var(--ds-content-max-width);
+            --ds-container-padding: var(--ds-space-6);
+
+            --ds-nav-type: sidebar;
+            --ds-nav-width: var(--ds-sidebar-width);
+            --ds-nav-height: 100vh;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        :root {
+            --ds-container-padding: var(--ds-space-8);
+            --ds-content-max-width: 60rem; /* 960px */
+        }
+    }
+
+    @media (min-width: 1280px) {
+        :root {
+            --ds-content-max-width: 70rem; /* 1120px */
+            --ds-chat-sidebar-width: 22rem; /* 352px */
+        }
     }
 
     /* Dark Theme */
