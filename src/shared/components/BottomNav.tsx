@@ -1,8 +1,8 @@
-import { Camera, Images, MessageCircle } from 'lucide-react';
+import { Camera, MessageCircle, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useUIStore } from '../hooks/useUIStore';
-import './BottomNav.css';
+import './BottomNav.css'; // TODO: migrate to Tailwind utilities
 
 export default function BottomNav() {
     const show = useUIStore((s) => s.showBottomNav);
@@ -25,7 +25,7 @@ export default function BottomNav() {
         >
             <IconButton
                 onClick={() => navigate('/chats', { replace: true })}
-                active={location.pathname.startsWith('/chat')}
+                active={location.pathname.startsWith('/chat') || location.pathname.startsWith('/chats')}
                 isDarkMode={isDarkMode}
             >
                 <MessageCircle
@@ -45,11 +45,11 @@ export default function BottomNav() {
                 <Camera />
             </IconButton>
             <IconButton
-                onClick={() => navigate('/gallery', { replace: true })}
-                active={location.pathname === '/gallery'}
+                onClick={() => navigate('/profile', { replace: true })}
+                active={location.pathname.startsWith('/profile')}
                 isDarkMode={isDarkMode}
             >
-                <Images />
+                <User />
             </IconButton>
         </nav>
     );

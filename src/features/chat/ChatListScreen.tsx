@@ -12,15 +12,11 @@ import { useChatStore } from '@shared/hooks/useChatStore';
 import { logger } from '../../shared/utils/logger';
 import { ConversationItem } from './ConversationItem';
 import { NewConversationDialog } from './NewConversationDialog';
-import './chatListScreen.css';
+import './chatListScreen.css'; // TODO: will migrate to Tailwind utility classes in upcoming refactor
 
 export default function ChatListScreen() {
     const navigate = useNavigate();
     const { conversations } = useChatStore();
-
-    const handleQuickPhoto = (conversationId: string) => {
-        navigate(`/camera?conversationId=${conversationId}`);
-    };
 
     const handleCreateConversation = async (didDoc: DIDDocument) => {
         logger.info('Starting conversation creation process', {
@@ -52,7 +48,6 @@ export default function ChatListScreen() {
                         <ConversationItem
                             key={conversation.id}
                             conversation={conversation}
-                            onQuickPhoto={handleQuickPhoto}
                         />
                     ))}
                 </div>

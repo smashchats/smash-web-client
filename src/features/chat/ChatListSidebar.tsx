@@ -13,10 +13,6 @@ export function ChatListSidebar() {
     const { id: activeConversationId } = useParams();
     const { conversations } = useChatStore();
 
-    const handleQuickPhoto = (conversationId: string) => {
-        navigate(`/camera?conversationId=${conversationId}`);
-    };
-
     const handleCreateConversation = async (didDoc: DIDDocument) => {
         logger.info('Starting conversation creation process', {
             didId: didDoc.id,
@@ -49,10 +45,7 @@ export function ChatListSidebar() {
                                     activeConversationId === conversation.id ? 'active' : ''
                                 }`}
                             >
-                                <ConversationItem
-                                    conversation={conversation}
-                                    onQuickPhoto={handleQuickPhoto}
-                                />
+                                <ConversationItem conversation={conversation} />
                             </div>
                         ))}
                     </div>

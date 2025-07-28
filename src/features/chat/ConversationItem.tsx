@@ -1,5 +1,4 @@
-import { formatDistanceToNow } from 'date-fns';
-import { Camera, Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useChatStore } from '../../shared/hooks/useChatStore';
@@ -8,21 +7,17 @@ import './conversationItem.css';
 
 interface ConversationItemProps {
     conversation: SmashConversation;
-    onQuickPhoto?: (conversationId: string) => void;
 }
 
 export function ConversationItem({
     conversation,
-    onQuickPhoto,
 }: Readonly<ConversationItemProps>) {
     const { id, title, lastMessage, unreadCount } = conversation;
 
     const profile = useChatStore((state) => state.getPeerProfile(id));
 
     // Format the relative time (e.g., "5 minutes ago")
-    const timeAgo = lastMessage
-        ? formatDistanceToNow(new Date(lastMessage.timestamp))
-        : 'No messages yet';
+    const timeAgo = lastMessage ? getSmartTimestamp(new Date(lastMessage.timestamp)) : '';
 
     // Generate initials for avatar
     const displayName = profile?.title || title;
@@ -42,25 +37,12 @@ export function ConversationItem({
                 {/* Main content */}
                 <div className="conversation-header">
                     <div className="conversation-header-row">
-                        <h3 className="conversation-title">{displayName}</h3>
-                        <div className="conversation-meta">
-                            <span className="conversation-time">
-                                {timeAgo === 'less than a minute'
-                                    ? 'just now'
-                                    : timeAgo}
-                            </span>
-                            {/* Quick photo button */}
-                            <button
-                                className="photo-button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    onQuickPhoto?.(id);
-                                }}
-                                aria-label="Take a photo"
-                            >
-                                <Camera size={18} />
-                            </button>
-                        </div>
+                        <h3
+                            className={`conversation-title ${unreadCount > 0 ? 'font-semibold' : ''}`}
+                        >
+                            {displayName}
+                        </h3>
+                        <span className="conversation-time">{timeAgo}</span>
                     </div>
                     {/* Last message preview */}
                     <div className="conversation-message">
@@ -87,4 +69,33 @@ export function ConversationItem({
             </div>
         </Link>
     );
+}
+
+// Util -----------------------------------------------------------
+function getSmartTimestamp(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+
+    const diffSec = Math.floor(diffMs / 1000);
+    if (diffSec < 60) {
+        return `${diffSec}s`;
+    }
+
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) {
+        return `${diffMin}mn`;
+    }
+
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 20) {
+        return date.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
+
+    return date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+    });
 }
