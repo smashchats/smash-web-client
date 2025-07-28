@@ -6,16 +6,12 @@ import { useChatStore } from '@shared/hooks/useChatStore';
 import { logger } from '@shared/utils/logger';
 import { ConversationItem } from './ConversationItem';
 import { NewConversationDialog } from './NewConversationDialog';
-import './ChatListSidebar.css';
+// Tailwind classes are used directly
 
 export function ChatListSidebar() {
     const navigate = useNavigate();
     const { id: activeConversationId } = useParams();
     const { conversations } = useChatStore();
-
-    const handleQuickPhoto = (conversationId: string) => {
-        navigate(`/camera?conversationId=${conversationId}`);
-    };
 
     const handleCreateConversation = async (didDoc: DIDDocument) => {
         logger.info('Starting conversation creation process', {
@@ -26,32 +22,29 @@ export function ChatListSidebar() {
     };
 
     return (
-        <div className="chat-list-sidebar">
-            <div className="chat-list-sidebar__header">
-                <h2 className="chat-list-sidebar__title">Chats</h2>
+        <div className="flex flex-col w-80 border-r border-gray-200 dark:border-gray-700 h-full">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold">Chats</h2>
                 <NewConversationDialog
                     onCreateConversation={handleCreateConversation}
                 />
             </div>
             
-            <div className="chat-list-sidebar__content">
+            <div className="flex-1 overflow-y-auto">
                 {conversations.length === 0 ? (
-                    <div className="chat-list-sidebar__empty">
+                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400 p-4">
                         <p>No conversations yet</p>
-                        <p className="text-muted">Start a new chat!</p>
+                        <p className="text-sm">Start a new chat!</p>
                     </div>
                 ) : (
-                    <div className="chat-list-sidebar__conversations">
+                    <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
                         {conversations.map((conversation) => (
                             <div
                                 key={conversation.id}
-                                className={`chat-list-sidebar__conversation-wrapper ${
-                                    activeConversationId === conversation.id ? 'active' : ''
-                                }`}
+                                className={`${activeConversationId === conversation.id ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
                             >
                                 <ConversationItem
                                     conversation={conversation}
-                                    onQuickPhoto={handleQuickPhoto}
                                 />
                             </div>
                         ))}

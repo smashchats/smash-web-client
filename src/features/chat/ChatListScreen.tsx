@@ -12,15 +12,11 @@ import { useChatStore } from '@shared/hooks/useChatStore';
 import { logger } from '../../shared/utils/logger';
 import { ConversationItem } from './ConversationItem';
 import { NewConversationDialog } from './NewConversationDialog';
-import './chatListScreen.css';
+// Tailwind styles are now applied directly via className
 
 export default function ChatListScreen() {
     const navigate = useNavigate();
     const { conversations } = useChatStore();
-
-    const handleQuickPhoto = (conversationId: string) => {
-        navigate(`/camera?conversationId=${conversationId}`);
-    };
 
     const handleCreateConversation = async (didDoc: DIDDocument) => {
         logger.info('Starting conversation creation process', {
@@ -40,19 +36,18 @@ export default function ChatListScreen() {
             <ScreenHeaderRightSlot>
                 <User onClick={() => navigate('/profile')} />
             </ScreenHeaderRightSlot>
-            <div className="chat-list-container">
+            <div className="flex flex-col h-full overflow-y-auto p-2">
                 {conversations.length === 0 && (
-                    <p className="empty-message">
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-10">
                         No conversations yet. Start a new chat!
                     </p>
                 )}
 
-                <div className="conversation-list">
+                <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
                     {conversations.map((conversation) => (
                         <ConversationItem
                             key={conversation.id}
                             conversation={conversation}
-                            onQuickPhoto={handleQuickPhoto}
                         />
                     ))}
                 </div>

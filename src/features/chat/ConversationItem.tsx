@@ -1,19 +1,17 @@
 import { formatDistanceToNow } from 'date-fns';
-import { Camera, Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useChatStore } from '../../shared/hooks/useChatStore';
 import type { SmashConversation } from '../../shared/types/smash';
-import './conversationItem.css';
+// Styles are now handled entirely with Tailwind classes
 
 interface ConversationItemProps {
     conversation: SmashConversation;
-    onQuickPhoto?: (conversationId: string) => void;
 }
 
 export function ConversationItem({
     conversation,
-    onQuickPhoto,
 }: Readonly<ConversationItemProps>) {
     const { id, title, lastMessage, unreadCount } = conversation;
 
@@ -34,57 +32,48 @@ export function ConversationItem({
         .toUpperCase();
 
     return (
-        <Link to={`/chat/${id}`} className="conversation-content">
-            <div className="conversation-item">
-                {/* Avatar */}
-                <div className="avatar">{initials}</div>
+        <Link
+            to={`/chat/${id}`}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+            {/* Avatar */}
+            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-violet-600/10 text-violet-700 dark:text-violet-200 flex items-center justify-center font-semibold">
+                {initials}
+            </div>
 
-                {/* Main content */}
-                <div className="conversation-header">
-                    <div className="conversation-header-row">
-                        <h3 className="conversation-title">{displayName}</h3>
-                        <div className="conversation-meta">
-                            <span className="conversation-time">
-                                {timeAgo === 'less than a minute'
-                                    ? 'just now'
-                                    : timeAgo}
-                            </span>
-                            {/* Quick photo button */}
-                            <button
-                                className="photo-button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    onQuickPhoto?.(id);
-                                }}
-                                aria-label="Take a photo"
-                            >
-                                <Camera size={18} />
-                            </button>
-                        </div>
-                    </div>
-                    {/* Last message preview */}
-                    <div className="conversation-message">
-                        {lastMessage ? (
-                            lastMessage.type === 'im.chat.text' ? (
-                                lastMessage.content
-                            ) : (
-                                <span className="conversation-message-media">
-                                    <ImageIcon size={14} /> Photo
-                                </span>
-                            )
-                        ) : (
-                            <span className="conversation-message-empty">No messages yet</span>
-                        )}
-                    </div>
+            {/* Main */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between">
+                    <h3
+                        className={`truncate ${unreadCount > 0 ? 'font-semibold text-gray-900 dark:text-gray-50' : 'font-medium text-gray-900 dark:text-gray-50'}`}
+                    >
+                        {displayName}
+                    </h3>
+                    <span className="ml-2 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                        {timeAgo === 'less than a minute' ? 'just now' : timeAgo}
+                    </span>
                 </div>
 
-                {/* Unread count */}
-                {unreadCount > 0 && (
-                    <div className="conversation-actions">
-                        <span className="unread-badge">{unreadCount}</span>
-                    </div>
-                )}
+                <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+                    {lastMessage ? (
+                        lastMessage.type === 'im.chat.text' ? (
+                            lastMessage.content
+                        ) : (
+                            <span className="inline-flex items-center gap-1">
+                                <ImageIcon size={14} /> Photo
+                            </span>
+                        )
+                    ) : (
+                        'No messages yet'
+                    )}
+                </p>
             </div>
+
+            {unreadCount > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center h-6 min-w-6 rounded-full bg-violet-600 text-white text-xs px-1 font-semibold">
+                    {unreadCount}
+                </span>
+            )}
         </Link>
     );
 }
