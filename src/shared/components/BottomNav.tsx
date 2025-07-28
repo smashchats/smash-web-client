@@ -1,4 +1,4 @@
-import { Camera, Images, MessageCircle } from 'lucide-react';
+import { Camera, MessageCircle, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useUIStore } from '../hooks/useUIStore';
@@ -45,11 +45,11 @@ export default function BottomNav() {
                 <Camera />
             </IconButton>
             <IconButton
-                onClick={() => navigate('/gallery', { replace: true })}
-                active={location.pathname === '/gallery'}
+                onClick={() => navigate('/profile', { replace: true })}
+                active={location.pathname === '/profile'}
                 isDarkMode={isDarkMode}
             >
-                <Images />
+                <Settings />
             </IconButton>
         </nav>
     );

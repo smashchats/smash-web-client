@@ -18,10 +18,6 @@ export default function ChatListScreen() {
     const navigate = useNavigate();
     const { conversations } = useChatStore();
 
-    const handleQuickPhoto = (conversationId: string) => {
-        navigate(`/camera?conversationId=${conversationId}`);
-    };
-
     const handleCreateConversation = async (didDoc: DIDDocument) => {
         logger.info('Starting conversation creation process', {
             didId: didDoc.id,
@@ -52,7 +48,6 @@ export default function ChatListScreen() {
                         <ConversationItem
                             key={conversation.id}
                             conversation={conversation}
-                            onQuickPhoto={handleQuickPhoto}
                         />
                     ))}
                 </div>

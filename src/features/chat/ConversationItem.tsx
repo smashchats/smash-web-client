@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from 'date-fns';
-import { Camera, Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useChatStore } from '../../shared/hooks/useChatStore';
@@ -8,12 +8,10 @@ import './conversationItem.css';
 
 interface ConversationItemProps {
     conversation: SmashConversation;
-    onQuickPhoto?: (conversationId: string) => void;
 }
 
 export function ConversationItem({
     conversation,
-    onQuickPhoto,
 }: Readonly<ConversationItemProps>) {
     const { id, title, lastMessage, unreadCount } = conversation;
 
@@ -49,17 +47,7 @@ export function ConversationItem({
                                     ? 'just now'
                                     : timeAgo}
                             </span>
-                            {/* Quick photo button */}
-                            <button
-                                className="photo-button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    onQuickPhoto?.(id);
-                                }}
-                                aria-label="Take a photo"
-                            >
-                                <Camera size={18} />
-                            </button>
+                            {/* Removed per-chat quick photo button in redesigned UX */}
                         </div>
                     </div>
                     {/* Last message preview */}

@@ -1,4 +1,4 @@
-import { Camera, Images, MessageCircle, User } from 'lucide-react';
+import { Camera, MessageCircle, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './SideNav.css';
 
@@ -20,15 +20,9 @@ export default function SideNav() {
             active: location.pathname === '/camera',
         },
         {
-            path: '/gallery',
-            icon: Images,
-            label: 'Gallery',
-            active: location.pathname === '/gallery',
-        },
-        {
             path: '/profile',
-            icon: User,
-            label: 'Profile',
+            icon: Settings,
+            label: 'Settings',
             active: location.pathname === '/profile',
         },
     ];
