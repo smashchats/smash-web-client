@@ -3,10 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { DIDDocument, DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
 import { CURRENT_USER } from '@src/app/config/sme';
-import { messageController } from '@src/controllers/messageController';
+import { messagingService } from '@src/services/messagingService';
+import { useMessageStore } from '@src/shared/hooks/useMessageStore';
 import ScreenWrapper from '@src/shared/components/ScreenWrapper';
 import { useChatStore } from '@src/shared/hooks/useChatStore';
-import { useMessageStore } from '@src/shared/hooks/useMessageStore';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';
@@ -36,11 +36,14 @@ export default function ChatScreen() {
 
     useEffect(() => {
         if (!id) return;
-        void messageController.loadMessages(id as DIDString);
+        void messagingService.loadMessages(id as DIDString).then((messages) => {
+            useMessageStore.getState().setMessages(id as DIDString, messages);
+        });
     }, [id]);
 
-    const sendMessage = (content: string | IMMediaEmbedded) => {
-        messageController.sendMessage(id as DIDString, content);
+    const sendMessage = async (content: string | IMMediaEmbedded) => {
+        const message = await messagingService.sendMessage(id as DIDString, content);
+        useMessageStore.getState().addMessage(id as DIDString, message);
     };
 
     return (

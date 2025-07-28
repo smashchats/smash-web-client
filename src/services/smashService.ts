@@ -17,7 +17,7 @@ import {
     type sha256,
 } from 'smash-node-lib';
 
-import { peerController } from '../controllers/peerController';
+// Note: peerController replaced with dynamic imports to avoid circular dependencies
 import { type StoredProfile } from '../shared/types/db';
 import {
     type SmashConversation,
@@ -62,10 +62,22 @@ class SmashService {
             this.handleIncomingMessage.bind(this),
         );
         this.smashUser.on(IM_DID_DOCUMENT, (senderId, didDocument) =>
-            peerController.handleIncomingDIDDocument(senderId, didDocument),
+            import('@src/features/messaging/hooks/usePeerHandlers').then(
+                (module) =>
+                    module.peerHandlers.handleIncomingDIDDocument(
+                        senderId,
+                        didDocument,
+                    ),
+            ),
         );
         this.smashUser.on(IM_PROFILE, (senderId, profile) =>
-            peerController.handleIncomingProfile(senderId, profile),
+            import('@src/features/messaging/hooks/usePeerHandlers').then(
+                (module) =>
+                    module.peerHandlers.handleIncomingProfile(
+                        senderId,
+                        profile,
+                    ),
+            ),
         );
     }
 
@@ -120,6 +132,16 @@ class SmashService {
         senderId: DIDString,
         message: IMProtoMessage,
     ): SmashMessage {
+        // Only process actual chat messages, not system messages
+        if (
+            message.type !== IM_CHAT_TEXT &&
+            message.type !== IM_MEDIA_EMBEDDED
+        ) {
+            throw new Error(
+                `Message type ${message.type} is not a chat message`,
+            );
+        }
+
         if (!message.sha256) {
             throw new Error('Message must have a sha256 hash to be stored');
         }
@@ -163,25 +185,38 @@ class SmashService {
         logger.info('Handling incoming message', {
             senderId,
             messageId: message.sha256,
+            messageType: message.type,
         });
 
         try {
-            const smashMessage = this.createSmashMessage(senderId, message);
+            // Only process actual chat messages (not system messages like profiles/DID docs)
+            if (
+                message.type === IM_CHAT_TEXT ||
+                message.type === IM_MEDIA_EMBEDDED
+            ) {
+                const smashMessage = this.createSmashMessage(senderId, message);
 
-            // Store the message to database
-            await this.storeMessage(smashMessage);
+                // Store the message to database
+                await this.storeMessage(smashMessage);
 
-            // Update conversation (creates new one if needed)
-            await this.updateConversation(senderId, smashMessage);
+                // Update conversation (creates new one if needed)
+                await this.updateConversation(senderId, smashMessage);
 
-            logger.info('Successfully processed incoming message', {
-                messageId: smashMessage.id,
-                conversationId: smashMessage.conversationId,
-            });
+                logger.info('Successfully processed incoming chat message', {
+                    messageId: smashMessage.id,
+                    conversationId: smashMessage.conversationId,
+                });
+            } else {
+                logger.debug('Skipping system message (not a chat message)', {
+                    messageType: message.type,
+                    messageId: message.sha256,
+                });
+            }
         } catch (error) {
             logger.error('Failed to handle incoming message', {
                 senderId,
                 messageId: message.sha256,
+                messageType: message.type,
                 error,
             });
         }
@@ -215,18 +250,23 @@ class SmashService {
         senderId: DIDString,
         message: SmashMessage,
     ): Promise<SmashConversation> {
+        // Only set unread count to 1 if the message is from someone else
+        const isFromOther = message.sender !== 'You';
+
         const conversation = {
             id: senderId,
             title: `Chat with ${senderId.slice(0, 8)}...`,
             participants: ['You', senderId],
             type: 'direct' as const,
-            unreadCount: 1,
+            unreadCount: isFromOther ? 1 : 0,
             updatedAt: message.timestamp,
             lastMessage: message,
         };
 
         logger.debug('Creating new conversation', {
             conversationId: conversation.id,
+            unreadCount: conversation.unreadCount,
+            messageFromSelf: !isFromOther,
         });
         await db.addConversation(conversation);
         return conversation;
@@ -236,9 +276,14 @@ class SmashService {
         conversation: SmashConversation,
         message: SmashMessage,
     ): Promise<SmashConversation> {
+        // Only increment unread count for messages from others, not our own
+        const shouldIncrementUnread = message.sender !== 'You';
+
         const updatedConversation = {
             ...conversation,
-            unreadCount: (conversation.unreadCount || 0) + 1,
+            unreadCount: shouldIncrementUnread
+                ? (conversation.unreadCount || 0) + 1
+                : conversation.unreadCount || 0,
             lastMessage: message,
             updatedAt: message.timestamp,
         };
@@ -246,6 +291,7 @@ class SmashService {
         logger.debug('Updating existing conversation', {
             conversationId: updatedConversation.id,
             unreadCount: updatedConversation.unreadCount,
+            messageFromSelf: !shouldIncrementUnread,
         });
 
         await db.updateConversation(updatedConversation);
@@ -481,7 +527,9 @@ class SmashService {
     async getAllPeerProfiles(): Promise<Record<string, StoredProfile>> {
         logger.debug('Getting all peer profiles from DB');
         try {
-            const profiles = await db.getAllPeerProfiles();
+            // Use peerService for peer-related operations
+            const { peerService } = await import('@src/services/peerService');
+            const profiles = await peerService.getAllPeerProfiles();
             logger.debug('Retrieved all peer profiles from DB', {
                 count: Object.keys(profiles).length,
             });

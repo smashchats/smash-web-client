@@ -1,3 +1,9 @@
+import { CURRENT_USER } from '@src/app/config/sme';
+import { db } from '@src/services/db';
+import { useChatStore } from '@src/shared/hooks/useChatStore';
+import { type StoredProfile } from '@src/shared/types/db';
+import type { SmashConversation } from '@src/shared/types/smash';
+import { logger } from '@src/shared/utils/logger';
 import {
     type DIDDocument,
     type DIDString,
@@ -6,20 +12,37 @@ import {
     SmashMessaging,
 } from 'smash-node-lib';
 
-import { CURRENT_USER } from '../app/config/sme';
-import { db } from '../services/db';
-import { useChatStore } from '../shared/hooks/useChatStore';
-import { type StoredProfile } from '../shared/types/db';
-import type { SmashConversation } from '../shared/types/smash';
-import { logger } from '../shared/utils/logger';
+export class PeerService {
+    /**
+     * Get peer profile from database
+     */
+    async getPeerProfile(did: DIDString): Promise<StoredProfile | undefined> {
+        return db.getPeerProfile(did);
+    }
 
-export const peerController = {
-    async getPeerProfile(did: DIDString) {
-        const peerProfile = await db.getPeerProfile(did);
-        return peerProfile;
-    },
+    /**
+     * Get all peer profiles from database
+     */
+    async getAllPeerProfiles(): Promise<Record<string, StoredProfile>> {
+        const profiles: Record<string, StoredProfile> = {};
+        const didDocs = await db.getAllDIDDocuments();
 
-    async newPeer(didDoc: DIDDocument) {
+        for (const doc of didDocs) {
+            const profile = await db.getPeerProfile(doc.id);
+            if (profile) {
+                profiles[doc.id] = profile;
+            }
+        }
+
+        return profiles;
+    }
+
+    /**
+     * Create a new peer conversation from DID document
+     */
+    async createPeerConversation(
+        didDoc: DIDDocument,
+    ): Promise<{ conversation: SmashConversation }> {
         try {
             const conversation: SmashConversation = {
                 id: didDoc.id,
@@ -37,41 +60,49 @@ export const peerController = {
 
             await db.addConversation(conversation);
             await db.addDIDDocument(didDoc);
-            useChatStore.getState().addNewConversation(conversation);
 
             logger.debug('Resolving DID document in SmashMessaging', {
                 didId: didDoc.id,
             });
             await SmashMessaging.resolve(didDoc);
 
+            // IMMEDIATELY update live state - add conversation to chat store
+            const chatStore = useChatStore.getState();
+            chatStore.addNewConversation(conversation);
+
             logger.info('Conversation creation completed successfully', {
                 conversationId: conversation.id,
             });
 
-            return {
-                conversation,
-            };
+            return { conversation };
         } catch (error) {
             logger.error('Failed to create conversation', error);
             throw error;
         }
-    },
+    }
 
-    async initAllPeers() {
+    /**
+     * Initialize all known peers in SmashMessaging
+     */
+    async initAllPeers(): Promise<void> {
         const didDocs = await db.getAllDIDDocuments();
-        console.group('initAllPeers');
+        logger.info('Initializing all peers', { count: didDocs.length });
+
         for (const doc of didDocs) {
-            console.debug('init-ing', doc);
+            logger.debug('Initializing peer', { didId: doc.id });
             await SmashMessaging.resolve(doc);
         }
-        console.groupEnd();
-    },
 
+        logger.info('All peers initialized successfully');
+    }
+
+    /**
+     * Handle incoming DID document from peer
+     */
     async handleIncomingDIDDocument(
         senderId: DIDString,
         message: IMDIDDocumentMessage,
-    ) {
-        console.log('handleIncomingDIDDocument', senderId, message);
+    ): Promise<void> {
         const didDocument = message.data;
         try {
             logger.debug('Handling incoming DID document', {
@@ -79,7 +110,7 @@ export const peerController = {
             });
             await db.didDocuments.put(didDocument);
             await SmashMessaging.resolve(didDocument);
-            // Optionally, notify UI or other parts of the app if needed
+
             logger.info('Successfully processed incoming DID document', {
                 didId: didDocument.id,
             });
@@ -88,16 +119,19 @@ export const peerController = {
                 error,
                 didId: didDocument.id,
             });
-            // Rethrow or handle as appropriate for your application's error strategy
             throw error;
         }
-    },
+    }
 
+    /**
+     * Handle incoming profile from peer
+     * This method includes UI store update callbacks that should be set up via hooks
+     */
     async handleIncomingProfile(
         senderId: DIDString,
         message: IMProfileMessage,
-    ) {
-        console.log('handle incoming profile', senderId, message);
+        onProfileUpdate?: (peerId: string, profile: StoredProfile) => void,
+    ): Promise<void> {
         const profile = message.data;
         try {
             logger.debug('Handling incoming profile', { profile });
@@ -117,17 +151,22 @@ export const peerController = {
             };
 
             await db.setPeerProfile(profile.did as DIDString, storedProfile);
+
+            // Call UI update callback if provided
+            onProfileUpdate?.(profile.did as DIDString, storedProfile);
+
             logger.info('Successfully processed incoming profile for DID', {
                 did: profile.did,
             });
-            // Optionally, notify UI or other parts of the app if needed
         } catch (error) {
             logger.error('Failed to handle incoming profile', {
                 error,
                 profile,
             });
-            // Rethrow or handle as appropriate for your application's error strategy
             throw error;
         }
-    },
-};
+    }
+}
+
+// Export singleton instance
+export const peerService = new PeerService();

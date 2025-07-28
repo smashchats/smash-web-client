@@ -1,4 +1,4 @@
-import { initializeMessageController } from '@src/controllers/messageController';
+// Note: messageController replaced with useMessagingHandlers hook
 import { smashService } from '@src/services/smashService';
 import { initializeChatStore } from '@src/shared/hooks/useChatStore';
 import { logger } from '@src/shared/utils/logger';
@@ -35,15 +35,12 @@ export function useSmashMessaging(smashUser: SmashUser | null) {
                 // In the future, this could load saved chats from storage
                 await smashUser.initChats([]);
 
-                // Initialize message controller listeners
-                const cleanupMessageController = initializeMessageController();
-
                 // Initialize chat store (conversations)
                 const cleanupChatStore = initializeChatStore();
 
+                // Note: Message and peer event handlers are now set up by hooks in AppInitializer
                 // Store cleanup function
                 cleanup = () => {
-                    cleanupMessageController();
                     cleanupChatStore();
                 };
 

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
-import { messageController } from '../../controllers/messageController';
+import { messagingService } from '@src/services/messagingService';
+import { useMessageStore } from '@src/shared/hooks/useMessageStore';
 import { db } from '../../services/db';
 import { mediaDB } from '../../services/mediaStore';
 import type { SmashConversation } from '@src/shared/types/smash';
@@ -123,7 +124,9 @@ export default function CameraScreen() {
         const message = await IMMediaEmbedded.fromFile(capturedBlob!);
         await Promise.all(
             selectedIds.map((id) =>
-                messageController.sendMessage(id as DIDString, message),
+                messagingService.sendMessage(id as DIDString, message).then((msg) => {
+                    useMessageStore.getState().addMessage(id as DIDString, msg);
+                }),
             ),
         );
         await mediaDB.media.update(

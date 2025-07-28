@@ -7,7 +7,7 @@ import {
     ScreenHeaderRightSlot,
 } from '@src/shared/components/ScreenHeader';
 import ScreenWrapper from '@src/shared/components/ScreenWrapper';
-import { peerController } from '@src/controllers/peerController';
+import { peerService } from '@src/services/peerService';
 import { useChatStore } from '@src/shared/hooks/useChatStore';
 import { logger } from '../../shared/utils/logger';
 import { ConversationItem } from './ConversationItem';
@@ -26,7 +26,7 @@ export default function ChatListScreen() {
         logger.info('Starting conversation creation process', {
             didId: didDoc.id,
         });
-        const { conversation } = await peerController.newPeer(didDoc);
+        const { conversation } = await peerService.createPeerConversation(didDoc);
         navigate(`/chat/${conversation.id}`);
     };
 

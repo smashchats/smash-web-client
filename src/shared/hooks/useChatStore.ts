@@ -1,3 +1,4 @@
+import { peerService } from '@src/services/peerService';
 import { smashService } from '@src/services/smashService';
 import { useMessageStore } from '@src/shared/hooks/useMessageStore';
 import type {
@@ -128,7 +129,7 @@ export const useChatStore = create<ConversationState>((set, get) => ({
     initAllPeers: async () => {
         try {
             logger.info('Initializing all peer profiles from DB');
-            const profilesFromDb = await smashService.getAllPeerProfiles();
+            const profilesFromDb = await peerService.getAllPeerProfiles();
             set((state) => ({
                 profiles: { ...state.profiles, ...profilesFromDb },
                 error: null,

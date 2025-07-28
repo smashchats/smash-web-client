@@ -1,4 +1,4 @@
-import { peerController } from '@src/controllers/peerController';
+import { peerService } from '@src/services/peerService';
 import { logger } from '@src/shared/utils/logger';
 import { useEffect, useState } from 'react';
 import type { IMPeerIdentity } from 'smash-node-lib';
@@ -26,7 +26,7 @@ export function usePeerInit(
         const initializePeers = async () => {
             try {
                 logger.info('Initializing peer controller');
-                await peerController.initAllPeers();
+                await peerService.initAllPeers();
                 setState({ isInitialized: true, error: null });
                 logger.info('Peer controller initialized successfully');
             } catch (error) {
