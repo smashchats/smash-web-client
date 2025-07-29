@@ -1,8 +1,7 @@
+import { IdentityProvider } from '@features/identity';
+import type { StoredProfile } from '@shared/types/db';
 import React from 'react';
 import type { IMPeerIdentity, SMEConfigJSON, SmashUser } from 'smash-node-lib';
-import type { StoredProfile } from '@shared/types/db';
-
-import { IdentityProvider } from '@features/identity';
 
 interface AppProvidersProps {
     children: React.ReactNode;
@@ -13,13 +12,13 @@ interface AppProvidersProps {
     error: Error | null;
 }
 
-export function AppProviders({ 
-    children, 
+export function AppProviders({
+    children,
     identity,
     smashUser,
     profile,
     smeConfig,
-    error
+    error,
 }: AppProvidersProps) {
     return (
         <IdentityProvider
@@ -33,4 +32,4 @@ export function AppProviders({
             {children}
         </IdentityProvider>
     );
-} 
+}

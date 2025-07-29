@@ -1,10 +1,10 @@
 import * as Dialog from '@radix-ui/react-dialog';
+import Button from '@shared/components/Button';
+import { logger } from '@shared/utils/logger';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import type { DIDDocument } from 'smash-node-lib';
 
-import Button from '@shared/components/Button';
-import { logger } from '@shared/utils/logger';
 import './NewConversationDialog.css';
 
 type InputMode = 'text'; // Simplified to only text for now
@@ -86,10 +86,7 @@ function DialogContent({
             </div>
 
             <div className="new-chat-footer">
-                <Button
-                    variant="secondary"
-                    onClick={onCancel}
-                >
+                <Button variant="secondary" onClick={onCancel}>
                     Cancel
                 </Button>
                 <Button
@@ -148,7 +145,9 @@ export function NewConversationDialog({
         } catch (err) {
             logger.error('Error in conversation creation', err);
             setError(
-                err instanceof Error ? err.message : 'Invalid JSON format. Please check your DID document.',
+                err instanceof Error
+                    ? err.message
+                    : 'Invalid JSON format. Please check your DID document.',
             );
         }
     };
@@ -167,7 +166,7 @@ export function NewConversationDialog({
     return (
         <Dialog.Root open={open} onOpenChange={setOpen}>
             <Dialog.Trigger asChild>
-                <button 
+                <button
                     className="chat-list-action-button chat-list-action-button--primary"
                     aria-label="Start new chat"
                 >

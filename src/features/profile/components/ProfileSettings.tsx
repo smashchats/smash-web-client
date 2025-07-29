@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-
 import { useIdentityContext } from '@features/identity';
 import Button from '@shared/components/Button';
 import { logger } from '@shared/utils/logger';
+import { useEffect, useState } from 'react';
 
 interface Profile {
     title: string;
@@ -107,7 +106,9 @@ export function ProfileSettings() {
                         />
                     </div>
                     <Button
-                        variant={saveStatus === 'success' ? 'success' : 'primary'}
+                        variant={
+                            saveStatus === 'success' ? 'success' : 'primary'
+                        }
                         isFullWidth
                         onClick={handleManualSave}
                         disabled={

@@ -1,13 +1,13 @@
+import { db } from '@services/db';
+import { mediaDB } from '@services/mediaStore';
+import { messagingService } from '@services/messagingService';
+import { useMessageStore } from '@shared/hooks/useMessageStore';
+import { useUIStore } from '@shared/hooks/useUIStore';
+import type { SmashConversation } from '@shared/types/smash';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
-import { messagingService } from '@services/messagingService';
-import { useMessageStore } from '@shared/hooks/useMessageStore';
-import { db } from '@services/db';
-import { mediaDB } from '@services/mediaStore';
-import type { SmashConversation } from '@shared/types/smash';
-import { useUIStore } from '@shared/hooks/useUIStore';
 import CameraOverlay from './CameraOverlay';
 import CameraView, { type CameraViewHandle } from './CameraView';
 import CapturePreview from './CapturePreview';
@@ -124,9 +124,13 @@ export default function CameraScreen() {
         const message = await IMMediaEmbedded.fromFile(capturedBlob!);
         await Promise.all(
             selectedIds.map((id) =>
-                messagingService.sendMessage(id as DIDString, message).then((msg) => {
-                    useMessageStore.getState().addMessage(id as DIDString, msg);
-                }),
+                messagingService
+                    .sendMessage(id as DIDString, message)
+                    .then((msg) => {
+                        useMessageStore
+                            .getState()
+                            .addMessage(id as DIDString, msg);
+                    }),
             ),
         );
         await mediaDB.media.update(

@@ -1,5 +1,6 @@
 import { Camera, MessageCircle, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
 import './SideNav.css';
 
 export default function SideNav() {
@@ -12,22 +13,24 @@ export default function SideNav() {
             icon: MessageCircle,
             label: 'Chats',
             path: '/chats',
-            isActive: location.pathname.startsWith('/chat') || location.pathname === '/chats'
+            isActive:
+                location.pathname.startsWith('/chat') ||
+                location.pathname === '/chats',
         },
         {
             id: 'camera',
             icon: Camera,
             label: 'Camera',
             path: '/camera',
-            isActive: location.pathname === '/camera'
+            isActive: location.pathname === '/camera',
         },
         {
             id: 'settings',
             icon: Settings,
             label: 'Settings',
             path: '/profile',
-            isActive: location.pathname === '/profile'
-        }
+            isActive: location.pathname === '/profile',
+        },
     ];
 
     return (
@@ -63,11 +66,11 @@ interface SideNavItemProps {
     onClick: () => void;
 }
 
-function SideNavItem({ 
-    icon: Icon, 
-    label, 
-    isActive, 
-    onClick 
+function SideNavItem({
+    icon: Icon,
+    label,
+    isActive,
+    onClick,
 }: Readonly<SideNavItemProps>) {
     return (
         <li className="side-nav-item">
@@ -81,4 +84,4 @@ function SideNavItem({
             </button>
         </li>
     );
-} 
+}

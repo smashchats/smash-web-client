@@ -1,6 +1,7 @@
+import { logger } from '@shared/utils/logger';
 import React, { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
-import { logger } from '@shared/utils/logger';
+
 import Button from './Button';
 
 interface ErrorBoundaryState {
@@ -46,7 +47,7 @@ export class EnhancedErrorBoundary extends Component<
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         const errorId = this.state.errorId || 'unknown';
-        
+
         // Log the error
         logger.error('Error Boundary caught an error', {
             error: error.message,
@@ -66,7 +67,11 @@ export class EnhancedErrorBoundary extends Component<
         this.reportError(error, errorInfo, errorId);
     }
 
-    private reportError = (error: Error, errorInfo: ErrorInfo, errorId: string) => {
+    private reportError = (
+        error: Error,
+        errorInfo: ErrorInfo,
+        errorId: string,
+    ) => {
         // This would typically send to a service like Sentry, LogRocket, etc.
         if (typeof window !== 'undefined' && window.console) {
             console.group(`🚨 Error Boundary Report [${errorId}]`);
@@ -80,11 +85,11 @@ export class EnhancedErrorBoundary extends Component<
     private handleRetry = () => {
         if (this.retryCount < this.maxRetries) {
             this.retryCount++;
-            logger.info('Retrying after error', { 
-                retryCount: this.retryCount, 
-                errorId: this.state.errorId 
+            logger.info('Retrying after error', {
+                retryCount: this.retryCount,
+                errorId: this.state.errorId,
             });
-            
+
             this.setState({
                 hasError: false,
                 error: null,
@@ -95,7 +100,9 @@ export class EnhancedErrorBoundary extends Component<
     };
 
     private handleRefresh = () => {
-        logger.info('Refreshing page after error', { errorId: this.state.errorId });
+        logger.info('Refreshing page after error', {
+            errorId: this.state.errorId,
+        });
         window.location.reload();
     };
 
@@ -115,14 +122,19 @@ export class EnhancedErrorBoundary extends Component<
         };
 
         // Copy to clipboard for easy reporting
-        navigator.clipboard?.writeText(JSON.stringify(report, null, 2))
+        navigator.clipboard
+            ?.writeText(JSON.stringify(report, null, 2))
             .then(() => {
-                alert('Error report copied to clipboard. Please paste it when reporting the issue.');
+                alert(
+                    'Error report copied to clipboard. Please paste it when reporting the issue.',
+                );
             })
             .catch(() => {
                 // Fallback: show report in console
                 console.log('Error Report:', report);
-                alert('Error report logged to console. Please check the console and include it when reporting.');
+                alert(
+                    'Error report logged to console. Please check the console and include it when reporting.',
+                );
             });
     };
 
@@ -134,7 +146,8 @@ export class EnhancedErrorBoundary extends Component<
             }
 
             const { error, errorId } = this.state;
-            const canRetry = this.props.enableRetry && this.retryCount < this.maxRetries;
+            const canRetry =
+                this.props.enableRetry && this.retryCount < this.maxRetries;
 
             return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -145,7 +158,9 @@ export class EnhancedErrorBoundary extends Component<
                                 Something went wrong
                             </h1>
                             <p className="text-gray-600 mb-6">
-                                We encountered an unexpected error. Please try again or contact support if the problem persists.
+                                We encountered an unexpected error. Please try
+                                again or contact support if the problem
+                                persists.
                             </p>
 
                             {this.props.showErrorDetails && error && (
@@ -166,7 +181,9 @@ export class EnhancedErrorBoundary extends Component<
                                         isFullWidth
                                         onClick={this.handleRetry}
                                     >
-                                        Try Again ({this.maxRetries - this.retryCount} attempts left)
+                                        Try Again (
+                                        {this.maxRetries - this.retryCount}{' '}
+                                        attempts left)
                                     </Button>
                                 )}
 
@@ -215,11 +232,11 @@ interface ErrorBoundaryWrapperProps {
     showErrorDetails?: boolean;
 }
 
-export function ErrorBoundaryWrapper({ 
-    children, 
+export function ErrorBoundaryWrapper({
+    children,
     message,
     enableRetry = true,
-    showErrorDetails = process.env.NODE_ENV === 'development'
+    showErrorDetails = process.env.NODE_ENV === 'development',
 }: Readonly<ErrorBoundaryWrapperProps>) {
     return (
         <EnhancedErrorBoundary
@@ -237,4 +254,4 @@ export function ErrorBoundaryWrapper({
             {children}
         </EnhancedErrorBoundary>
     );
-} 
+}

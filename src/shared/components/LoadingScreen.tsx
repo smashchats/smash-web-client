@@ -1,12 +1,13 @@
 import { MessageCircle } from 'lucide-react';
+
 import './LoadingScreen.css';
 
 type LoadingScreenProps = Readonly<{
     message?: string;
 }>;
 
-export default function LoadingScreen({ 
-    message = 'Loading...'
+export default function LoadingScreen({
+    message = 'Loading...',
 }: LoadingScreenProps) {
     return (
         <div className="loading-screen">
@@ -18,11 +19,9 @@ export default function LoadingScreen({
                     </div>
                     <h1 className="loading-screen-brand">Smashchats</h1>
                 </div>
-                
-                {message && (
-                    <p className="loading-screen-message">{message}</p>
-                )}
-                
+
+                {message && <p className="loading-screen-message">{message}</p>}
+
                 <div className="loading-screen-spinner">
                     <div className="spinner-dot"></div>
                     <div className="spinner-dot"></div>
@@ -31,4 +30,4 @@ export default function LoadingScreen({
             </div>
         </div>
     );
-} 
+}

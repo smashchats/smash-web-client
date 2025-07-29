@@ -1,14 +1,17 @@
 import React from 'react';
+
 import { useUIStore } from '../hooks/useUIStore';
 import BottomNav from './BottomNav';
-import SideNav from './SideNav';
 import './ResponsiveLayout.css';
+import SideNav from './SideNav';
 
 interface ResponsiveLayoutProps {
     children: React.ReactNode;
 }
 
-export function ResponsiveLayout({ children }: Readonly<ResponsiveLayoutProps>) {
+export function ResponsiveLayout({
+    children,
+}: Readonly<ResponsiveLayoutProps>) {
     const showBottomNav = useUIStore((s) => s.showBottomNav);
 
     return (
@@ -17,12 +20,10 @@ export function ResponsiveLayout({ children }: Readonly<ResponsiveLayoutProps>) 
             <div className="responsive-layout__sidebar">
                 <SideNav />
             </div>
-            
+
             {/* Main Content Area */}
-            <div className="responsive-layout__main">
-                {children}
-            </div>
-            
+            <div className="responsive-layout__main">{children}</div>
+
             {/* Mobile Bottom Navigation */}
             {showBottomNav && (
                 <div className="responsive-layout__bottom-nav">
@@ -33,4 +34,4 @@ export function ResponsiveLayout({ children }: Readonly<ResponsiveLayoutProps>) 
     );
 }
 
-export default ResponsiveLayout; 
+export default ResponsiveLayout;

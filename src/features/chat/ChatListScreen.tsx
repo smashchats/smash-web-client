@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { type DIDDocument } from 'smash-node-lib';
-import { UserRoundPen } from 'lucide-react';
-
+import { peerService } from '@services/peerService';
 import {
     ScreenHeaderLeftSlot,
     ScreenHeaderRightSlot,
 } from '@shared/components/ScreenHeader';
 import ScreenWrapper from '@shared/components/ScreenWrapper';
-import { peerService } from '@services/peerService';
 import { useChatStore } from '@shared/hooks/useChatStore';
+import { UserRoundPen } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { type DIDDocument } from 'smash-node-lib';
+
 import { logger } from '../../shared/utils/logger';
 import { ConversationItem } from './ConversationItem';
 import { NewConversationDialog } from './NewConversationDialog';
@@ -24,7 +24,8 @@ export default function ChatListScreen() {
         logger.info('Starting conversation creation process', {
             didId: didDoc.id,
         });
-        const { conversation } = await peerService.createPeerConversation(didDoc);
+        const { conversation } =
+            await peerService.createPeerConversation(didDoc);
         navigate(`/chat/${conversation.id}`);
     };
 
@@ -33,7 +34,7 @@ export default function ChatListScreen() {
     };
 
     // Filter conversations based on unread filter only
-    const filteredConversations = conversations.filter(conversation => {
+    const filteredConversations = conversations.filter((conversation) => {
         const matchesUnread = !showUnreadOnly || conversation.unreadCount > 0;
         return matchesUnread;
     });
@@ -43,7 +44,7 @@ export default function ChatListScreen() {
         // First sort by unread status
         if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
         if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
-        
+
         // Then sort by last message timestamp
         const aTime = a.lastMessage?.timestamp || 0;
         const bTime = b.lastMessage?.timestamp || 0;
@@ -66,10 +67,12 @@ export default function ChatListScreen() {
                     >
                         <UserRoundPen size={24} />
                     </button>
-                    <NewConversationDialog onCreateConversation={handleCreateConversation} />
+                    <NewConversationDialog
+                        onCreateConversation={handleCreateConversation}
+                    />
                 </div>
             </ScreenHeaderRightSlot>
-            
+
             <div className="chat-list-container">
                 {/* Conversation List */}
                 <div className="chat-list-content">

@@ -1,13 +1,13 @@
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { CURRENT_USER } from '@app/config/sme';
+import { messagingService } from '@services/messagingService';
+import { useChatStore } from '@shared/hooks/useChatStore';
+import { useMessageStore } from '@shared/hooks/useMessageStore';
+import { useUIStore } from '@shared/hooks/useUIStore';
 import { ArrowLeft } from 'lucide-react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
-import { CURRENT_USER } from '@app/config/sme';
-import { messagingService } from '@services/messagingService';
-import { useMessageStore } from '@shared/hooks/useMessageStore';
-import { useChatStore } from '@shared/hooks/useChatStore';
-import { useUIStore } from '@shared/hooks/useUIStore';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';
 import './ChatScreen.css';
@@ -25,7 +25,7 @@ export default function ChatScreen() {
         id ? state.getPeerProfile(id) : undefined,
     );
     const conversation = useChatStore((state) =>
-        state.conversations.find(c => c.id === id)
+        state.conversations.find((c) => c.id === id),
     );
 
     const [isProcessingMedia] = useState(false);
@@ -75,11 +75,16 @@ export default function ChatScreen() {
             // For now, we'll need to handle media differently
             // The messaging service expects File, but we're receiving IMMediaEmbedded
             // This will be addressed when we implement the camera flow
-            console.warn('Media content handling not yet implemented for new UI');
+            console.warn(
+                'Media content handling not yet implemented for new UI',
+            );
             return;
         }
-        
-        const message = await messagingService.sendMessage(id as DIDString, processedContent);
+
+        const message = await messagingService.sendMessage(
+            id as DIDString,
+            processedContent,
+        );
         useMessageStore.getState().addMessage(id as DIDString, message);
     };
 
@@ -96,23 +101,25 @@ export default function ChatScreen() {
         <div className="chat-screen">
             {/* Chat Header */}
             <div className="chat-header">
-                <button 
+                <button
                     className="chat-header-back"
                     onClick={handleGoBack}
                     aria-label="Go back to chats"
                 >
                     <ArrowLeft size={20} />
                 </button>
-                
+
                 <div className="chat-header-info">
                     <div className="chat-header-avatar">
-                        <span className="chat-header-avatar-text">{initials}</span>
+                        <span className="chat-header-avatar-text">
+                            {initials}
+                        </span>
                     </div>
                     <div className="chat-header-details">
                         <h1 className="chat-header-name">{displayName}</h1>
                     </div>
                 </div>
-                
+
                 <div className="chat-header-actions">
                     {/* Future: Add call, video call, and more options here */}
                 </div>
@@ -127,17 +134,26 @@ export default function ChatScreen() {
                                 <span>{initials}</span>
                             </div>
                             <h3>Start your conversation</h3>
-                            <p>Send a message to {displayName} to begin chatting</p>
+                            <p>
+                                Send a message to {displayName} to begin
+                                chatting
+                            </p>
                         </div>
                     ) : (
                         messages.map((message) => (
                             <Suspense
                                 key={message.id}
-                                fallback={<div className="message-loading">Loading...</div>}
+                                fallback={
+                                    <div className="message-loading">
+                                        Loading...
+                                    </div>
+                                }
                             >
                                 <ChatMessage
                                     message={message}
-                                    isOwnMessage={message.sender === CURRENT_USER}
+                                    isOwnMessage={
+                                        message.sender === CURRENT_USER
+                                    }
                                     peerProfile={peerProfile}
                                 />
                             </Suspense>

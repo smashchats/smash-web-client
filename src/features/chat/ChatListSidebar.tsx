@@ -1,12 +1,12 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { type DIDDocument } from 'smash-node-lib';
-
 import { peerService } from '@services/peerService';
 import { useChatStore } from '@shared/hooks/useChatStore';
 import { logger } from '@shared/utils/logger';
+import { useNavigate, useParams } from 'react-router-dom';
+import { type DIDDocument } from 'smash-node-lib';
+
+import './ChatListSidebar.css';
 import { ConversationItem } from './ConversationItem';
 import { NewConversationDialog } from './NewConversationDialog';
-import './ChatListSidebar.css';
 
 export function ChatListSidebar() {
     const navigate = useNavigate();
@@ -21,7 +21,8 @@ export function ChatListSidebar() {
         logger.info('Starting conversation creation process', {
             didId: didDoc.id,
         });
-        const { conversation } = await peerService.createPeerConversation(didDoc);
+        const { conversation } =
+            await peerService.createPeerConversation(didDoc);
         navigate(`/chat/${conversation.id}`);
     };
 
@@ -33,7 +34,7 @@ export function ChatListSidebar() {
                     onCreateConversation={handleCreateConversation}
                 />
             </div>
-            
+
             <div className="chat-list-sidebar__content">
                 {conversations.length === 0 ? (
                     <div className="chat-list-sidebar__empty">
@@ -46,7 +47,9 @@ export function ChatListSidebar() {
                             <div
                                 key={conversation.id}
                                 className={`chat-list-sidebar__conversation-wrapper ${
-                                    activeConversationId === conversation.id ? 'active' : ''
+                                    activeConversationId === conversation.id
+                                        ? 'active'
+                                        : ''
                                 }`}
                             >
                                 <ConversationItem
@@ -60,4 +63,4 @@ export function ChatListSidebar() {
             </div>
         </div>
     );
-} 
+}

@@ -1,11 +1,11 @@
-import { ArrowLeft, Check, Send } from 'lucide-react';
-import { useEffect, useState } from 'react';
-
 import Button from '@shared/components/Button';
 import { ScreenHeaderLeftSlot } from '@shared/components/ScreenHeader';
 import ScreenWrapper from '@shared/components/ScreenWrapper';
 import { useChatStore } from '@shared/hooks/useChatStore';
 import type { SmashConversation } from '@shared/types/smash';
+import { ArrowLeft, Check, Send } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import './DiscussionSelection.css';
 
 type DiscussionSelectionProps = {
@@ -98,10 +98,7 @@ export default function DiscussionSelection({
                                 {selectedDiscussions.size} selected
                             </div>
 
-                            <Button
-                                variant="primary"
-                                onClick={handleSend}
-                            >
+                            <Button variant="primary" onClick={handleSend}>
                                 <span>Send</span>
                                 <Send size={18} />
                             </Button>

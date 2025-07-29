@@ -1,11 +1,7 @@
+import { type Media, getAllMedia, getMediaByType } from '@services/mediaStore';
+import ScreenWrapper from '@shared/components/ScreenWrapper';
 import { useEffect, useRef, useState } from 'react';
 
-import ScreenWrapper from '@shared/components/ScreenWrapper';
-import {
-    type Media,
-    getAllMedia,
-    getMediaByType,
-} from '@services/mediaStore';
 import './GalleryScreen.css';
 
 type MediaType = 'all' | 'image' | 'video' | 'audio';

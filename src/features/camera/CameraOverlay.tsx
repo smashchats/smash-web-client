@@ -1,8 +1,8 @@
+import Button from '@shared/components/Button';
+import type { SmashConversation } from '@shared/types/smash';
 import { ArrowLeft, Download, Send, SwitchCamera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
- import Button from '@shared/components/Button';
-import type { SmashConversation } from '@shared/types/smash';
 import './CameraOverlay.css';
 import FloatingButton from './FloatingButton';
 import type { CameraMode } from './cameraModes';
@@ -65,18 +65,11 @@ export default function CameraOverlay({
             )}
             {mode === 'preview' && (
                 <div className="camera-overlay-floating-bar">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onDownload}
-                    >
+                    <Button variant="ghost" size="sm" onClick={onDownload}>
                         <Download size={20} />
                     </Button>
 
-                    <Button
-                        variant="primary"
-                        onClick={handleSend}
-                    >
+                    <Button variant="primary" onClick={handleSend}>
                         <span>Send to</span>
                         <Send size={20} />
                     </Button>

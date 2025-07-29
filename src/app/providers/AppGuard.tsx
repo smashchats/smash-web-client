@@ -1,6 +1,5 @@
-import { Navigate, useLocation } from 'react-router-dom';
-
 import { useIdentityContext } from '@features/identity';
+import { Navigate, useLocation } from 'react-router-dom';
 
 export default function AppGuard({
     children,

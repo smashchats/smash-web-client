@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-
 import { useIdentityContext } from '@features/identity';
 import Button from '@shared/components/Button';
 import { logger } from '@shared/utils/logger';
+import { useEffect, useState } from 'react';
 import type { SMEConfigJSON } from 'smash-node-lib';
 
 type SMEStatus = 'success' | 'error' | 'unsaved' | null;
@@ -78,7 +77,9 @@ export function SmeConfiguration() {
                         />
                     </div>
                     <Button
-                        variant={smeStatus === 'success' ? 'success' : 'primary'}
+                        variant={
+                            smeStatus === 'success' ? 'success' : 'primary'
+                        }
                         isFullWidth
                         onClick={handleSaveSME}
                         disabled={isSavingSME || smeStatus !== 'unsaved'}

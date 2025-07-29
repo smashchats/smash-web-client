@@ -1,8 +1,8 @@
+import Button from '@shared/components/Button';
 import { Send } from 'lucide-react';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
-import Button from '@shared/components/Button';
 import { logger } from '../../shared/utils/logger';
 import { AudioRecorder } from './AudioRecorder';
 import './ChatInput.css';

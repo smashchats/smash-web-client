@@ -1,8 +1,7 @@
-import { useState } from 'react';
-
 import { useIdentityContext } from '@features/identity';
 import Button from '@shared/components/Button';
 import { logger } from '@shared/utils/logger';
+import { useState } from 'react';
 
 export function AccountSection() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);

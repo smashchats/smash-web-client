@@ -42,7 +42,12 @@ export function MediaUpload({
             <label htmlFor="media-upload" className="media-upload-label">
                 {isProcessing ? (
                     <div className="media-upload-spinner">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                        >
                             <circle
                                 cx="12"
                                 cy="12"

@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import type { IMPeerIdentity, SMEConfigJSON, SmashUser } from 'smash-node-lib';
 import type { StoredProfile } from '@shared/types/db';
 import { logger } from '@shared/utils/logger';
+import { useState } from 'react';
+import type { IMPeerIdentity, SMEConfigJSON, SmashUser } from 'smash-node-lib';
 
-import { IdentityContext, type IdentityContextValue } from './IdentityContext';
 import { createSmashUser, persistIdentity } from '../services/identityService';
 import { clearStoredIdentity } from '../services/identityStorage';
+import { IdentityContext, type IdentityContextValue } from './IdentityContext';
 
 interface IdentityProviderProps {
     children: React.ReactNode;
@@ -16,13 +16,13 @@ interface IdentityProviderProps {
     error: Error | null;
 }
 
-export function IdentityProvider({ 
-    children, 
+export function IdentityProvider({
+    children,
     identity: initialIdentity,
     smashUser: initialSmashUser,
     profile: initialProfile,
     smeConfig: initialSmeConfig,
-    error: initialError
+    error: initialError,
 }: IdentityProviderProps) {
     const [state, setState] = useState({
         identity: initialIdentity,
@@ -51,7 +51,7 @@ export function IdentityProvider({
             logger.info('Identity stored successfully');
         } catch (error) {
             logger.error('Failed to set identity', error);
-            setState(prev => ({ ...prev, error: error as Error }));
+            setState((prev) => ({ ...prev, error: error as Error }));
         }
     };
 
@@ -61,24 +61,28 @@ export function IdentityProvider({
             if (state.identity && state.smeConfig) {
                 await persistIdentity(state.identity, state.smeConfig, profile);
                 if (state.smashUser) await state.smashUser.updateMeta(profile);
-                setState(prev => ({ ...prev, profile, error: null }));
+                setState((prev) => ({ ...prev, profile, error: null }));
                 logger.info('Profile updated successfully');
             }
         } catch (error) {
             logger.error('Failed to update profile', error);
-            setState(prev => ({ ...prev, error: error as Error }));
+            setState((prev) => ({ ...prev, error: error as Error }));
         }
     };
 
     const updateSMEConfig = async (config: SMEConfigJSON) => {
         if (!state.identity) {
-            setState(s => ({ ...s, error: new Error('No identity') }));
+            setState((s) => ({ ...s, error: new Error('No identity') }));
             return;
         }
         try {
             const smashUser = await createSmashUser(state.identity, config);
-            await persistIdentity(state.identity, config, state.profile ?? undefined);
-            setState(prev => ({
+            await persistIdentity(
+                state.identity,
+                config,
+                state.profile ?? undefined,
+            );
+            setState((prev) => ({
                 ...prev,
                 smeConfig: config,
                 smashUser,
@@ -87,7 +91,7 @@ export function IdentityProvider({
             logger.info('SME config updated successfully');
         } catch (error) {
             logger.error('Failed to update SME config', error);
-            setState(prev => ({ ...prev, error: error as Error }));
+            setState((prev) => ({ ...prev, error: error as Error }));
         }
     };
 
@@ -112,7 +116,7 @@ export function IdentityProvider({
             }, 100);
         } catch (error) {
             logger.error('Error during logout', error);
-            setState(prev => ({ ...prev, error: error as Error }));
+            setState((prev) => ({ ...prev, error: error as Error }));
             window.location.href = '/';
         }
     };
@@ -129,10 +133,10 @@ export function IdentityProvider({
         updateSMEConfig,
         clearIdentity,
     };
-    
+
     return (
         <IdentityContext.Provider value={contextValue}>
             {children}
         </IdentityContext.Provider>
     );
-} 
+}

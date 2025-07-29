@@ -1,4 +1,4 @@
-import { Camera, MessageCircle, Images } from 'lucide-react';
+import { Camera, Images, MessageCircle } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useUIStore } from '../hooks/useUIStore';
@@ -17,7 +17,9 @@ export default function BottomNav() {
             icon: MessageCircle,
             label: 'Chats',
             path: '/chats',
-            isActive: location.pathname.startsWith('/chat') || location.pathname === '/chats'
+            isActive:
+                location.pathname.startsWith('/chat') ||
+                location.pathname === '/chats',
         },
         {
             id: 'camera',
@@ -25,15 +27,15 @@ export default function BottomNav() {
             label: 'Camera',
             path: '/camera',
             isActive: location.pathname === '/camera',
-            isCenter: true
+            isCenter: true,
         },
         {
             id: 'gallery',
             icon: Images,
             label: 'Gallery',
             path: '/gallery',
-            isActive: location.pathname === '/gallery'
-        }
+            isActive: location.pathname === '/gallery',
+        },
     ];
 
     return (
@@ -62,12 +64,12 @@ interface NavButtonProps {
     onClick: () => void;
 }
 
-function NavButton({ 
-    icon: Icon, 
-    label, 
-    isActive, 
-    isCenter = false, 
-    onClick 
+function NavButton({
+    icon: Icon,
+    label,
+    isActive,
+    isCenter = false,
+    onClick,
 }: Readonly<NavButtonProps>) {
     return (
         <button
@@ -76,7 +78,7 @@ function NavButton({
             aria-label={label}
         >
             <div className="nav-button-icon">
-                <Icon 
+                <Icon
                     size={isCenter ? 24 : 22}
                     fill={isActive && !isCenter ? 'currentColor' : 'none'}
                 />

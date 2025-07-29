@@ -20,24 +20,34 @@ export function ConversationItem({
     const formatTimestamp = (timestamp: number) => {
         const now = new Date();
         const messageTime = new Date(timestamp);
-        const diffInMinutes = Math.floor((now.getTime() - messageTime.getTime()) / (1000 * 60));
-        
+        const diffInMinutes = Math.floor(
+            (now.getTime() - messageTime.getTime()) / (1000 * 60),
+        );
+
         if (diffInMinutes < 1) {
             return 'now';
         } else if (diffInMinutes < 60) {
             return `${diffInMinutes}m`;
         }
-        
+
         const diffInHours = Math.floor(diffInMinutes / 60);
         if (diffInHours < 20) {
-            return messageTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return messageTime.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
         }
-        
+
         // For messages older than 20 hours, show month and day
-        return messageTime.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        return messageTime.toLocaleDateString([], {
+            month: 'short',
+            day: 'numeric',
+        });
     };
 
-    const timeDisplay = lastMessage ? formatTimestamp(lastMessage.timestamp) : '';
+    const timeDisplay = lastMessage
+        ? formatTimestamp(lastMessage.timestamp)
+        : '';
 
     // Generate initials for avatar
     const displayName = profile?.title || title;
@@ -51,9 +61,9 @@ export function ConversationItem({
     // Truncate message preview
     const getMessagePreview = () => {
         if (!lastMessage) return 'No messages yet';
-        
+
         if (lastMessage.type === 'im.chat.text') {
-            return lastMessage.content.length > 50 
+            return lastMessage.content.length > 50
                 ? `${lastMessage.content.substring(0, 50)}...`
                 : lastMessage.content;
         } else {
@@ -63,7 +73,9 @@ export function ConversationItem({
 
     return (
         <Link to={`/chat/${id}`} className="conversation-item-link">
-            <div className={`conversation-item ${unreadCount > 0 ? 'conversation-item--unread' : ''}`}>
+            <div
+                className={`conversation-item ${unreadCount > 0 ? 'conversation-item--unread' : ''}`}
+            >
                 {/* Avatar */}
                 <div className="conversation-avatar">
                     <span className="conversation-avatar-text">{initials}</span>
@@ -75,7 +87,7 @@ export function ConversationItem({
                         <h3 className="conversation-name">{displayName}</h3>
                         <div className="conversation-time">{timeDisplay}</div>
                     </div>
-                    
+
                     <div className="conversation-footer">
                         <div className="conversation-preview">
                             {lastMessage?.type === 'im.chat.text' ? (
@@ -88,10 +100,12 @@ export function ConversationItem({
                                     <span>Photo</span>
                                 </div>
                             ) : (
-                                <span className="conversation-preview-empty">No messages yet</span>
+                                <span className="conversation-preview-empty">
+                                    No messages yet
+                                </span>
                             )}
                         </div>
-                        
+
                         {unreadCount > 0 && (
                             <div className="conversation-unread-badge">
                                 {unreadCount > 99 ? '99+' : unreadCount}

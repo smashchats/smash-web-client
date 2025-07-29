@@ -1,11 +1,10 @@
-import { Check, Copy } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useState } from 'react';
-
+import { useIdentityContext } from '@features/identity';
 import Button from '@shared/components/Button';
 import { logger } from '@shared/utils/logger';
 import { copyToClipboard } from '@shared/utils/utils';
-import { useIdentityContext } from '@features/identity';
+import { Check, Copy } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { useEffect, useState } from 'react';
 
 export function DidDocumentSection() {
     const [didDocumentString, setDidDocumentString] = useState<string | null>(
