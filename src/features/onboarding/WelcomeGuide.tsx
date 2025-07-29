@@ -1,12 +1,11 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { Camera, Lock, MessageCircle, Shield } from 'lucide-react';
+import { ArrowRight, Camera, Lock, MessageCircle, Shield, User } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { DEFAULT_SME_CONFIG } from '@app/config/sme';
-import { useIdentityContext, generateIdentity } from '@features/identity';
+import { generateIdentity, useIdentityContext } from '@features/identity';
 import Button from '@shared/components/Button';
 import './WelcomeGuide.css';
 
@@ -57,8 +56,8 @@ export function WelcomeGuide() {
             const identity = await generateIdentity();
             if (!identity) throw new Error('No identity generated');
             await setIdentity(identity, DEFAULT_SME_CONFIG, { 
-                title: displayName || 'Anonymous User',
-                description: 'Smash user',
+                title: displayName.trim() || '',
+                description: '',
                 avatar: ''
             });
             navigate('/', { replace: true });
@@ -82,83 +81,117 @@ export function WelcomeGuide() {
                 <Dialog.Overlay className="welcome-overlay" />
                 <div className="welcome-content-wrapper">
                     <Dialog.Content className="welcome-content" aria-describedby="welcome-description">
-                        <VisuallyHidden>
-                            <Dialog.Title>Welcome</Dialog.Title>
-                        </VisuallyHidden>
                         <div id="welcome-description" className="sr-only">
                             Welcome to Smashchats - A decentralized, private-first messaging app
                         </div>
 
-                    {step === 1 && (
-                        <>
-                            <h2>{t('title')}</h2>
-                            <p className="description">{t('description')}</p>
-
-                            <div className="features">
-                                {FEATURES.map((feature) => (
-                                    <Feature
-                                        key={feature.title}
-                                        icon={feature.icon}
-                                        title={feature.title}
-                                        desc={feature.desc}
-                                    />
-                                ))}
+                        <div className="welcome-header">
+                            <div className="welcome-logo">
+                                <MessageCircle className="welcome-logo-icon" />
                             </div>
+                            <h1 className="welcome-brand">{t('title')}</h1>
+                            <div className="welcome-steps">
+                                <div className={`welcome-step ${step >= 1 ? 'welcome-step--active' : ''}`} />
+                                <div className={`welcome-step ${step >= 2 ? 'welcome-step--active' : ''}`} />
+                            </div>
+                        </div>
 
-                            <Button
-                                className="btn-primary"
-                                isFullWidth
-                                onClick={() => setStep(2)}
-                            >
-                                {t('continue')}
-                            </Button>
-                        </>
-                    )}
+                        {step === 1 && (
+                            <div className="welcome-step-content">
+                                <div className="welcome-intro">
+                                    <p className="welcome-description">{t('description')}</p>
+                                </div>
 
-                    {step === 2 && (
-                        <>
-                            <h2>{t('create-identity.title')}</h2>
-                            <p className="description">
-                                {t('create-identity.description')}
-                            </p>
+                                <div className="welcome-features">
+                                    {FEATURES.map((feature) => (
+                                        <FeatureCard
+                                            key={feature.title}
+                                            icon={feature.icon}
+                                            title={feature.title}
+                                            desc={feature.desc}
+                                        />
+                                    ))}
+                                </div>
 
-                            <input
-                                type="text"
-                                className="welcome-guide-input-field"
-                                placeholder={t('create-identity.placeholder')}
-                                value={displayName}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleCreateIdentity();
-                                    }
-                                }}
-                                onChange={handleNameChange}
-                                disabled={isGenerating}
-                                aria-label={t('create-identity.display-name')}
-                                autoComplete="name"
-                                autoFocus
-                            />
+                                <div className="welcome-actions">
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => setStep(2)}
+                                        size="lg"
+                                        isFullWidth
+                                    >
+                                        Get Started
+                                        <ArrowRight size={20} />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
 
-                            {errorMessage && (
-                                <p className="welcome-guide-alert-error">
-                                    {errorMessage}
-                                </p>
-                            )}
+                        {step === 2 && (
+                            <div className="welcome-step-content">
+                                <div className="welcome-intro">
+                                    <div className="welcome-avatar">
+                                        <User size={32} />
+                                    </div>
+                                    <h2 className="welcome-title">{t('create-identity.title')}</h2>
+                                    <p className="welcome-description">
+                                        {t('create-identity.description')}
+                                    </p>
+                                </div>
 
-                            <Button
-                                className="btn-primary"
-                                isFullWidth
-                                onClick={handleCreateIdentity}
-                                disabled={isGenerating}
-                                isLoading={isGenerating}
-                            >
-                                {isGenerating
-                                    ? t('create-identity.creating')
-                                    : t('create-identity.create-identity')}
-                            </Button>
-                        </>
-                    )}
+                                <div className="welcome-form">
+                                    <div className="welcome-input-group">
+                                        <input
+                                            type="text"
+                                            className="welcome-input"
+                                            placeholder={t('create-identity.placeholder')}
+                                            value={displayName}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !isGenerating) {
+                                                    e.preventDefault();
+                                                    handleCreateIdentity();
+                                                }
+                                            }}
+                                            onChange={handleNameChange}
+                                            disabled={isGenerating}
+                                            aria-label={t('create-identity.display-name')}
+                                            autoComplete="name"
+                                            autoFocus
+                                        />
+                                    </div>
+
+                                    {errorMessage && (
+                                        <div className="welcome-error">
+                                            {errorMessage}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="welcome-actions">
+                                    <Button
+                                        variant="primary"
+                                        onClick={handleCreateIdentity}
+                                        disabled={isGenerating}
+                                        isLoading={isGenerating}
+                                        size="lg"
+                                        isFullWidth
+                                    >
+                                        {isGenerating
+                                            ? t('create-identity.creating')
+                                            : t('create-identity.create-identity')}
+                                    </Button>
+                                    
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => setStep(1)}
+                                        disabled={isGenerating}
+                                        isFullWidth
+                                    >
+                                        Back
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </Dialog.Content>
                 </div>
             </Dialog.Portal>
@@ -166,7 +199,7 @@ export function WelcomeGuide() {
     );
 }
 
-function Feature({
+function FeatureCard({
     icon,
     title,
     desc,
@@ -176,11 +209,11 @@ function Feature({
     desc: string;
 }>) {
     return (
-        <div className="feature">
-            <div className="feature-icon">{icon}</div>
-            <div className="feature-content">
-                <h3>{title}</h3>
-                <p>{desc}</p>
+        <div className="welcome-feature">
+            <div className="welcome-feature-icon">{icon}</div>
+            <div className="welcome-feature-content">
+                <h3 className="welcome-feature-title">{title}</h3>
+                <p className="welcome-feature-desc">{desc}</p>
             </div>
         </div>
     );

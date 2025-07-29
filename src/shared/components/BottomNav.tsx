@@ -1,4 +1,4 @@
-import { Camera, Images, MessageCircle } from 'lucide-react';
+import { Camera, MessageCircle, Images } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useUIStore } from '../hooks/useUIStore';
@@ -8,77 +8,80 @@ export default function BottomNav() {
     const show = useUIStore((s) => s.showBottomNav);
     const navigate = useNavigate();
     const location = useLocation();
-    const isDarkMode = window.matchMedia(
-        '(prefers-color-scheme: dark)',
-    ).matches;
 
     if (!show) return null;
 
-    return (
-        <nav
-            className="bottom-nav"
-            style={{
-                backgroundColor: isDarkMode
-                    ? 'rgba(0,0,0,0.6)'
-                    : 'rgba(230,230,230,0.6)',
-            }}
-        >
-            <IconButton
-                onClick={() => navigate('/chats', { replace: true })}
-                active={location.pathname.startsWith('/chat')}
-                isDarkMode={isDarkMode}
-            >
-                <MessageCircle
-                    fill={
-                        location.pathname.startsWith('/chat')
-                            ? 'var(--ds-color-primary-600)'
-                            : 'transparent'
-                    }
-                />
-            </IconButton>
+    const navItems = [
+        {
+            id: 'chats',
+            icon: MessageCircle,
+            label: 'Chats',
+            path: '/chats',
+            isActive: location.pathname.startsWith('/chat') || location.pathname === '/chats'
+        },
+        {
+            id: 'camera',
+            icon: Camera,
+            label: 'Camera',
+            path: '/camera',
+            isActive: location.pathname === '/camera',
+            isCenter: true
+        },
+        {
+            id: 'gallery',
+            icon: Images,
+            label: 'Gallery',
+            path: '/gallery',
+            isActive: location.pathname === '/gallery'
+        }
+    ];
 
-            <IconButton
-                onClick={() => navigate('/camera', { replace: true })}
-                active={location.pathname === '/camera'}
-                isDarkMode={isDarkMode}
-            >
-                <Camera />
-            </IconButton>
-            <IconButton
-                onClick={() => navigate('/gallery', { replace: true })}
-                active={location.pathname === '/gallery'}
-                isDarkMode={isDarkMode}
-            >
-                <Images />
-            </IconButton>
+    return (
+        <nav className="bottom-nav">
+            <div className="bottom-nav-container">
+                {navItems.map((item) => (
+                    <NavButton
+                        key={item.id}
+                        icon={item.icon}
+                        label={item.label}
+                        isActive={item.isActive}
+                        isCenter={item.isCenter}
+                        onClick={() => navigate(item.path, { replace: true })}
+                    />
+                ))}
+            </div>
         </nav>
     );
 }
 
-function IconButton({
-    children,
-    onClick,
-    active,
-    isDarkMode,
-}: Readonly<{
-    children: React.ReactNode;
+interface NavButtonProps {
+    icon: React.ComponentType<{ size?: number; fill?: string }>;
+    label: string;
+    isActive: boolean;
+    isCenter?: boolean;
     onClick: () => void;
-    active: boolean;
-    isDarkMode: boolean;
-}>) {
-    const activeColor = 'var(--ds-color-primary-600)';
-    const inactiveColor = isDarkMode ? '#aaa' : '#666';
-    const color = active ? activeColor : inactiveColor;
+}
 
+function NavButton({ 
+    icon: Icon, 
+    label, 
+    isActive, 
+    isCenter = false, 
+    onClick 
+}: Readonly<NavButtonProps>) {
     return (
         <button
-            className="bottom-nav-button"
+            className={`nav-button ${isActive ? 'nav-button--active' : ''} ${isCenter ? 'nav-button--center' : ''}`}
             onClick={onClick}
-            style={{
-                color,
-            }}
+            aria-label={label}
         >
-            {children}
+            <div className="nav-button-icon">
+                <Icon 
+                    size={isCenter ? 24 : 22}
+                    fill={isActive && !isCenter ? 'currentColor' : 'none'}
+                />
+            </div>
+            <span className="nav-button-label">{label}</span>
         </button>
     );
 }

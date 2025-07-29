@@ -131,21 +131,3 @@
     font-weight: 500;
     color: var(--color-text);
 }
-
-.discussion-send-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--color-primary);
-    color: var(--color-white);
-    border: none;
-    border-radius: 24px;
-    padding: 10px 20px;
-    gap: 8px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.discussion-send-text {
-    font-size: 16px;
-}

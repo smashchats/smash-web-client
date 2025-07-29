@@ -14,10 +14,10 @@ export default function FloatingButton({
     position = 'top-left',
 }: Readonly<FloatingButtonProps>) {
     const positionClass = {
-        'top-left': 'fixed top-4 left-4',
-        'top-right': 'fixed top-4 right-4',
-        'bottom-left': 'fixed bottom-4 left-4',
-        'bottom-right': 'fixed bottom-4 right-4',
+        'top-left': 'floating-button--top-left',
+        'top-right': 'floating-button--top-right',
+        'bottom-left': 'floating-button--bottom-left',
+        'bottom-right': 'floating-button--bottom-right',
         'none': ''
     }[position] || '';
 
@@ -26,7 +26,7 @@ export default function FloatingButton({
             variant="primary"
             size="md"
             onClick={onClick}
-            className={`${positionClass} z-30 rounded-full w-12 h-12 p-0 flex items-center justify-center`}
+            className={`floating-button ${positionClass}`}
         >
             {icon}
         </Button>

@@ -1,6 +1,7 @@
 import { ArrowLeft, Check, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import Button from '@shared/components/Button';
 import { ScreenHeaderLeftSlot } from '@shared/components/ScreenHeader';
 import ScreenWrapper from '@shared/components/ScreenWrapper';
 import { useChatStore } from '@shared/hooks/useChatStore';
@@ -97,15 +98,13 @@ export default function DiscussionSelection({
                                 {selectedDiscussions.size} selected
                             </div>
 
-                            <button
-                                className="discussion-send-button"
+                            <Button
+                                variant="primary"
                                 onClick={handleSend}
                             >
-                                <span className="discussion-send-text">
-                                    Send
-                                </span>
+                                <span>Send</span>
                                 <Send size={18} />
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 )}

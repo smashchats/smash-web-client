@@ -69,7 +69,6 @@ export default function CameraOverlay({
                         variant="ghost"
                         size="sm"
                         onClick={onDownload}
-                        className="camera-overlay-icon-button"
                     >
                         <Download size={20} />
                     </Button>
@@ -77,11 +76,8 @@ export default function CameraOverlay({
                     <Button
                         variant="primary"
                         onClick={handleSend}
-                        className="camera-overlay-send-button"
                     >
-                        <span className="camera-overlay-send-text">
-                            Send to
-                        </span>
+                        <span>Send to</span>
                         <Send size={20} />
                     </Button>
                 </div>

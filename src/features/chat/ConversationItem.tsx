@@ -1,5 +1,4 @@
-import { formatDistanceToNow } from 'date-fns';
-import { Camera, Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useChatStore } from '../../shared/hooks/useChatStore';
@@ -8,21 +7,37 @@ import './conversationItem.css';
 
 interface ConversationItemProps {
     conversation: SmashConversation;
-    onQuickPhoto?: (conversationId: string) => void;
 }
 
 export function ConversationItem({
     conversation,
-    onQuickPhoto,
 }: Readonly<ConversationItemProps>) {
     const { id, title, lastMessage, unreadCount } = conversation;
 
     const profile = useChatStore((state) => state.getPeerProfile(id));
 
-    // Format the relative time (e.g., "5 minutes ago")
-    const timeAgo = lastMessage
-        ? formatDistanceToNow(new Date(lastMessage.timestamp))
-        : 'No messages yet';
+    // Format the time according to requirements
+    const formatTimestamp = (timestamp: number) => {
+        const now = new Date();
+        const messageTime = new Date(timestamp);
+        const diffInMinutes = Math.floor((now.getTime() - messageTime.getTime()) / (1000 * 60));
+        
+        if (diffInMinutes < 1) {
+            return 'now';
+        } else if (diffInMinutes < 60) {
+            return `${diffInMinutes}m`;
+        }
+        
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 20) {
+            return messageTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // For messages older than 20 hours, show month and day
+        return messageTime.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    };
+
+    const timeDisplay = lastMessage ? formatTimestamp(lastMessage.timestamp) : '';
 
     // Generate initials for avatar
     const displayName = profile?.title || title;
@@ -33,57 +48,57 @@ export function ConversationItem({
         .substring(0, 2)
         .toUpperCase();
 
+    // Truncate message preview
+    const getMessagePreview = () => {
+        if (!lastMessage) return 'No messages yet';
+        
+        if (lastMessage.type === 'im.chat.text') {
+            return lastMessage.content.length > 50 
+                ? `${lastMessage.content.substring(0, 50)}...`
+                : lastMessage.content;
+        } else {
+            return 'Photo';
+        }
+    };
+
     return (
-        <Link to={`/chat/${id}`} className="conversation-content">
-            <div className="conversation-item">
+        <Link to={`/chat/${id}`} className="conversation-item-link">
+            <div className={`conversation-item ${unreadCount > 0 ? 'conversation-item--unread' : ''}`}>
                 {/* Avatar */}
-                <div className="avatar">{initials}</div>
+                <div className="conversation-avatar">
+                    <span className="conversation-avatar-text">{initials}</span>
+                </div>
 
                 {/* Main content */}
-                <div className="conversation-header">
-                    <div className="conversation-header-row">
-                        <h3 className="conversation-title">{displayName}</h3>
-                        <div className="conversation-meta">
-                            <span className="conversation-time">
-                                {timeAgo === 'less than a minute'
-                                    ? 'just now'
-                                    : timeAgo}
-                            </span>
-                            {/* Quick photo button */}
-                            <button
-                                className="photo-button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    onQuickPhoto?.(id);
-                                }}
-                                aria-label="Take a photo"
-                            >
-                                <Camera size={18} />
-                            </button>
-                        </div>
+                <div className="conversation-main">
+                    <div className="conversation-header">
+                        <h3 className="conversation-name">{displayName}</h3>
+                        <div className="conversation-time">{timeDisplay}</div>
                     </div>
-                    {/* Last message preview */}
-                    <div className="conversation-message">
-                        {lastMessage ? (
-                            lastMessage.type === 'im.chat.text' ? (
-                                lastMessage.content
-                            ) : (
-                                <span className="conversation-message-media">
-                                    <ImageIcon size={14} /> Photo
+                    
+                    <div className="conversation-footer">
+                        <div className="conversation-preview">
+                            {lastMessage?.type === 'im.chat.text' ? (
+                                <span className="conversation-preview-text">
+                                    {getMessagePreview()}
                                 </span>
-                            )
-                        ) : (
-                            <span className="conversation-message-empty">No messages yet</span>
+                            ) : lastMessage ? (
+                                <div className="conversation-preview-media">
+                                    <ImageIcon size={14} />
+                                    <span>Photo</span>
+                                </div>
+                            ) : (
+                                <span className="conversation-preview-empty">No messages yet</span>
+                            )}
+                        </div>
+                        
+                        {unreadCount > 0 && (
+                            <div className="conversation-unread-badge">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </div>
                         )}
                     </div>
                 </div>
-
-                {/* Unread count */}
-                {unreadCount > 0 && (
-                    <div className="conversation-actions">
-                        <span className="unread-badge">{unreadCount}</span>
-                    </div>
-                )}
             </div>
         </Link>
     );

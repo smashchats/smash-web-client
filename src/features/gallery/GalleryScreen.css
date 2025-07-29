@@ -21,7 +21,7 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    background-color: var(--color-background-primary);
+    background-color: var(--ds-color-background);
     transition: transform 0.2s ease-in-out;
 }
 
@@ -48,7 +48,7 @@
     justify-content: center;
     align-items: center;
     height: 100%;
-    color: var(--color-text-secondary);
+    color: var(--ds-color-foreground-secondary);
     font-size: 1.2rem;
 }
 
@@ -65,25 +65,24 @@
     transition: box-shadow 0.2s ease-in-out;
 }
 
-.gallery-filters button {
+.gallery-filters .gallery-filter-button {
     padding: 0.5rem 1rem;
     border: none;
     border-radius: 20px;
-    background: var(--color-background-secondary);
-    color: var(--color-text-primary);
-    font-weight: 500;
+    background: var(--ds-color-surface-secondary);
+    color: var(--ds-color-foreground);
+    font-weight: var(--ds-font-weight-medium);
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color var(--ds-transition-fast);
 }
 
-.gallery-filters button:hover {
-    background: var(--color-primary);
-    opacity: 0.8;
+.gallery-filters .gallery-filter-button:hover {
+    background: var(--ds-color-primary-600);
     color: white;
 }
 
-.gallery-filters button.active {
-    background: var(--color-primary);
+.gallery-filters .gallery-filter-button.active {
+    background: var(--ds-color-primary-600);
     color: white;
 }
 

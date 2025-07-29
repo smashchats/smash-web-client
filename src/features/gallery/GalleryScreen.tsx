@@ -91,25 +91,25 @@ export default function GalleryScreen() {
             <div className="gallery-screen">
                 <div className="gallery-filters">
                     <button
-                        className={activeType === 'all' ? 'active' : ''}
+                        className={`gallery-filter-button ${activeType === 'all' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('all')}
                     >
                         All
                     </button>
                     <button
-                        className={activeType === 'image' ? 'active' : ''}
+                        className={`gallery-filter-button ${activeType === 'image' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('image')}
                     >
                         Images
                     </button>
                     <button
-                        className={activeType === 'video' ? 'active' : ''}
+                        className={`gallery-filter-button ${activeType === 'video' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('video')}
                     >
                         Videos
                     </button>
                     <button
-                        className={activeType === 'audio' ? 'active' : ''}
+                        className={`gallery-filter-button ${activeType === 'audio' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('audio')}
                     >
                         Audio

@@ -31,10 +31,9 @@ function SendButton({ isLoading, disabled }: Readonly<SendButtonProps>) {
             size="sm"
             disabled={disabled}
             isLoading={isLoading}
-            className="chat-input-send-button"
             aria-label="Send message"
         >
-            <Send className="w-5 h-5" />
+            <Send size={20} />
         </Button>
     );
 }

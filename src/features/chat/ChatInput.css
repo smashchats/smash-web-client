@@ -59,6 +59,19 @@
     cursor: pointer;
 }
 
+.media-upload-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .media-upload-dropzone {
     position: absolute;
     top: 0;
@@ -101,20 +114,4 @@
 
 .chat-input::placeholder {
     color: var(--ds-color-foreground-tertiary);
-}
-
-.chat-input-send-button {
-    width: 2.75rem !important;
-    height: 2.75rem !important;
-    min-height: 2.75rem !important;
-    padding: 0 !important;
-    color: var(--ds-color-primary-600) !important;
-}
-
-.chat-input-send-button:hover:not(:disabled) {
-    color: var(--ds-color-primary-700) !important;
-}
-
-.chat-input-send-button:disabled {
-    color: var(--ds-color-foreground-tertiary) !important;
 }

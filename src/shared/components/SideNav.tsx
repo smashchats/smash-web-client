@@ -1,4 +1,4 @@
-import { Camera, Images, MessageCircle, User } from 'lucide-react';
+import { Camera, MessageCircle, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './SideNav.css';
 
@@ -6,54 +6,79 @@ export default function SideNav() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const navigationItems = [
+    const navItems = [
         {
-            path: '/chats',
+            id: 'chats',
             icon: MessageCircle,
             label: 'Chats',
-            active: location.pathname.startsWith('/chat'),
+            path: '/chats',
+            isActive: location.pathname.startsWith('/chat') || location.pathname === '/chats'
         },
         {
-            path: '/camera',
+            id: 'camera',
             icon: Camera,
             label: 'Camera',
-            active: location.pathname === '/camera',
+            path: '/camera',
+            isActive: location.pathname === '/camera'
         },
         {
-            path: '/gallery',
-            icon: Images,
-            label: 'Gallery',
-            active: location.pathname === '/gallery',
-        },
-        {
+            id: 'settings',
+            icon: Settings,
+            label: 'Settings',
             path: '/profile',
-            icon: User,
-            label: 'Profile',
-            active: location.pathname === '/profile',
-        },
+            isActive: location.pathname === '/profile'
+        }
     ];
 
     return (
         <nav className="side-nav">
-            <div className="side-nav__header">
-                <h2 className="side-nav__title">SmashChats</h2>
+            <div className="side-nav-header">
+                <div className="side-nav-logo">
+                    <MessageCircle className="side-nav-logo-icon" />
+                    <h1 className="side-nav-brand">Smashchats</h1>
+                </div>
             </div>
-            
-            <div className="side-nav__menu">
-                {navigationItems.map((item) => (
-                    <button
-                        key={item.path}
-                        className={`side-nav__item ${item.active ? 'side-nav__item--active' : ''}`}
-                        onClick={() => navigate(item.path, { replace: true })}
-                    >
-                        <item.icon 
-                            className="side-nav__icon"
-                            fill={item.active ? 'currentColor' : 'transparent'}
+
+            <div className="side-nav-content">
+                <ul className="side-nav-list">
+                    {navItems.map((item) => (
+                        <SideNavItem
+                            key={item.id}
+                            icon={item.icon}
+                            label={item.label}
+                            isActive={item.isActive}
+                            onClick={() => navigate(item.path)}
                         />
-                        <span className="side-nav__label">{item.label}</span>
-                    </button>
-                ))}
+                    ))}
+                </ul>
             </div>
         </nav>
+    );
+}
+
+interface SideNavItemProps {
+    icon: React.ComponentType<{ size?: number }>;
+    label: string;
+    isActive: boolean;
+    onClick: () => void;
+}
+
+function SideNavItem({ 
+    icon: Icon, 
+    label, 
+    isActive, 
+    onClick 
+}: Readonly<SideNavItemProps>) {
+    return (
+        <li className="side-nav-item">
+            <button
+                className={`side-nav-button ${isActive ? 'side-nav-button--active' : ''}`}
+                onClick={onClick}
+                aria-label={label}
+            >
+                <Icon size={20} />
+                <span className="side-nav-button-label">{label}</span>
+            </button>
+        </li>
     );
 } 

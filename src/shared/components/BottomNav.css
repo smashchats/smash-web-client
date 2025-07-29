@@ -1,28 +1,163 @@
 .bottom-nav {
-    display: flex;
-    justify-content: space-around;
     position: fixed;
-    bottom: -1px;
-    width: 100vw;
-    padding: var(--ds-space-1) 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     z-index: var(--ds-z-fixed);
-    min-height: calc(
-        var(--ds-bottom-nav-height) + env(safe-area-inset-bottom, 15px) / 2
-    );
-    padding-bottom: calc(env(safe-area-inset-bottom, 15px) / 2);
-    background-color: var(--ds-color-surface);
-    border-top: 1px solid var(--ds-color-border);
+    background: var(--ds-color-surface);
+    border-top: 1px solid var(--ds-color-border-light);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-.bottom-nav-button {
+.bottom-nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: var(--ds-space-2) var(--ds-space-4);
+    max-width: 100%;
+    height: var(--ds-bottom-nav-height);
+    position: relative;
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ds-space-1);
     background: none;
     border: none;
-    font-size: var(--ds-font-size-xs);
-    color: var(--ds-color-foreground-secondary);
-    transition: color var(--ds-transition-fast);
+    cursor: pointer;
+    color: var(--ds-color-foreground-tertiary);
+    transition: all var(--ds-transition-fast);
+    border-radius: var(--ds-radius-lg);
+    padding: var(--ds-space-2);
+    min-width: 3.5rem;
+    min-height: 3.5rem;
+    position: relative;
+    outline: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.bottom-nav-button:hover,
-.bottom-nav-button.active {
+.nav-button:focus-visible {
+    outline: 2px solid var(--ds-color-primary-600);
+    outline-offset: 2px;
+}
+
+.nav-button:active {
+    transform: scale(0.95);
+}
+
+.nav-button--active {
     color: var(--ds-color-primary-600);
+}
+
+.nav-button--center {
+    background: var(--ds-color-primary-600);
+    color: white;
+    border-radius: 50%;
+    width: 3.5rem;
+    height: 3.5rem;
+    min-width: 3.5rem;
+    min-height: 3.5rem;
+    transform: translateY(-2px);
+    box-shadow: var(--ds-shadow-lg);
+}
+
+.nav-button--center:hover {
+    background: var(--ds-color-primary-700);
+    transform: translateY(-3px);
+    box-shadow: var(--ds-shadow-xl);
+}
+
+.nav-button--center:active {
+    transform: translateY(-1px) scale(0.95);
+}
+
+.nav-button--center .nav-button-label {
+    display: none;
+}
+
+.nav-button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--ds-transition-fast);
+}
+
+.nav-button:hover .nav-button-icon {
+    transform: scale(1.1);
+}
+
+.nav-button-label {
+    font-size: var(--ds-font-size-xs);
+    font-weight: var(--ds-font-weight-medium);
+    line-height: var(--ds-line-height-tight);
+    text-align: center;
+    opacity: 0.9;
+    transition: opacity var(--ds-transition-fast);
+}
+
+.nav-button--active .nav-button-label {
+    opacity: 1;
+    font-weight: var(--ds-font-weight-semibold);
+}
+
+/* Desktop and tablet - hide on larger screens */
+@media (min-width: 768px) {
+    .bottom-nav {
+        display: none;
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .bottom-nav {
+        background: rgba(26, 26, 26, 0.95);
+        border-top-color: var(--ds-color-border);
+    }
+
+    .nav-button--center {
+        background: var(--ds-color-primary-500);
+    }
+
+    .nav-button--center:hover {
+        background: var(--ds-color-primary-600);
+    }
+
+    .nav-button--active {
+        color: var(--ds-color-primary-400);
+    }
+}
+
+/* High contrast accessibility */
+@media (prefers-contrast: high) {
+    .bottom-nav {
+        border-top-width: 2px;
+    }
+
+    .nav-button--active {
+        background: var(--ds-color-primary-50);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .nav-button--active {
+            background: var(--ds-color-primary-900);
+        }
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .nav-button {
+        transition: none;
+    }
+
+    .nav-button-icon,
+    .nav-button-label {
+        transition: none;
+    }
 }

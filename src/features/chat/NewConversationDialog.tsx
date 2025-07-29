@@ -1,13 +1,13 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { FileText, MessageCirclePlus, Type, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { Plus, X } from 'lucide-react';
+import { useState } from 'react';
 import type { DIDDocument } from 'smash-node-lib';
 
 import Button from '@shared/components/Button';
 import { logger } from '@shared/utils/logger';
 import './NewConversationDialog.css';
 
-type ScanMode = 'qr' | 'file' | 'text';
+type InputMode = 'text'; // Simplified to only text for now
 
 interface NewConversationDialogProps {
     onCreateConversation: (didDoc: DIDDocument) => void;
@@ -20,8 +20,8 @@ interface DialogContentProps {
     error?: string;
     onSubmit: () => void;
     onCancel: () => void;
-    scanMode: ScanMode;
-    onScanModeChange: (mode: ScanMode) => void;
+    inputMode: InputMode;
+    onInputModeChange: (mode: InputMode) => void;
 }
 
 function DialogContent({
@@ -30,86 +30,62 @@ function DialogContent({
     error,
     onSubmit,
     onCancel,
-    scanMode,
-    onScanModeChange,
 }: Readonly<DialogContentProps>) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        logger.debug('Scanning file', { fileName: file.name });
-
-        try {
-            const text = await file.text();
-            onDidInputChange(text);
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && e.ctrlKey && didInput.trim()) {
             onSubmit();
-        } catch (err) {
-            logger.error('Error reading file', err);
         }
     };
 
     return (
-        <>
-            <Dialog.Title className="dialog-title">
-                Start New Conversation
-            </Dialog.Title>
-            <Dialog.Description className="dialog-description">
-                Enter the DID document of the peer you want to chat with.
-            </Dialog.Description>
-
-            <div className="scan-mode-selector">
-                <button
-                    className={`scan-mode-button ${scanMode === 'text' ? 'active' : ''}`}
-                    onClick={() => onScanModeChange('text')}
-                >
-                    <Type size={20} />
-                    <span>Paste Text</span>
-                </button>
-                <button
-                    className={`scan-mode-button ${scanMode === 'file' ? 'active' : ''}`}
-                    onClick={() => onScanModeChange('file')}
-                >
-                    <FileText size={20} />
-                    <span>Upload File</span>
-                </button>
+        <div className="new-chat-dialog">
+            <div className="new-chat-header">
+                <div className="new-chat-icon">
+                    <Plus size={24} />
+                </div>
+                <div className="new-chat-title-section">
+                    <Dialog.Title className="new-chat-title">
+                        Start New Chat
+                    </Dialog.Title>
+                    <Dialog.Description className="new-chat-description">
+                        Paste a DID document to start chatting
+                    </Dialog.Description>
+                </div>
+                <Dialog.Close asChild>
+                    <button className="new-chat-close" aria-label="Close">
+                        <X size={20} />
+                    </button>
+                </Dialog.Close>
             </div>
 
-            {scanMode === 'file' && (
-                <div className="file-upload-container">
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileUpload}
-                        accept="*.json,application/json"
-                        style={{ display: 'none' }}
+            <div className="new-chat-content">
+                <div className="did-input-section">
+                    <label htmlFor="did-input" className="did-input-label">
+                        DID Document
+                    </label>
+                    <textarea
+                        id="did-input"
+                        className="did-input"
+                        value={didInput}
+                        onChange={(e) => onDidInputChange(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Paste the complete DID document JSON here..."
+                        rows={8}
                     />
-                    <Button
-                        variant="secondary"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="file-upload-button"
-                    >
-                        Choose File
-                    </Button>
-                    {didInput && (
-                        <p className="file-name">File loaded successfully</p>
-                    )}
+                    {/* <div className="did-input-hint">
+                    // TODO: add Ctrl+Enter to create conversation
+                        <span>Tip: Press Ctrl+Enter to create conversation</span>
+                    </div> */}
                 </div>
-            )}
 
-            {scanMode === 'text' && (
-                <textarea
-                    className="dialog-input"
-                    value={didInput}
-                    onChange={(e) => onDidInputChange(e.target.value)}
-                    placeholder="Paste DID document JSON here..."
-                />
-            )}
+                {error && (
+                    <div className="new-chat-error">
+                        <span className="new-chat-error-text">{error}</span>
+                    </div>
+                )}
+            </div>
 
-            {error && <p className="dialog-error">{error}</p>}
-
-            <div className="dialog-footer">
+            <div className="new-chat-footer">
                 <Button
                     variant="secondary"
                     onClick={onCancel}
@@ -121,16 +97,10 @@ function DialogContent({
                     onClick={onSubmit}
                     disabled={!didInput.trim()}
                 >
-                    Create Conversation
+                    Start Chat
                 </Button>
             </div>
-
-            <Dialog.Close asChild>
-                <button className="dialog-close" aria-label="Close">
-                    <X size={16} />
-                </button>
-            </Dialog.Close>
-        </>
+        </div>
     );
 }
 
@@ -141,7 +111,7 @@ export function NewConversationDialog({
     const [didInput, setDidInput] = useState('');
     const [error, setError] = useState<string>();
     const [open, setOpen] = useState(false);
-    const [scanMode, setScanMode] = useState<ScanMode>('text');
+    const [inputMode] = useState<InputMode>('text'); // Always text for now
 
     const validateDIDDocument = (didDoc: DIDDocument): void => {
         if (!didDoc.id || !didDoc.ik || !didDoc.ek || !didDoc.endpoints) {
@@ -173,25 +143,23 @@ export function NewConversationDialog({
 
             logger.info('Creating new conversation', { didId: didDoc.id });
             onCreateConversation(didDoc);
-            setDidInput('');
-            setError(undefined);
-            logger.debug('Dialog state reset successfully');
+            handleReset();
             setOpen(false);
         } catch (err) {
             logger.error('Error in conversation creation', err);
             setError(
-                err instanceof Error ? err.message : 'Invalid JSON format',
+                err instanceof Error ? err.message : 'Invalid JSON format. Please check your DID document.',
             );
         }
     };
 
-    const handleDidInputChange = (value: string) => {
-        setDidInput(value);
+    const handleReset = () => {
+        setDidInput('');
+        setError(undefined);
     };
 
     const handleCancel = () => {
-        setDidInput('');
-        setError(undefined);
+        handleReset();
         setOpen(false);
         onCancel?.();
     };
@@ -199,19 +167,24 @@ export function NewConversationDialog({
     return (
         <Dialog.Root open={open} onOpenChange={setOpen}>
             <Dialog.Trigger asChild>
-                <MessageCirclePlus />
+                <button 
+                    className="chat-list-action-button chat-list-action-button--primary"
+                    aria-label="Start new chat"
+                >
+                    <Plus size={20} />
+                </button>
             </Dialog.Trigger>
             <Dialog.Portal>
-                <Dialog.Overlay className="dialog-overlay" />
-                <Dialog.Content className="dialog-content">
+                <Dialog.Overlay className="new-chat-overlay" />
+                <Dialog.Content className="new-chat-content-wrapper">
                     <DialogContent
                         didInput={didInput}
-                        onDidInputChange={handleDidInputChange}
+                        onDidInputChange={setDidInput}
                         error={error}
                         onSubmit={handleSubmit}
                         onCancel={handleCancel}
-                        scanMode={scanMode}
-                        onScanModeChange={setScanMode}
+                        inputMode={inputMode}
+                        onInputModeChange={() => {}} // No-op since we only have text mode
                     />
                 </Dialog.Content>
             </Dialog.Portal>
