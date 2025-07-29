@@ -197,13 +197,16 @@ class MessageService {
     // Event handling
     onMessageReceived(callback: MessageCallback): () => void {
         this.messageCallbacks.add(callback);
-        logger.debug('Added message received callback', {
+        logger.info('➕ Added message received callback', {
             callbackCount: this.messageCallbacks.size,
         });
 
         // Return cleanup function
         return () => {
             this.messageCallbacks.delete(callback);
+            logger.info('➖ Removed message received callback', {
+                callbackCount: this.messageCallbacks.size,
+            });
         };
     }
 
@@ -220,12 +223,35 @@ class MessageService {
     }
 
     notifyMessageCallbacks(message: SmashMessage): void {
-        this.messageCallbacks.forEach((callback) => {
+        logger.info('📬 notifyMessageCallbacks ENTRY', {
+            messageId: message.id,
+            conversationId: message.conversationId,
+            callbackCount: this.messageCallbacks.size,
+        });
+
+        this.messageCallbacks.forEach((callback, index) => {
             try {
+                logger.debug('🔔 Executing message callback', {
+                    messageId: message.id,
+                    callbackIndex: index,
+                });
                 callback(message);
+                logger.debug('✅ Message callback executed successfully', {
+                    messageId: message.id,
+                    callbackIndex: index,
+                });
             } catch (error) {
-                logger.error('Error in message callback', error);
+                logger.error('❌ Error in message callback', {
+                    messageId: message.id,
+                    callbackIndex: index,
+                    error,
+                });
             }
+        });
+
+        logger.info('📬 notifyMessageCallbacks COMPLETE', {
+            messageId: message.id,
+            callbacksExecuted: this.messageCallbacks.size,
         });
     }
 

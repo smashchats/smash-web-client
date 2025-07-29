@@ -12,17 +12,22 @@ import { useEffect } from 'react';
  */
 export function useMessagingHandlers() {
     useEffect(() => {
-        logger.info('Setting up messaging event handlers');
+        logger.info('🚀 useMessagingHandlers effect STARTING');
 
         const handleIncomingMessage = (message: SmashMessage) => {
-            logger.info('Handling incoming message', {
+            logger.info('🔔 useMessagingHandlers.handleIncomingMessage', {
                 messageId: message.id,
                 conversationId: message.conversationId,
+                sender: message.sender,
             });
             // Message is already stored by smashService, just update UI store
             useMessageStore
                 .getState()
                 .addMessage(message.conversationId, message);
+            logger.debug('✅ Added message to UI store', {
+                messageId: message.id,
+                conversationId: message.conversationId,
+            });
         };
 
         const handleMessageStatusUpdate = async (
@@ -104,21 +109,29 @@ export function useMessagingHandlers() {
         const cleanupMessage = smashOrchestrator.onMessageReceived(
             handleIncomingMessage,
         );
+        logger.info('📝 Subscribed to message events');
+
         const cleanupStatus = smashOrchestrator.onMessageStatusUpdated(
             handleMessageStatusUpdate,
         );
+        logger.info('📊 Subscribed to status events');
+
         const cleanupConversation = smashOrchestrator.onConversationUpdated(
             handleConversationUpdate,
         );
+        logger.info('💬 Subscribed to conversation events');
 
-        logger.info('Messaging event handlers initialized');
+        logger.info(
+            '🎯 useMessagingHandlers effect COMPLETE - all listeners set up',
+        );
 
         // Return cleanup function
         return () => {
-            logger.debug('Cleaning up messaging event handlers');
+            logger.info('🧹 useMessagingHandlers cleanup STARTING');
             cleanupMessage();
             cleanupStatus();
             cleanupConversation();
+            logger.info('🧹 useMessagingHandlers cleanup COMPLETE');
         };
     }, []);
 }

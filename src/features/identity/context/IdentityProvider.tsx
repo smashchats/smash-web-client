@@ -40,6 +40,16 @@ export function IdentityProvider({
         try {
             logger.info('Setting up new identity');
             const smashUser = await createSmashUser(identity, smeConfig);
+
+            // Immediately update meta if profile is provided to ensure peers receive the profile
+            if (profile) {
+                logger.debug(
+                    'Updating meta immediately after identity creation',
+                    profile,
+                );
+                await smashUser.updateMeta(profile);
+            }
+
             await persistIdentity(identity, smeConfig, profile);
             setState({
                 identity,

@@ -60,25 +60,63 @@ class ConversationService {
         lastMessage: SmashMessage,
         incrementUnread = true,
     ): Promise<SmashConversation | null> {
+        logger.info('🔄 ConversationService.updateConversation ENTRY', {
+            conversationId,
+            messageId: lastMessage.id,
+            messageSender: lastMessage.sender,
+            incrementUnread,
+        });
+
         const conversation = await db.getConversation(conversationId);
         if (!conversation) {
-            logger.warn('Conversation not found for update', {
+            logger.warn('⚠️ Conversation not found for update', {
                 conversationId,
             });
             return null;
         }
 
+        logger.info('📊 Current conversation state', {
+            conversationId,
+            currentUnreadCount: conversation.unreadCount,
+            currentLastMessageId: conversation.lastMessage?.id,
+            newMessageId: lastMessage.id,
+            newMessageSender: lastMessage.sender,
+        });
+
         conversation.lastMessage = lastMessage;
         conversation.updatedAt = lastMessage.timestamp;
 
-        if (incrementUnread && lastMessage.sender !== 'You') {
+        const shouldIncrement = incrementUnread && lastMessage.sender !== 'You';
+        logger.info('🧮 Unread count logic', {
+            incrementUnread,
+            messageSender: lastMessage.sender,
+            shouldIncrement,
+            currentCount: conversation.unreadCount,
+        });
+
+        if (shouldIncrement) {
+            const oldCount = conversation.unreadCount;
             conversation.unreadCount += 1;
+            logger.info('⬆️ INCREMENTED unread count', {
+                conversationId,
+                oldCount,
+                newCount: conversation.unreadCount,
+                messageId: lastMessage.id,
+            });
+        } else {
+            logger.info('➡️ NOT incrementing unread count', {
+                conversationId,
+                reason: !incrementUnread
+                    ? 'incrementUnread=false'
+                    : 'message from You',
+                currentCount: conversation.unreadCount,
+            });
         }
 
         await db.updateConversation(conversation);
-        logger.debug('Updated conversation', {
+        logger.info('💾 Updated conversation in database', {
             conversationId,
-            unreadCount: conversation.unreadCount,
+            finalUnreadCount: conversation.unreadCount,
         });
 
         return conversation;
@@ -118,23 +156,49 @@ class ConversationService {
     // Event handling
     onConversationUpdated(callback: ConversationCallback): () => void {
         this.conversationCallbacks.add(callback);
-        logger.debug('Added conversation updated callback', {
+        logger.info('➕ Added conversation updated callback', {
             callbackCount: this.conversationCallbacks.size,
         });
 
         // Return cleanup function
         return () => {
             this.conversationCallbacks.delete(callback);
+            logger.info('➖ Removed conversation updated callback', {
+                callbackCount: this.conversationCallbacks.size,
+            });
         };
     }
 
     private notifyConversationCallbacks(conversation: SmashConversation): void {
-        this.conversationCallbacks.forEach((callback) => {
+        logger.info('📢 notifyConversationCallbacks ENTRY', {
+            conversationId: conversation.id,
+            unreadCount: conversation.unreadCount,
+            callbackCount: this.conversationCallbacks.size,
+        });
+
+        this.conversationCallbacks.forEach((callback, index) => {
             try {
+                logger.debug('🔔 Executing conversation callback', {
+                    conversationId: conversation.id,
+                    callbackIndex: index,
+                });
                 callback(conversation);
+                logger.debug('✅ Conversation callback executed successfully', {
+                    conversationId: conversation.id,
+                    callbackIndex: index,
+                });
             } catch (error) {
-                logger.error('Error in conversation callback', error);
+                logger.error('❌ Error in conversation callback', {
+                    conversationId: conversation.id,
+                    callbackIndex: index,
+                    error,
+                });
             }
+        });
+
+        logger.info('📢 notifyConversationCallbacks COMPLETE', {
+            conversationId: conversation.id,
+            callbacksExecuted: this.conversationCallbacks.size,
         });
     }
 

@@ -158,39 +158,8 @@ export const initializeChatStore = () => {
     store.refreshConversations();
     store.initAllPeers();
 
-    // Set up conversation update listener
-    const handleConversationUpdate = (conversation: SmashConversation) => {
-        logger.info('Conversation updated', {
-            conversationId: conversation.id,
-        });
-        const state = useChatStore.getState();
-        const existing = state.conversations.find(
-            (c) => c.id === conversation.id,
-        );
-
-        if (existing) {
-            // Update existing conversation
-            const updated = state.conversations.map((c) =>
-                c.id === conversation.id ? conversation : c,
-            );
-            useChatStore.setState({
-                conversations: updated
-                    .slice()
-                    .sort((a, b) => b.updatedAt - a.updatedAt),
-            });
-        } else {
-            // Add new conversation
-            store.addNewConversation(conversation);
-        }
-    };
-
-    const cleanup = smashOrchestrator.onConversationUpdated(
-        handleConversationUpdate,
-    );
-
-    // Return cleanup function
+    // Return cleanup function (no conversation handler needed since useMessagingHandlers handles it)
     return () => {
-        logger.debug('Cleaning up conversation handlers');
-        cleanup();
+        logger.debug('Chat store initialized (no cleanup needed)');
     };
 };

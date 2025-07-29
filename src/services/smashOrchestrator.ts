@@ -26,6 +26,8 @@ import { messageService } from './messageService';
 class SmashOrchestrator {
     private static instance: SmashOrchestrator;
     private smashUser: SmashUser | null = null;
+    private processedMessageIds = new Set<string>();
+    private readonly MAX_PROCESSED_MESSAGE_IDS = 1000;
 
     private constructor() {}
 
@@ -37,7 +39,16 @@ class SmashOrchestrator {
     }
 
     init(smashUser: SmashUser): void {
+        logger.info('SmashOrchestrator.init called', {
+            hasExistingSmashUser: !!this.smashUser,
+        });
+
         this.smashUser = smashUser;
+
+        // Clear processed message IDs when reinitializing
+        this.processedMessageIds.clear();
+        logger.debug('🧹 Cleared processed message IDs for fresh start');
+
         this.setupEventListeners();
         logger.info('SmashOrchestrator initialized');
     }
@@ -45,22 +56,33 @@ class SmashOrchestrator {
     private setupEventListeners(): void {
         if (!this.smashUser) return;
 
+        logger.info('Setting up event listeners');
+
         // Handle incoming chat messages
         this.smashUser.on(IM_CHAT_TEXT, this.handleIncomingMessage.bind(this));
+        logger.debug('Added IM_CHAT_TEXT listener');
+
         this.smashUser.on(
             IM_MEDIA_EMBEDDED,
             this.handleIncomingMessage.bind(this),
         );
+        logger.debug('Added IM_MEDIA_EMBEDDED listener');
 
         // Handle system messages
         this.smashUser.on(
             IM_DID_DOCUMENT,
             this.handleIncomingDIDDocument.bind(this),
         );
+        logger.debug('Added IM_DID_DOCUMENT listener');
+
         this.smashUser.on(IM_PROFILE, this.handleIncomingProfile.bind(this));
+        logger.debug('Added IM_PROFILE listener');
 
         // Handle message status updates
         this.smashUser.on('status', this.handleStatusUpdate.bind(this));
+        logger.debug('Added status listener');
+
+        logger.info('All event listeners set up');
     }
 
     private async handleIncomingMessage(
@@ -69,11 +91,56 @@ class SmashOrchestrator {
     ): Promise<void> {
         if (!this.smashUser) return;
 
-        logger.info('Handling incoming message', {
+        logger.info('🔔 handleIncomingMessage ENTRY', {
             senderId,
             messageId: message.sha256,
             messageType: message.type,
+            timestamp: message.timestamp,
         });
+
+        // Check if message has a valid ID for deduplication
+        if (!message.sha256) {
+            logger.warn('⚠️ Message without sha256 ID, cannot deduplicate', {
+                senderId,
+                messageType: message.type,
+            });
+        } else {
+            // Check if we've already processed this message
+            if (this.processedMessageIds.has(message.sha256)) {
+                logger.warn(
+                    '🚫 Duplicate message detected, skipping processing',
+                    {
+                        messageId: message.sha256,
+                        senderId,
+                    },
+                );
+                return;
+            }
+
+            // Mark message as processed
+            this.processedMessageIds.add(message.sha256);
+            logger.debug('✅ Message marked as processed', {
+                messageId: message.sha256,
+                totalProcessedCount: this.processedMessageIds.size,
+            });
+
+            // Clean up old message IDs if the set gets too large
+            if (
+                this.processedMessageIds.size > this.MAX_PROCESSED_MESSAGE_IDS
+            ) {
+                const idsToRemove = Array.from(this.processedMessageIds).slice(
+                    0,
+                    100,
+                );
+                idsToRemove.forEach((id) =>
+                    this.processedMessageIds.delete(id),
+                );
+                logger.debug('🧹 Cleaned up old processed message IDs', {
+                    removedCount: idsToRemove.length,
+                    remainingCount: this.processedMessageIds.size,
+                });
+            }
+        }
 
         try {
             // Only process actual chat messages
@@ -81,14 +148,28 @@ class SmashOrchestrator {
                 message.type === IM_CHAT_TEXT ||
                 message.type === IM_MEDIA_EMBEDDED
             ) {
+                logger.info('📝 Processing chat message', {
+                    messageId: message.sha256,
+                    messageType: message.type,
+                });
+
                 const smashMessage = messageService.createSmashMessage(
                     senderId,
                     senderId, // conversation ID is the sender for direct messages
                     message,
                 );
 
+                logger.info('💾 About to store message', {
+                    messageId: smashMessage.id,
+                    conversationId: smashMessage.conversationId,
+                });
+
                 // Store the message
                 await messageService.storeMessage(smashMessage);
+
+                logger.info('✅ Message stored, updating conversation', {
+                    messageId: smashMessage.id,
+                });
 
                 // Update or create conversation
                 await this.updateConversationWithMessage(
@@ -96,13 +177,18 @@ class SmashOrchestrator {
                     smashMessage,
                 );
 
-                logger.info('Successfully processed incoming chat message', {
+                logger.info('🎯 Successfully processed incoming chat message', {
                     messageId: smashMessage.id,
                     conversationId: smashMessage.conversationId,
                 });
+            } else {
+                logger.debug('⏭️ Skipping non-chat message', {
+                    messageType: message.type,
+                    messageId: message.sha256,
+                });
             }
         } catch (error) {
-            logger.error('Failed to handle incoming message', {
+            logger.error('❌ Failed to handle incoming message', {
                 senderId,
                 messageId: message.sha256,
                 messageType: message.type,
@@ -115,30 +201,63 @@ class SmashOrchestrator {
         senderId: DIDString,
         message: SmashMessage,
     ): Promise<void> {
+        logger.info('📋 updateConversationWithMessage ENTRY', {
+            senderId,
+            messageId: message.id,
+            sender: message.sender,
+        });
+
         let conversation = await conversationService.getConversation(senderId);
 
         if (!conversation) {
+            logger.info('🆕 Creating new conversation', { senderId });
             // Create new conversation
             conversation = await conversationService.createConversation(
                 senderId,
                 message,
             );
+            logger.info('✨ Created new conversation', {
+                conversationId: conversation.id,
+                unreadCount: conversation.unreadCount,
+            });
         } else {
+            logger.info('🔄 Updating existing conversation', {
+                conversationId: senderId,
+                currentUnreadCount: conversation.unreadCount,
+                lastMessageId: conversation.lastMessage?.id,
+                newMessageId: message.id,
+            });
             // Update existing conversation
             conversation = await conversationService.updateConversation(
                 senderId,
                 message,
                 true, // increment unread count
             );
+            logger.info('📊 Updated conversation', {
+                conversationId: conversation?.id,
+                newUnreadCount: conversation?.unreadCount,
+            });
         }
 
         if (conversation) {
+            logger.info('📢 Notifying conversation callbacks', {
+                conversationId: conversation.id,
+                unreadCount: conversation.unreadCount,
+            });
             // Notify conversation updated
             conversationService['notifyConversationCallbacks'](conversation);
         }
 
+        logger.info('📨 Notifying message callbacks', {
+            messageId: message.id,
+        });
         // Notify message received
         messageService.notifyMessageCallbacks(message);
+
+        logger.info('🏁 updateConversationWithMessage COMPLETE', {
+            messageId: message.id,
+            conversationId: senderId,
+        });
     }
 
     private async handleIncomingDIDDocument(
