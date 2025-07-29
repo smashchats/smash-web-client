@@ -52,56 +52,60 @@ export default function ChatListScreen() {
     });
 
     return (
-        <ScreenWrapper title="">
-            <ScreenHeaderLeftSlot>
-                <div className="chat-list-header-left">
-                    <h1 className="chat-list-title">beta.smashchats.com</h1>
-                </div>
-            </ScreenHeaderLeftSlot>
-            <ScreenHeaderRightSlot>
-                <div className="chat-list-header-actions">
-                    <button
-                        onClick={handleNavigateToSettings}
-                        className="chat-list-settings-button"
-                        aria-label="Settings"
-                    >
-                        <UserRoundPen size={24} />
-                    </button>
-                    <NewConversationDialog
-                        onCreateConversation={handleCreateConversation}
-                    />
-                </div>
-            </ScreenHeaderRightSlot>
+        <div className="md:hidden h-full">
+            <ScreenWrapper title="">
+                <ScreenHeaderLeftSlot>
+                    <div className="chat-list-header-left">
+                        <h1 className="chat-list-title">beta.smashchats.com</h1>
+                    </div>
+                </ScreenHeaderLeftSlot>
+                <ScreenHeaderRightSlot>
+                    <div className="chat-list-header-actions">
+                        <button
+                            onClick={handleNavigateToSettings}
+                            className="chat-list-settings-button"
+                            aria-label="Settings"
+                        >
+                            <UserRoundPen size={24} />
+                        </button>
+                        <NewConversationDialog
+                            onCreateConversation={handleCreateConversation}
+                        />
+                    </div>
+                </ScreenHeaderRightSlot>
 
-            <div className="chat-list-container">
-                {/* Conversation List */}
-                <div className="chat-list-content">
-                    {sortedConversations.length === 0 ? (
-                        <div className="chat-list-empty">
-                            {showUnreadOnly ? (
-                                <>
-                                    <h3>No unread messages</h3>
-                                    <p>You're all caught up!</p>
-                                </>
-                            ) : (
-                                <>
-                                    <h3>No conversations yet</h3>
-                                    <p>Start a new chat to begin messaging</p>
-                                </>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="conversation-list">
-                            {sortedConversations.map((conversation) => (
-                                <ConversationItem
-                                    key={conversation.id}
-                                    conversation={conversation}
-                                />
-                            ))}
-                        </div>
-                    )}
+                <div className="chat-list-container">
+                    {/* Conversation List */}
+                    <div className="chat-list-content">
+                        {sortedConversations.length === 0 ? (
+                            <div className="chat-list-empty">
+                                {showUnreadOnly ? (
+                                    <>
+                                        <h3>No unread messages</h3>
+                                        <p>You're all caught up!</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h3>No conversations yet</h3>
+                                        <p>
+                                            Start a new chat to begin messaging
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="conversation-list">
+                                {sortedConversations.map((conversation) => (
+                                    <ConversationItem
+                                        key={conversation.id}
+                                        conversation={conversation}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
-        </ScreenWrapper>
+            </ScreenWrapper>
+        </div>
     );
 }

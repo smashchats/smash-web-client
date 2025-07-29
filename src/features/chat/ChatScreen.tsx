@@ -98,9 +98,9 @@ export default function ChatScreen() {
         .toUpperCase();
 
     return (
-        <div className="chat-screen">
+        <div className="chat-screen h-full md:h-full">
             {/* Chat Header */}
-            <div className="chat-header">
+            <div className="chat-header md:hidden">
                 <button
                     className="chat-header-back"
                     onClick={handleGoBack}
@@ -125,9 +125,28 @@ export default function ChatScreen() {
                 </div>
             </div>
 
+            {/* Desktop Header - simplified for desktop layout */}
+            <div className="hidden md:flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                            {initials}
+                        </span>
+                    </div>
+                    <div>
+                        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {displayName}
+                        </h1>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    {/* Future: Add call, video call, and more options here */}
+                </div>
+            </div>
+
             {/* Messages Container */}
-            <div className="chat-messages">
-                <div className="chat-messages-content">
+            <div className="chat-messages flex-1 overflow-y-auto">
+                <div className="chat-messages-content md:max-w-4xl md:mx-auto">
                     {messages.length === 0 ? (
                         <div className="chat-empty-state">
                             <div className="chat-empty-avatar">
@@ -164,11 +183,15 @@ export default function ChatScreen() {
             </div>
 
             {/* Chat Input */}
-            <ChatInput
-                ref={chatInputRef}
-                onSendMessage={sendMessage}
-                isLoading={isProcessingMedia}
-            />
+            <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <div className="md:max-w-4xl md:mx-auto">
+                    <ChatInput
+                        ref={chatInputRef}
+                        onSendMessage={sendMessage}
+                        isLoading={isProcessingMedia}
+                    />
+                </div>
+            </div>
         </div>
     );
 }
