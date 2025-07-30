@@ -117,7 +117,8 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
                                     }
                                 };
 
-                                setTimeout(markAsRead, 400);
+                                // debounce
+                                setTimeout(markAsRead, 300);
 
                                 observer.unobserve(entry.target);
                             }

@@ -112,9 +112,16 @@ export default function ChatScreen() {
         setHasUnreadBelow(hasUnreadBelowViewport);
     }, [messages, unreadMessages]);
 
-    // Auto-scroll to bottom on new messages (only if user is already at bottom)
+    // Auto-scroll to bottom on new messages
     useEffect(() => {
-        if (messages.length > 0 && isUserAtBottom()) {
+        if (messages.length === 0) return;
+
+        const lastMessage = messages[messages.length - 1];
+        const isLastMessageFromCurrentUser =
+            lastMessage.sender === CURRENT_USER;
+
+        // Always scroll to bottom for sent messages, only scroll for received messages if user is at bottom
+        if (isLastMessageFromCurrentUser || isUserAtBottom()) {
             if (messagesEndRef.current) {
                 messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
             }
