@@ -25,15 +25,19 @@ export function ChatLayout({
         <div className="flex h-screen w-screen overflow-hidden max-w-none">
             <div className="flex w-full h-full max-w-screen-2xl mx-auto">
                 {/* Desktop Navigation Sidebar */}
-                <div className="hidden md:flex h-full flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900" 
-                     style={{ width: 'var(--ds-sidebar-width)' }}>
+                <div
+                    className="hidden md:flex h-full flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                    style={{ width: 'var(--ds-sidebar-width)' }}
+                >
                     <SideNav />
                 </div>
 
                 {/* Desktop Chat Sidebar */}
                 {shouldShowChatSidebar && (
-                    <div className="hidden md:flex flex-col h-full flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-                         style={{ width: 'var(--ds-chat-sidebar-width)' }}>
+                    <div
+                        className="hidden md:flex flex-col h-full flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                        style={{ width: 'var(--ds-chat-sidebar-width)' }}
+                    >
                         {chatSidebar}
                     </div>
                 )}
