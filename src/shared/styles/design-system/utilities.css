@@ -49,6 +49,22 @@
     background-color: var(--ds-color-surface);
 }
 
+/* Chat layout utilities */
+.chat-layout-container {
+    max-width: var(--ds-container-max-width, none);
+    margin: 0 auto;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+@media (min-width: 1920px) {
+    .chat-layout-container {
+        max-width: 1920px;
+    }
+}
+
 /* Chat utilities */
 .message-bubble {
     padding: var(--ds-space-3) var(--ds-space-4);

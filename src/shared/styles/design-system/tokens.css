@@ -228,10 +228,27 @@
     }
 }
 
+/* Large screens - constrain width */
 @media (min-width: 1280px) {
     :root {
         --ds-content-max-width: 70rem; /* 1120px */
         --ds-chat-sidebar-width: 24rem; /* 384px - more spacious */
+    }
+}
+
+@media (min-width: 1440px) {
+    :root {
+        --ds-content-max-width: 80rem; /* 1280px */
+        --ds-sidebar-width: 20rem; /* 320px - slightly wider on very large screens */
+        --ds-chat-sidebar-width: 26rem; /* 416px */
+    }
+}
+
+/* Ultra-wide screens - prevent infinite stretching */
+@media (min-width: 1920px) {
+    :root {
+        --ds-content-max-width: 90rem; /* 1440px - maximum content width */
+        --ds-container-max-width: 120rem; /* 1920px - maximum total width */
     }
 }
 

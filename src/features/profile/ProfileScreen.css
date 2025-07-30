@@ -31,7 +31,7 @@
     font-size: var(--ds-font-size-xl);
     font-weight: var(--ds-font-weight-semibold);
     color: var(--ds-color-foreground);
-    margin: 0 0 var(--ds-space-4) 0;
+    margin: 0;
 }
 
 .settings-card {
@@ -146,14 +146,6 @@
     flex-direction: column;
     align-items: center;
     gap: var(--ds-space-4);
-}
-
-.did-help-text {
-    font-size: var(--ds-font-size-sm);
-    color: var(--ds-color-gray-600);
-    text-align: center;
-    margin-top: var(--ds-space-2);
-    line-height: var(--ds-line-height-relaxed);
 }
 
 /* Responsive adjustments */

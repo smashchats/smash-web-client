@@ -362,3 +362,74 @@
         transform: none;
     }
 }
+
+/* Desktop enhancements */
+@media (min-width: 768px) {
+    .welcome-content {
+        max-width: 32rem;
+        max-height: 85vh;
+    }
+
+    .welcome-header {
+        padding: var(--ds-space-10) var(--ds-space-8) var(--ds-space-8);
+    }
+
+    .welcome-logo {
+        width: 5rem;
+        height: 5rem;
+        margin-bottom: var(--ds-space-6);
+    }
+
+    .welcome-logo-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .welcome-brand {
+        font-size: var(--ds-font-size-3xl);
+        margin-bottom: var(--ds-space-6);
+    }
+
+    .welcome-step-content {
+        padding: var(--ds-space-8);
+        gap: var(--ds-space-8);
+    }
+
+    .welcome-features {
+        gap: var(--ds-space-5);
+    }
+
+    .welcome-feature {
+        padding: var(--ds-space-5);
+    }
+
+    .welcome-feature-icon {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .welcome-input {
+        padding: var(--ds-space-5);
+        font-size: var(--ds-font-size-lg);
+    }
+
+    .welcome-actions {
+        gap: var(--ds-space-4);
+    }
+
+    .welcome-avatar {
+        width: 5rem;
+        height: 5rem;
+        margin-bottom: var(--ds-space-6);
+    }
+}
+
+@media (min-width: 1024px) {
+    .welcome-content {
+        max-width: 36rem;
+    }
+
+    .welcome-content-wrapper {
+        padding: var(--ds-space-8);
+    }
+}

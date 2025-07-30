@@ -50,11 +50,21 @@
     }
 }
 
-/* Large screens - constrain width */
+/* Large screens - constrain width and center layout */
 @media (min-width: 1280px) {
     .responsive-layout {
-        max-width: 1400px;
+        max-width: var(--ds-container-max-width, 1400px);
         margin: 0 auto;
-        width: 100vw;
+        width: 100%;
+    }
+
+    .responsive-layout__main {
+        max-width: calc(100vw - var(--ds-sidebar-width));
+    }
+}
+
+@media (min-width: 1920px) {
+    .responsive-layout {
+        max-width: var(--ds-container-max-width, 1920px);
     }
 }

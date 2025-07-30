@@ -3,7 +3,6 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import BottomNav from './BottomNav';
-import './ChatLayout.css';
 import SideNav from './SideNav';
 
 interface ChatLayoutProps {
@@ -23,23 +22,31 @@ export function ChatLayout({
     const shouldShowChatSidebar = chatSidebar && (isInChat || isChatListRoute);
 
     return (
-        <div className="chat-layout">
-            {/* Desktop Navigation Sidebar */}
-            <div className="chat-layout__nav-sidebar">
-                <SideNav />
+        <div className="flex h-screen w-screen overflow-hidden max-w-none">
+            <div className="flex w-full h-full max-w-screen-2xl mx-auto">
+                {/* Desktop Navigation Sidebar */}
+                <div className="hidden md:flex h-full flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900" 
+                     style={{ width: 'var(--ds-sidebar-width)' }}>
+                    <SideNav />
+                </div>
+
+                {/* Desktop Chat Sidebar */}
+                {shouldShowChatSidebar && (
+                    <div className="hidden md:flex flex-col h-full flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                         style={{ width: 'var(--ds-chat-sidebar-width)' }}>
+                        {chatSidebar}
+                    </div>
+                )}
+
+                {/* Main Content Area */}
+                <div className="flex-1 h-full overflow-hidden relative flex flex-col min-w-0">
+                    {children}
+                </div>
             </div>
-
-            {/* Desktop Chat Sidebar */}
-            {shouldShowChatSidebar && (
-                <div className="chat-layout__chat-sidebar">{chatSidebar}</div>
-            )}
-
-            {/* Main Content Area */}
-            <div className="chat-layout__main">{children}</div>
 
             {/* Mobile Bottom Navigation */}
             {showBottomNav && (
-                <div className="chat-layout__bottom-nav">
+                <div className="md:hidden fixed bottom-0 left-0 right-0 z-20">
                     <BottomNav />
                 </div>
             )}
