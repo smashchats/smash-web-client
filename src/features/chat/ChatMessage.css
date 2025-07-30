@@ -39,6 +39,21 @@
     border: 1px solid var(--ds-color-border);
 }
 
+.message.incoming.unread {
+    border-left: 3px solid var(--ds-color-primary-600);
+    background-color: var(--ds-color-surface-secondary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode adjustments for unread messages */
+@media (prefers-color-scheme: dark) {
+    .message.incoming.unread {
+        border-left-color: var(--ds-color-primary-500);
+        background-color: var(--ds-color-surface-secondary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+}
+
 .message-sender {
     font-size: var(--ds-font-size-sm);
     font-weight: var(--ds-font-weight-medium);

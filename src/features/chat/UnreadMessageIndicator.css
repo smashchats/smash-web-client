@@ -1,0 +1,8 @@
+/* UnreadMessageIndicator Component Styles */
+.unread-message-indicator {
+    background-color: var(--ds-color-primary-600);
+}
+
+.unread-message-indicator:hover {
+    background-color: var(--ds-color-primary-700);
+}

@@ -4,13 +4,14 @@ import { useChatStore } from '@shared/hooks/useChatStore';
 import { useMessageStore } from '@shared/hooks/useMessageStore';
 import { useUIStore } from '@shared/hooks/useUIStore';
 import { ArrowLeft } from 'lucide-react';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { DIDString, IMMediaEmbedded } from 'smash-node-lib';
 
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';
 import './ChatScreen.css';
+import { UnreadMessageIndicator } from './UnreadMessageIndicator';
 
 export default function ChatScreen() {
     const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function ChatScreen() {
     const rawMessages = useMessageStore(
         (s) => s.messagesByConversation[id as DIDString],
     );
-    const messages = rawMessages ?? [];
+    const messages = useMemo(() => rawMessages ?? [], [rawMessages]);
 
     const peerProfile = useChatStore((state) =>
         id ? state.getPeerProfile(id) : undefined,
@@ -29,9 +30,14 @@ export default function ChatScreen() {
     );
 
     const [isProcessingMedia] = useState(false);
+    const [hasInitialScroll, setHasInitialScroll] = useState(false);
+    const [hasUnreadAbove, setHasUnreadAbove] = useState(false);
+    const [hasUnreadBelow, setHasUnreadBelow] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatInputRef = useRef<HTMLTextAreaElement>(null);
+    const firstUnreadMessageRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     // Hide bottom nav when in chat view
     useEffect(() => {
@@ -45,19 +51,97 @@ export default function ChatScreen() {
         navigate('/chats');
     };
 
-    // Auto-scroll to bottom on new messages
+    // Check if user is at the bottom of the conversation
+    const isUserAtBottom = () => {
+        if (!messagesContainerRef.current) return false;
+
+        const container = messagesContainerRef.current;
+        const scrollTop = container.scrollTop;
+        const scrollHeight = container.scrollHeight;
+        const clientHeight = container.clientHeight;
+
+        // Consider user at bottom if they're within 100px of the bottom
+        return scrollHeight - scrollTop - clientHeight < 100;
+    };
+
+    // Find all unread messages
+    const unreadMessages = messages.filter(
+        (message) =>
+            message.sender !== CURRENT_USER && message.status !== 'read',
+    );
+
+    // Find the first unread message
+    const firstUnreadMessage = unreadMessages[0];
+
+    // Check for unread messages above and below current viewport
     useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (!messagesContainerRef.current || unreadMessages.length === 0) {
+            setHasUnreadAbove(false);
+            setHasUnreadBelow(false);
+            return;
+        }
+
+        const container = messagesContainerRef.current;
+        const scrollTop = container.scrollTop;
+        const clientHeight = container.clientHeight;
+        const scrollBottom = scrollTop + clientHeight;
+
+        let hasUnreadAboveViewport = false;
+        let hasUnreadBelowViewport = false;
+
+        unreadMessages.forEach((unreadMessage) => {
+            const messageElement = container.querySelector(
+                `[data-message-id="${unreadMessage.id}"]`,
+            );
+            if (messageElement) {
+                const rect = messageElement.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const messageTop =
+                    rect.top - containerRect.top + container.scrollTop;
+                const messageBottom = messageTop + rect.height;
+
+                if (messageBottom < scrollTop) {
+                    hasUnreadAboveViewport = true;
+                } else if (messageTop > scrollBottom) {
+                    hasUnreadBelowViewport = true;
+                }
+            }
+        });
+
+        setHasUnreadAbove(hasUnreadAboveViewport);
+        setHasUnreadBelow(hasUnreadBelowViewport);
+    }, [messages, unreadMessages]);
+
+    // Auto-scroll to bottom on new messages (only if user is already at bottom)
+    useEffect(() => {
+        if (messages.length > 0 && isUserAtBottom()) {
+            if (messagesEndRef.current) {
+                messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     }, [messages.length]);
 
-    // Auto-scroll to bottom on open (no animation)
+    // Reset initial scroll state when conversation changes
     useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
-        }
+        setHasInitialScroll(false);
     }, [id]);
+
+    // Auto-scroll to first unread message or bottom on open (only once per conversation)
+    useEffect(() => {
+        if (!hasInitialScroll) {
+            if (firstUnreadMessage && firstUnreadMessageRef.current) {
+                // Scroll to first unread message
+                firstUnreadMessageRef.current.scrollIntoView({
+                    behavior: 'auto',
+                    block: 'center',
+                });
+            } else if (messagesEndRef.current) {
+                // Fallback to bottom if no unread messages
+                messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+            }
+            setHasInitialScroll(true);
+        }
+    }, [id, firstUnreadMessage, hasInitialScroll]);
 
     useEffect(() => {
         if (!id) return;
@@ -116,7 +200,9 @@ export default function ChatScreen() {
                         </span>
                     </div>
                     <div className="chat-screen-header-details">
-                        <h1 className="chat-screen-header-name">{displayName}</h1>
+                        <h1 className="chat-screen-header-name">
+                            {displayName}
+                        </h1>
                     </div>
                 </div>
 
@@ -126,7 +212,10 @@ export default function ChatScreen() {
             </div>
 
             {/* Messages Container */}
-            <div className="chat-messages flex-1 overflow-y-auto">
+            <div
+                className="chat-messages flex-1 overflow-y-auto"
+                ref={messagesContainerRef}
+            >
                 <div className="chat-messages-content md:max-w-4xl md:mx-auto">
                     {messages.length === 0 ? (
                         <div className="chat-empty-state">
@@ -155,6 +244,11 @@ export default function ChatScreen() {
                                         message.sender === CURRENT_USER
                                     }
                                     peerProfile={peerProfile}
+                                    ref={
+                                        message === firstUnreadMessage
+                                            ? firstUnreadMessageRef
+                                            : undefined
+                                    }
                                 />
                             </Suspense>
                         ))
@@ -162,6 +256,34 @@ export default function ChatScreen() {
                     <div ref={messagesEndRef} />
                 </div>
             </div>
+
+            {/* Floating Unread Message Indicators */}
+            {hasUnreadAbove && (
+                <UnreadMessageIndicator
+                    direction="above"
+                    onClick={() => {
+                        if (firstUnreadMessageRef.current) {
+                            firstUnreadMessageRef.current.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                            });
+                        }
+                    }}
+                />
+            )}
+
+            {hasUnreadBelow && (
+                <UnreadMessageIndicator
+                    direction="below"
+                    onClick={() => {
+                        if (messagesEndRef.current) {
+                            messagesEndRef.current.scrollIntoView({
+                                behavior: 'smooth',
+                            });
+                        }
+                    }}
+                />
+            )}
 
             {/* Chat Input */}
             <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
