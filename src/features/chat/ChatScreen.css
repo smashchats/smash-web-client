@@ -6,7 +6,7 @@
     position: relative;
 }
 
-.chat-header {
+.chat-screen-header {
     display: flex;
     align-items: center;
     gap: var(--ds-space-3);
@@ -18,7 +18,7 @@
     z-index: var(--ds-z-sticky);
 }
 
-.chat-header-back {
+.chat-screen-header-back {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -33,17 +33,17 @@
     flex-shrink: 0;
 }
 
-.chat-header-back:hover {
+.chat-screen-header-back:hover {
     background: var(--ds-color-surface-hover);
     color: var(--ds-color-foreground);
 }
 
-.chat-header-back:focus-visible {
+.chat-screen-header-back:focus-visible {
     outline: 2px solid var(--ds-color-primary-600);
     outline-offset: 2px;
 }
 
-.chat-header-info {
+.chat-screen-header-info {
     display: flex;
     align-items: center;
     gap: var(--ds-space-3);
@@ -51,7 +51,7 @@
     min-width: 0;
 }
 
-.chat-header-avatar {
+.chat-screen-header-avatar {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -62,18 +62,18 @@
     flex-shrink: 0;
 }
 
-.chat-header-avatar-text {
+.chat-screen-header-avatar-text {
     font-size: var(--ds-font-size-sm);
     font-weight: var(--ds-font-weight-semibold);
     color: var(--ds-color-primary-700);
 }
 
-.chat-header-details {
+.chat-screen-header-details {
     flex: 1;
     min-width: 0;
 }
 
-.chat-header-name {
+.chat-screen-header-name {
     font-size: var(--ds-font-size-lg);
     font-weight: var(--ds-font-weight-semibold);
     color: var(--ds-color-foreground);
@@ -84,7 +84,7 @@
     text-overflow: ellipsis;
 }
 
-.chat-header-actions {
+.chat-screen-header-actions {
     display: flex;
     align-items: center;
     gap: var(--ds-space-2);
@@ -167,11 +167,11 @@
 
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
-    .chat-header-avatar {
+    .chat-screen-header-avatar {
         background: var(--ds-color-primary-900);
     }
 
-    .chat-header-avatar-text {
+    .chat-screen-header-avatar-text {
         color: var(--ds-color-primary-300);
     }
 
@@ -186,20 +186,20 @@
 
 /* Desktop adjustments */
 @media (min-width: 768px) {
-    .chat-header {
+    .chat-screen-header {
         padding: var(--ds-space-6);
     }
 
-    .chat-header-avatar {
+    .chat-screen-header-avatar {
         width: var(--ds-avatar-lg);
         height: var(--ds-avatar-lg);
     }
 
-    .chat-header-avatar-text {
+    .chat-screen-header-avatar-text {
         font-size: var(--ds-font-size-base);
     }
 
-    .chat-header-name {
+    .chat-screen-header-name {
         font-size: var(--ds-font-size-xl);
     }
 
@@ -241,7 +241,7 @@
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-    .chat-header-back {
+    .chat-screen-header-back {
         transition: none;
     }
 }

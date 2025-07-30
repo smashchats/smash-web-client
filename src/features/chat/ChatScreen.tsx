@@ -99,47 +99,28 @@ export default function ChatScreen() {
 
     return (
         <div className="chat-screen h-full md:h-full">
-            {/* Chat Header */}
-            <div className="chat-header md:hidden">
+            {/* Chat Header - Mobile and Desktop */}
+            <div className="chat-screen-header">
                 <button
-                    className="chat-header-back"
+                    className="chat-screen-header-back md:hidden"
                     onClick={handleGoBack}
                     aria-label="Go back to chats"
                 >
                     <ArrowLeft size={20} />
                 </button>
 
-                <div className="chat-header-info">
-                    <div className="chat-header-avatar">
-                        <span className="chat-header-avatar-text">
+                <div className="chat-screen-header-info">
+                    <div className="chat-screen-header-avatar">
+                        <span className="chat-screen-header-avatar-text">
                             {initials}
                         </span>
                     </div>
-                    <div className="chat-header-details">
-                        <h1 className="chat-header-name">{displayName}</h1>
+                    <div className="chat-screen-header-details">
+                        <h1 className="chat-screen-header-name">{displayName}</h1>
                     </div>
                 </div>
 
-                <div className="chat-header-actions">
-                    {/* Future: Add call, video call, and more options here */}
-                </div>
-            </div>
-
-            {/* Desktop Header - simplified for desktop layout */}
-            <div className="hidden md:flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                        <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-                            {initials}
-                        </span>
-                    </div>
-                    <div>
-                        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {displayName}
-                        </h1>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
+                <div className="chat-screen-header-actions">
                     {/* Future: Add call, video call, and more options here */}
                 </div>
             </div>
