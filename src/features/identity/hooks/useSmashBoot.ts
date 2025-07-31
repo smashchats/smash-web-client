@@ -1,4 +1,4 @@
-import type { StoredProfile } from '@types/db';
+import type { StoredProfile } from '@smash/db';
 import { logger } from '@utils/logger';
 import { useEffect, useState } from 'react';
 import type { IMPeerIdentity, SMEConfigJSON, SmashUser } from 'smash-node-lib';

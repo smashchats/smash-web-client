@@ -14,7 +14,7 @@
             "@hooks/*": ["src/hooks/*"],
             "@services/*": ["src/services/*"],
             "@styles/*": ["src/styles/*"],
-            "@types/*": ["src/types/*"],
+            "@smash/*": ["src/types/*"],
             "@utils/*": ["src/utils/*"]
         }
     }

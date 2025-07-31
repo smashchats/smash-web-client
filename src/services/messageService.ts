@@ -1,4 +1,4 @@
-import type { SmashMessage } from '@types/smash';
+import type { SmashMessage } from '@smash/smash';
 import { logger } from '@utils/logger';
 import type {
     DID,

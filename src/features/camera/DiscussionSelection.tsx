@@ -2,7 +2,7 @@ import Button from '@components/Button';
 import { ScreenHeaderLeftSlot } from '@components/ScreenHeader';
 import ScreenWrapper from '@components/ScreenWrapper';
 import { useChatStore } from '@hooks/useChatStore';
-import type { SmashConversation } from '@types/smash';
+import type { SmashConversation } from '@smash/smash';
 import { ArrowLeft, Check, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

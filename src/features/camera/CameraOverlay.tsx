@@ -1,5 +1,5 @@
 import Button from '@components/Button';
-import type { SmashConversation } from '@types/smash';
+import type { SmashConversation } from '@smash/smash';
 import { ArrowLeft, Download, Send, SwitchCamera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

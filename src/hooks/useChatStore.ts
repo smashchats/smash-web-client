@@ -1,7 +1,7 @@
 import { useMessageStore } from '@hooks/useMessageStore';
 import { peerService } from '@services/peerService';
 import { smashOrchestrator } from '@services/smashOrchestrator';
-import type { Profile, SmashConversation, SmashMessage } from '@types/smash';
+import type { Profile, SmashConversation, SmashMessage } from '@smash/smash';
 import { logger } from '@utils/logger';
 import { create } from 'zustand';
 

@@ -3,7 +3,7 @@ import { useUIStore } from '@hooks/useUIStore';
 import { db } from '@services/db';
 import { mediaDB } from '@services/mediaStore';
 import { messagingService } from '@services/messagingService';
-import type { SmashConversation } from '@types/smash';
+import type { SmashConversation } from '@smash/smash';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type DIDString, IMMediaEmbedded } from 'smash-node-lib';

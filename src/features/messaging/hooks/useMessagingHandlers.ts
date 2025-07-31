@@ -2,7 +2,7 @@ import { useChatStore } from '@hooks/useChatStore';
 import { useMessageStore } from '@hooks/useMessageStore';
 import { db } from '@services/db';
 import { smashOrchestrator } from '@services/smashOrchestrator';
-import type { SmashConversation, SmashMessage } from '@types/smash';
+import type { SmashConversation, SmashMessage } from '@smash/smash';
 import { logger } from '@utils/logger';
 import { useEffect } from 'react';
 

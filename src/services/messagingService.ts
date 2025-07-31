@@ -1,6 +1,6 @@
 import { useChatStore } from '@hooks/useChatStore';
 import { smashOrchestrator } from '@services/smashOrchestrator';
-import type { SmashMessage } from '@types/smash';
+import type { SmashMessage } from '@smash/smash';
 import { logger } from '@utils/logger';
 import type { DIDString } from 'smash-node-lib';
 

@@ -1,4 +1,4 @@
-import type { SmashConversation, SmashMessage } from '@types/smash';
+import type { SmashConversation, SmashMessage } from '@smash/smash';
 import { logger } from '@utils/logger';
 import type {
     DIDString,

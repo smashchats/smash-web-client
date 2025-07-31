@@ -1,6 +1,6 @@
 import { db } from '@services/db';
 import { getDIDDocManager } from '@services/didDocService';
-import type { StoredProfile } from '@types/db';
+import type { StoredProfile } from '@smash/db';
 import { logger } from '@utils/logger';
 import {
     type IIMPeerIdentity,
