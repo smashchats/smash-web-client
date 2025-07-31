@@ -1,5 +1,6 @@
 ---
 alwaysApply: false
+description: UI
 ---
 
 - All UI you implement is clean and sober.

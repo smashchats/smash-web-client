@@ -47,22 +47,21 @@ src/
 │ ├── gallery/
 │ └── profile/
 │
-├── shared/ # Shared across features
-│ ├── components/
-│ │ ├── Button.tsx
-│ │ ├── Spinner.tsx
-│ │ └── ErrorBoundary.tsx
-│ ├── hooks/
-│ ├── utils/
-│ ├── styles/
-│ │ ├── globals.css
-│ │ └── variables.css
-│ └── types/
-│ └── global.d.ts
-│
-├── services/ # API and service abstraction
-│ ├── smashService.ts
-│ ├── mediaStore.ts
-│ └── messaging.ts
+├ # Shared across features
+│── components/
+│ ├── Button.tsx
+│ ├── Spinner.tsx
+│ └── ErrorBoundary.tsx
+│── hooks/
+│── utils/
+│── styles/
+│ ├── globals.css
+│ └── variables.css
+│── types/
+|
+├ services/ # API and service abstraction
+│── smashService.ts
+│── mediaStore.ts
+│── messaging.ts
 │
 └── main.tsx # App entry point

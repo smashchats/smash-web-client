@@ -1,5 +1,6 @@
 ---
 alwaysApply: false
+description: controllers services hooks
 ---
 
 Controllers and UI logic **must never** interact directly with both the database (e.g., Dexie/IndexedDB) and the in-memory state (e.g., Zustand).
