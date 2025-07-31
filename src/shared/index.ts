@@ -12,6 +12,7 @@ export * from './components/BottomNav';
 export * from './hooks/useChatStore';
 export * from './hooks/useMessageStore';
 export * from './hooks/useUIStore';
+export * from './hooks/useTotalUnreadCount';
 
 // Types
 export * from './types/db';

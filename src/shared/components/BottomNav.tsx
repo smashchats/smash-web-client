@@ -1,6 +1,7 @@
 import { Camera, Images, MessageCircle } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { useTotalUnreadCount } from '../hooks/useTotalUnreadCount';
 import { useUIStore } from '../hooks/useUIStore';
 import './BottomNav.css';
 
@@ -8,6 +9,7 @@ export default function BottomNav() {
     const show = useUIStore((s) => s.showBottomNav);
     const navigate = useNavigate();
     const location = useLocation();
+    const totalUnreadCount = useTotalUnreadCount();
 
     if (!show) return null;
 
@@ -48,6 +50,9 @@ export default function BottomNav() {
                         label={item.label}
                         isActive={item.isActive}
                         isCenter={item.isCenter}
+                        badge={
+                            item.id === 'chats' ? totalUnreadCount : undefined
+                        }
                         onClick={() => navigate(item.path, { replace: true })}
                     />
                 ))}
@@ -61,6 +66,7 @@ interface NavButtonProps {
     label: string;
     isActive: boolean;
     isCenter?: boolean;
+    badge?: number;
     onClick: () => void;
 }
 
@@ -69,6 +75,7 @@ function NavButton({
     label,
     isActive,
     isCenter = false,
+    badge,
     onClick,
 }: Readonly<NavButtonProps>) {
     return (
@@ -82,6 +89,11 @@ function NavButton({
                     size={isCenter ? 24 : 22}
                     fill={isActive && !isCenter ? 'currentColor' : 'none'}
                 />
+                {badge !== undefined && badge > 0 && (
+                    <div className="nav-button-badge">
+                        {badge > 99 ? '99+' : badge}
+                    </div>
+                )}
             </div>
             <span className="nav-button-label">{label}</span>
         </button>
