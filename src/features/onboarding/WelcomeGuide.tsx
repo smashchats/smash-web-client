@@ -1,7 +1,7 @@
 import { DEFAULT_SME_CONFIG } from '@app/config/sme';
+import Button from '@components/Button';
 import { generateIdentity, useIdentityContext } from '@features/identity';
 import * as Dialog from '@radix-ui/react-dialog';
-import Button from '@shared/components/Button';
 import {
     ArrowRight,
     Camera,

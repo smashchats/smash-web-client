@@ -1,4 +1,4 @@
-import { logger } from '@shared/utils/logger';
+import { logger } from '@utils/logger';
 import React, { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 

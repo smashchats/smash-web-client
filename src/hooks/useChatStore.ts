@@ -1,12 +1,8 @@
+import { useMessageStore } from '@hooks/useMessageStore';
 import { peerService } from '@services/peerService';
 import { smashOrchestrator } from '@services/smashOrchestrator';
-import { useMessageStore } from '@shared/hooks/useMessageStore';
-import type {
-    Profile,
-    SmashConversation,
-    SmashMessage,
-} from '@shared/types/smash';
-import { logger } from '@shared/utils/logger';
+import type { Profile, SmashConversation, SmashMessage } from '@types/smash';
+import { logger } from '@utils/logger';
 import { create } from 'zustand';
 
 interface ConversationState {

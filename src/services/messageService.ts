@@ -1,5 +1,5 @@
-import type { SmashMessage } from '@shared/types/smash';
-import { logger } from '@shared/utils/logger';
+import type { SmashMessage } from '@types/smash';
+import { logger } from '@utils/logger';
 import type {
     DID,
     DIDString,

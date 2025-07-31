@@ -1,5 +1,5 @@
-import { ChatLayout } from '@shared/components/ChatLayout';
-import LoadingScreen from '@shared/components/LoadingScreen';
+import { ChatLayout } from '@components/ChatLayout';
+import LoadingScreen from '@components/LoadingScreen';
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 

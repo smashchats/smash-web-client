@@ -1,6 +1,6 @@
+import Button from '@components/Button';
 import { useIdentityContext } from '@features/identity';
-import Button from '@shared/components/Button';
-import { logger } from '@shared/utils/logger';
+import { logger } from '@utils/logger';
 import { useEffect, useState } from 'react';
 import type { SMEConfigJSON } from 'smash-node-lib';
 

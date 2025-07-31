@@ -1,4 +1,4 @@
-import ScreenWrapper from '@shared/components/ScreenWrapper';
+import ScreenWrapper from '@components/ScreenWrapper';
 
 import './ProfileScreen.css';
 import { AccountSection } from './components/AccountSection';

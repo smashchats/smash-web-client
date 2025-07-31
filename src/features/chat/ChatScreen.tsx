@@ -1,8 +1,8 @@
 import { CURRENT_USER } from '@app/config/sme';
+import { useChatStore } from '@hooks/useChatStore';
+import { useMessageStore } from '@hooks/useMessageStore';
+import { useUIStore } from '@hooks/useUIStore';
 import { messagingService } from '@services/messagingService';
-import { useChatStore } from '@shared/hooks/useChatStore';
-import { useMessageStore } from '@shared/hooks/useMessageStore';
-import { useUIStore } from '@shared/hooks/useUIStore';
 import { ArrowLeft } from 'lucide-react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -126,7 +126,7 @@ export default function ChatScreen() {
                 messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
             }
         }
-    }, [messages.length]);
+    }, [messages.length, messages]);
 
     // Reset initial scroll state when conversation changes
     useEffect(() => {

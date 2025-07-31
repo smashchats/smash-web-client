@@ -1,5 +1,5 @@
+import ScreenWrapper from '@components/ScreenWrapper';
 import { type Media, getAllMedia, getMediaByType } from '@services/mediaStore';
-import ScreenWrapper from '@shared/components/ScreenWrapper';
 import { useEffect, useRef, useState } from 'react';
 
 import './GalleryScreen.css';

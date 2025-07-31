@@ -1,8 +1,8 @@
-import Button from '@shared/components/Button';
-import { ScreenHeaderLeftSlot } from '@shared/components/ScreenHeader';
-import ScreenWrapper from '@shared/components/ScreenWrapper';
-import { useChatStore } from '@shared/hooks/useChatStore';
-import type { SmashConversation } from '@shared/types/smash';
+import Button from '@components/Button';
+import { ScreenHeaderLeftSlot } from '@components/ScreenHeader';
+import ScreenWrapper from '@components/ScreenWrapper';
+import { useChatStore } from '@hooks/useChatStore';
+import type { SmashConversation } from '@types/smash';
 import { ArrowLeft, Check, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

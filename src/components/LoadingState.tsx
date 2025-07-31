@@ -1,4 +1,4 @@
-import { cn } from '@shared/utils/cn';
+import { cn } from '@utils/cn';
 
 type LoadingVariant = 'spinner' | 'skeleton' | 'dots';
 type LoadingSize = 'sm' | 'md' | 'lg';

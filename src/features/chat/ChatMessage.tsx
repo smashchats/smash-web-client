@@ -1,6 +1,6 @@
 import { smashOrchestrator } from '@services/smashOrchestrator';
-import type { SmashMessage } from '@shared/types/smash';
-import { logger } from '@shared/utils/logger';
+import type { SmashMessage } from '@types/smash';
+import { logger } from '@utils/logger';
 import { Check, CheckCheck } from 'lucide-react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 

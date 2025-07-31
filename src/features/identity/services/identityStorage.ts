@@ -1,5 +1,5 @@
 import { db } from '@services/db';
-import { logger } from '@shared/utils/logger';
+import { logger } from '@utils/logger';
 
 export async function loadStoredIdentity() {
     logger.info('Loading stored identity from DB');

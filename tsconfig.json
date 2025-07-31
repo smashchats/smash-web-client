@@ -8,10 +8,14 @@
         "baseUrl": ".",
         "paths": {
             "smash-node-lib/*": ["smash-node-lib/*"],
-            "@shared/*": ["src/shared/*"],
-            "@services/*": ["src/services/*"],
+            "@app/*": ["src/app/*"],
+            "@components/*": ["src/components/*"],
             "@features/*": ["src/features/*"],
-            "@app/*": ["src/app/*"]
+            "@hooks/*": ["src/hooks/*"],
+            "@services/*": ["src/services/*"],
+            "@styles/*": ["src/styles/*"],
+            "@types/*": ["src/types/*"],
+            "@utils/*": ["src/utils/*"]
         }
     }
 }

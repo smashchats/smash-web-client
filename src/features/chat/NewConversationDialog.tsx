@@ -1,6 +1,6 @@
+import Button from '@components/Button';
 import * as Dialog from '@radix-ui/react-dialog';
-import Button from '@shared/components/Button';
-import { logger } from '@shared/utils/logger';
+import { logger } from '@utils/logger';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import type { DIDDocument } from 'smash-node-lib';

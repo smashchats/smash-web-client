@@ -1,4 +1,4 @@
-import Button from '@shared/components/Button';
+import Button from '@components/Button';
 import type { ReactNode } from 'react';
 
 type FloatingButtonProps = {

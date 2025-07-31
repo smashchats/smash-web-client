@@ -1,9 +1,9 @@
+import { useMessageStore } from '@hooks/useMessageStore';
+import { useUIStore } from '@hooks/useUIStore';
 import { db } from '@services/db';
 import { mediaDB } from '@services/mediaStore';
 import { messagingService } from '@services/messagingService';
-import { useMessageStore } from '@shared/hooks/useMessageStore';
-import { useUIStore } from '@shared/hooks/useUIStore';
-import type { SmashConversation } from '@shared/types/smash';
+import type { SmashConversation } from '@types/smash';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type DIDString, IMMediaEmbedded } from 'smash-node-lib';

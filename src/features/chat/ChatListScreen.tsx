@@ -1,16 +1,16 @@
-import { peerService } from '@services/peerService';
 import {
     ScreenHeaderLeftSlot,
     ScreenHeaderRightSlot,
-} from '@shared/components/ScreenHeader';
-import ScreenWrapper from '@shared/components/ScreenWrapper';
-import { useChatStore } from '@shared/hooks/useChatStore';
+} from '@components/ScreenHeader';
+import ScreenWrapper from '@components/ScreenWrapper';
+import { useChatStore } from '@hooks/useChatStore';
+import { peerService } from '@services/peerService';
 import { UserRoundPen } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type DIDDocument } from 'smash-node-lib';
 
-import { logger } from '../../shared/utils/logger';
+import { logger } from '../../utils/logger';
 import { ConversationItem } from './ConversationItem';
 import { NewConversationDialog } from './NewConversationDialog';
 import './chatListScreen.css';

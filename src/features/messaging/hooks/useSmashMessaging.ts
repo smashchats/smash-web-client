@@ -1,7 +1,7 @@
 // Note: messageController replaced with useMessagingHandlers hook
+import { initializeChatStore } from '@hooks/useChatStore';
 import { smashOrchestrator } from '@services/smashOrchestrator';
-import { initializeChatStore } from '@shared/hooks/useChatStore';
-import { logger } from '@shared/utils/logger';
+import { logger } from '@utils/logger';
 import { useEffect, useState } from 'react';
 import type { SmashUser } from 'smash-node-lib';
 

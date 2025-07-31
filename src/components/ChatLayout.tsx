@@ -1,4 +1,4 @@
-import { useUIStore } from '@shared/hooks/useUIStore';
+import { useUIStore } from '@hooks/useUIStore';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 

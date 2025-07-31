@@ -1,6 +1,6 @@
+import { useChatStore } from '@hooks/useChatStore';
 import { peerService } from '@services/peerService';
-import { useChatStore } from '@shared/hooks/useChatStore';
-import { logger } from '@shared/utils/logger';
+import { logger } from '@utils/logger';
 import { useNavigate, useParams } from 'react-router-dom';
 import { type DIDDocument } from 'smash-node-lib';
 

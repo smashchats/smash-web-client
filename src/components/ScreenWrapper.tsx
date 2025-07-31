@@ -1,4 +1,4 @@
-import { useUIStore } from '@shared/hooks/useUIStore';
+import { useUIStore } from '@hooks/useUIStore';
 import { ArrowLeft } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

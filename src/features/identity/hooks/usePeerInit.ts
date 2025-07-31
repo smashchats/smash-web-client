@@ -1,5 +1,5 @@
 import { peerService } from '@services/peerService';
-import { logger } from '@shared/utils/logger';
+import { logger } from '@utils/logger';
 import { useEffect, useState } from 'react';
 import type { IMPeerIdentity } from 'smash-node-lib';
 

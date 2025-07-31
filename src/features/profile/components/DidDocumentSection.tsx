@@ -1,7 +1,7 @@
+import Button from '@components/Button';
 import { useIdentityContext } from '@features/identity';
-import Button from '@shared/components/Button';
-import { logger } from '@shared/utils/logger';
-import { copyToClipboard } from '@shared/utils/utils';
+import { logger } from '@utils/logger';
+import { copyToClipboard } from '@utils/utils';
 import { Check, Copy } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';

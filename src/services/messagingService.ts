@@ -1,7 +1,7 @@
+import { useChatStore } from '@hooks/useChatStore';
 import { smashOrchestrator } from '@services/smashOrchestrator';
-import { useChatStore } from '@shared/hooks/useChatStore';
-import type { SmashMessage } from '@shared/types/smash';
-import { logger } from '@shared/utils/logger';
+import type { SmashMessage } from '@types/smash';
+import { logger } from '@utils/logger';
 import type { DIDString } from 'smash-node-lib';
 
 export class MessagingService {

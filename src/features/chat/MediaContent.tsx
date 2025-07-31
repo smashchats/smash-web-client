@@ -2,7 +2,7 @@ import { Download, File } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
-import { logger } from '../../shared/utils/logger';
+import { logger } from '../../utils/logger';
 import './MediaContent.css';
 
 interface MediaContentProps {

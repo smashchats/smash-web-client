@@ -1,5 +1,5 @@
-import type { SmashConversation, SmashMessage } from '@shared/types/smash';
-import { logger } from '@shared/utils/logger';
+import type { SmashConversation, SmashMessage } from '@types/smash';
+import { logger } from '@utils/logger';
 import type { DIDString } from 'smash-node-lib';
 
 import { db } from './db';

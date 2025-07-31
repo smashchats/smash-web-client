@@ -1,6 +1,6 @@
+import LoadingScreen from '@components/LoadingScreen';
 import { IdentityProvider } from '@features/identity/context/IdentityProvider';
 import { useSmashBoot } from '@features/identity/hooks/useSmashBoot';
-import LoadingScreen from '@shared/components/LoadingScreen';
 import { useEffect, useState } from 'react';
 
 import { initializeSmashEnvironment } from './config/smash';

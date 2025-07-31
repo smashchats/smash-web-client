@@ -1,8 +1,8 @@
 import { Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { useChatStore } from '../../shared/hooks/useChatStore';
-import type { SmashConversation } from '../../shared/types/smash';
+import { useChatStore } from '../../hooks/useChatStore';
+import type { SmashConversation } from '../../types/smash';
 import './conversationItem.css';
 
 interface ConversationItemProps {
