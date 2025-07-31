@@ -89,7 +89,7 @@ export class PeerService {
         logger.info('Initializing all peers', { count: didDocs.length });
 
         for (const doc of didDocs) {
-            logger.debug('Initializing peer', { didId: doc.id });
+            logger.debug('Loading into live state', doc.id);
             await SmashMessaging.resolve(doc);
         }
 
@@ -108,8 +108,16 @@ export class PeerService {
             logger.debug('Handling incoming DID document', {
                 didId: didDocument.id,
             });
-            await db.didDocuments.put(didDocument);
-            await SmashMessaging.resolve(didDocument);
+
+            if (senderId !== didDocument.id) {
+                logger.warn('Incoming DID document is not from the sender', {
+                    senderId,
+                    didDocument,
+                });
+                return;
+            }
+
+            await db.addDIDDocument(didDocument);
 
             logger.info('Successfully processed incoming DID document', {
                 didId: didDocument.id,
@@ -144,19 +152,28 @@ export class PeerService {
                 return;
             }
 
+            const didDoc = await SmashMessaging.resolve(profile.did);
+            if (senderId !== didDoc.id) {
+                logger.warn('Incoming profile is not from the sender', {
+                    senderId,
+                    profile,
+                });
+                return;
+            }
+
             const storedProfile: StoredProfile = {
                 title: profile.title,
                 description: profile.description,
                 avatar: profile.avatar,
             };
 
-            await db.setPeerProfile(profile.did as DIDString, storedProfile);
+            await db.setPeerProfile(senderId as DIDString, storedProfile);
 
             // Call UI update callback if provided
-            onProfileUpdate?.(profile.did as DIDString, storedProfile);
+            onProfileUpdate?.(senderId as DIDString, storedProfile);
 
             logger.info('Successfully processed incoming profile for DID', {
-                did: profile.did,
+                did: senderId,
             });
         } catch (error) {
             logger.error('Failed to handle incoming profile', {

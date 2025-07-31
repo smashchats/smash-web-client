@@ -1,12 +1,11 @@
-import { useMessageStore } from '@hooks/useMessageStore';
 import { useUIStore } from '@hooks/useUIStore';
 import { db } from '@services/db';
 import { mediaDB } from '@services/mediaStore';
-import { messagingService } from '@services/messagingService';
+import { smashOrchestrator } from '@services/smashOrchestrator';
 import type { SmashConversation } from '@smash/smash';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { type DIDString, IMMediaEmbedded } from 'smash-node-lib';
+import { type DIDString } from 'smash-node-lib';
 
 import CameraOverlay from './CameraOverlay';
 import CameraView, { type CameraViewHandle } from './CameraView';
@@ -121,16 +120,16 @@ export default function CameraScreen() {
 
     const handleSendSelected = async (selectedIds: string[]) => {
         console.log('Sending to discussions:', selectedIds);
-        const message = await IMMediaEmbedded.fromFile(capturedBlob!);
+        // Convert blob to File for sending
+        const file = new File(
+            [capturedBlob!],
+            `smash-capture-${Date.now()}.jpg`,
+            { type: 'image/jpeg' },
+        );
         await Promise.all(
-            selectedIds.map((id) =>
-                messagingService
-                    .sendMessage(id as DIDString, message)
-                    .then((msg) => {
-                        useMessageStore
-                            .getState()
-                            .addMessage(id as DIDString, msg);
-                    }),
+            selectedIds.map(
+                (id) => smashOrchestrator.sendMessage(id as DIDString, file),
+                // Messages will be added to store automatically via event handlers
             ),
         );
         await mediaDB.media.update(

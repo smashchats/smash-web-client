@@ -5,6 +5,7 @@ import { logger } from '@utils/logger';
 import {
     type IIMPeerIdentity,
     type IMPeerIdentity,
+    type SMEConfig,
     type SMEConfigJSON,
     SmashMessaging,
     SmashUser,
@@ -45,7 +46,7 @@ export async function createSmashUser(
         if (!identity.signedPreKeys || !identity.signedPreKeys[0]) {
             throw new Error('Identity must have signed prekeys');
         }
-        const fullSmeConfig: import('smash-node-lib').SMEConfig = {
+        const fullSmeConfig: SMEConfig = {
             ...smeConfig,
             preKeyPair: identity.signedPreKeys[0],
         };

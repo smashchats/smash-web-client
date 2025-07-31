@@ -2,7 +2,7 @@ import { CURRENT_USER } from '@app/config/sme';
 import { useChatStore } from '@hooks/useChatStore';
 import { useMessageStore } from '@hooks/useMessageStore';
 import { useUIStore } from '@hooks/useUIStore';
-import { messagingService } from '@services/messagingService';
+import { smashOrchestrator } from '@services/smashOrchestrator';
 import { ArrowLeft } from 'lucide-react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -152,7 +152,7 @@ export default function ChatScreen() {
 
     useEffect(() => {
         if (!id) return;
-        void messagingService.loadMessages(id as DIDString).then((messages) => {
+        void smashOrchestrator.getMessages(id as DIDString).then((messages) => {
             useMessageStore.getState().setMessages(id as DIDString, messages);
         });
     }, [id]);
@@ -172,11 +172,8 @@ export default function ChatScreen() {
             return;
         }
 
-        const message = await messagingService.sendMessage(
-            id as DIDString,
-            processedContent,
-        );
-        useMessageStore.getState().addMessage(id as DIDString, message);
+        await smashOrchestrator.sendMessage(id as DIDString, processedContent);
+        // Message will be added to store automatically via event handlers
     };
 
     // Generate display name and avatar

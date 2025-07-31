@@ -9,7 +9,12 @@ import type {
     SmashUser,
     sha256,
 } from 'smash-node-lib';
-import { IMText, IM_CHAT_TEXT, IM_MEDIA_EMBEDDED } from 'smash-node-lib';
+import {
+    IMMediaEmbedded,
+    IMText,
+    IM_CHAT_TEXT,
+    IM_MEDIA_EMBEDDED,
+} from 'smash-node-lib';
 
 import { db } from './db';
 
@@ -67,7 +72,6 @@ class MessageService {
                 );
             } else {
                 // Media message - Handle File object
-                const { IMMediaEmbedded } = await import('smash-node-lib');
                 const mediaMessage = await IMMediaEmbedded.fromFile(content);
                 protoMessage = await smashUser.send(
                     recipientId as DID,

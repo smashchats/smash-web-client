@@ -13,8 +13,8 @@
 }
 
 /* Design System */
-@import './design-system/tokens.css';
-@import './design-system/utilities.css';
+@import './tokens.css';
+@import './utilities.css';
 
 :root {
     --vh: 1vh; /* This value is updated by JavaScript for mobile viewports */

@@ -18,6 +18,7 @@ import {
 
 import { conversationService } from './conversationService';
 import { messageService } from './messageService';
+import { peerService } from './peerService';
 
 /**
  * Main orchestrator service that coordinates between message handling,
@@ -266,10 +267,7 @@ class SmashOrchestrator {
     ): Promise<void> {
         // Handle DID document updates using dynamic import to avoid circular deps
         try {
-            const { peerHandlers } = await import(
-                '@features/messaging/hooks/usePeerHandlers'
-            );
-            await peerHandlers.handleIncomingDIDDocument(senderId, didDocument);
+            await peerService.handleIncomingDIDDocument(senderId, didDocument);
         } catch (error) {
             logger.error('Failed to handle incoming DID document', error);
         }
@@ -281,10 +279,7 @@ class SmashOrchestrator {
     ): Promise<void> {
         // Handle profile updates using dynamic import to avoid circular deps
         try {
-            const { peerHandlers } = await import(
-                '@features/messaging/hooks/usePeerHandlers'
-            );
-            await peerHandlers.handleIncomingProfile(senderId, profile);
+            await peerService.handleIncomingProfile(senderId, profile);
         } catch (error) {
             logger.error('Failed to handle incoming profile', error);
         }
