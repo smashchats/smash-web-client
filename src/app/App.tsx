@@ -1,10 +1,10 @@
+import { IdentityProvider } from '@features/identity/context/IdentityProvider';
 import { useSmashBoot } from '@features/identity/hooks/useSmashBoot';
 import LoadingScreen from '@shared/components/LoadingScreen';
 import { useEffect, useState } from 'react';
 
 import { initializeSmashEnvironment } from './config/smash';
 import { AppInitializer } from './providers/AppInitializer';
-import { AppProviders } from './providers/AppProviders';
 import AppRoutes from './routes';
 
 export default function App() {
@@ -37,7 +37,7 @@ export default function App() {
     // If no identity, show welcome guide (handled by AppGuard)
     // If identity exists, show main app with providers
     return (
-        <AppProviders
+        <IdentityProvider
             identity={identity}
             smashUser={smashUser}
             profile={profile}
@@ -46,6 +46,6 @@ export default function App() {
         >
             <AppInitializer />
             <AppRoutes />
-        </AppProviders>
+        </IdentityProvider>
     );
 }
