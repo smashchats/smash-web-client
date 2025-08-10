@@ -1,0 +1,268 @@
+.voice-recorder {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ds-space-2);
+}
+
+.voice-recorder--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.voice-recorder-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ds-space-2);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: var(--ds-radius-md);
+    transition: all var(--ds-transition-fast);
+    outline: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+}
+
+.voice-recorder-button:focus-visible {
+    outline: 2px solid var(--ds-color-primary-600);
+    outline-offset: 2px;
+}
+
+.voice-recorder-button:active {
+    transform: scale(0.95);
+}
+
+/* Button variant */
+.voice-recorder-button--button {
+    padding: var(--ds-space-2);
+    background: var(--ds-color-surface-secondary);
+    border: 1px solid var(--ds-color-border);
+    color: var(--ds-color-foreground-secondary);
+}
+
+.voice-recorder-button--button:hover:not(.voice-recorder-button--disabled) {
+    background: var(--ds-color-surface-tertiary);
+    border-color: var(--ds-color-border-strong);
+}
+
+/* Floating variant */
+.voice-recorder-button--floating {
+    background: var(--ds-color-primary-600);
+    color: white;
+    border-radius: 50%;
+    box-shadow: var(--ds-shadow-lg);
+}
+
+.voice-recorder-button--floating:hover:not(.voice-recorder-button--disabled) {
+    background: var(--ds-color-primary-700);
+    transform: translateY(-1px);
+    box-shadow: var(--ds-shadow-xl);
+}
+
+/* Sizes */
+.voice-recorder-button--sm {
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: var(--ds-space-1);
+}
+
+.voice-recorder-button--sm .mic-icon,
+.voice-recorder-button--sm .recording-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.voice-recorder-button--md {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: var(--ds-space-2);
+}
+
+.voice-recorder-button--md .mic-icon,
+.voice-recorder-button--md .recording-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.voice-recorder-button--lg {
+    min-width: 3.5rem;
+    min-height: 3.5rem;
+    padding: var(--ds-space-3);
+}
+
+.voice-recorder-button--lg .mic-icon,
+.voice-recorder-button--lg .recording-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* Recording state */
+.voice-recorder-button--recording {
+    background: var(--ds-color-danger-600) !important;
+    color: white !important;
+    border-color: var(--ds-color-danger-600) !important;
+}
+
+.voice-recorder-button--recording:hover {
+    background: var(--ds-color-danger-700) !important;
+}
+
+.voice-recorder-button--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Recording indicator */
+.recording-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.recording-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.3;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.recording-icon {
+    position: relative;
+    z-index: 1;
+}
+
+.recording-time {
+    font-size: var(--ds-font-size-sm);
+    font-weight: var(--ds-font-weight-medium);
+    font-family: var(--ds-font-mono);
+    min-width: 3rem;
+    text-align: center;
+}
+
+/* Spinner */
+.voice-recorder-spinner {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.spinner-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: spinner-bounce 1.4s ease-in-out infinite both;
+}
+
+.spinner-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.spinner-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+.spinner-dot:nth-child(3) {
+    animation-delay: 0s;
+}
+
+/* Error message */
+.voice-recorder-error {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: var(--ds-space-1);
+    padding: var(--ds-space-1) var(--ds-space-2);
+    background: var(--ds-color-danger-600);
+    color: white;
+    font-size: var(--ds-font-size-xs);
+    border-radius: var(--ds-radius-sm);
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: var(--ds-shadow-md);
+}
+
+.voice-recorder-error::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-bottom-color: var(--ds-color-danger-600);
+}
+
+/* Animations */
+@keyframes pulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.1;
+    }
+}
+
+@keyframes spinner-bounce {
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .voice-recorder-button--button {
+        background: var(--ds-color-surface-secondary);
+        border-color: var(--ds-color-border);
+    }
+
+    .voice-recorder-button--button:hover:not(.voice-recorder-button--disabled) {
+        background: var(--ds-color-surface-tertiary);
+    }
+
+    .voice-recorder-button--floating {
+        background: var(--ds-color-primary-500);
+    }
+
+    .voice-recorder-button--floating:hover:not(
+            .voice-recorder-button--disabled
+        ) {
+        background: var(--ds-color-primary-600);
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .voice-recorder-button {
+        transition: none;
+    }
+
+    .recording-pulse {
+        animation: none;
+        opacity: 0.3;
+    }
+
+    .spinner-dot {
+        animation: none;
+    }
+
+    .voice-recorder-button:active {
+        transform: none;
+    }
+}

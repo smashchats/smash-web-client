@@ -1,12 +1,11 @@
 import Button from '@components/Button';
+import { GalleryPicker, VoiceRecorder } from '@features/media/components';
+import { logger } from '@utils/logger';
 import { Send } from 'lucide-react';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { IMMediaEmbedded } from 'smash-node-lib';
 
-import { logger } from '../../utils/logger';
-import { AudioRecorder } from './AudioRecorder';
 import './ChatInput.css';
-import { MediaUpload } from './MediaUpload';
 
 interface ChatInputProps {
     onSendMessage: (message: string | IMMediaEmbedded) => void;
@@ -77,17 +76,34 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             }
         };
 
+        const handleMultipleMediaSelect = async (
+            mediaMessages: IMMediaEmbedded[],
+        ) => {
+            setIsProcessing(true);
+            try {
+                // Send each media message individually
+                for (const mediaMessage of mediaMessages) {
+                    onSendMessage(mediaMessage);
+                }
+            } finally {
+                setIsProcessing(false);
+            }
+        };
+
         return (
             <form onSubmit={handleSubmit} className="chat-input-container">
                 <div className="chat-input-wrapper">
-                    <MediaUpload
-                        onMediaSelect={handleMediaSelect}
+                    <GalleryPicker
+                        onMediaSelect={handleMultipleMediaSelect}
                         disabled={isLoading || isProcessing}
+                        multiple={true}
+                        size="md"
                     />
-                    <AudioRecorder
+                    <VoiceRecorder
                         onRecordingComplete={handleMediaSelect}
                         disabled={isLoading || isProcessing}
                         chatInputRef={textareaRef}
+                        size="md"
                     />
                     <textarea
                         ref={textareaRef}

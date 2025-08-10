@@ -3,6 +3,7 @@ import { logger } from '@utils/logger';
 import type {
     DIDString,
     IMDIDDocumentMessage,
+    IMMediaEmbedded,
     IMProfileMessage,
     IMProtoMessage,
     MessageStatus,
@@ -322,7 +323,7 @@ class SmashOrchestrator {
     // Public API methods
     async sendMessage(
         recipientId: DIDString,
-        content: string | File,
+        content: string | File | IMMediaEmbedded,
     ): Promise<SmashMessage> {
         if (!this.smashUser) {
             throw new Error('SmashOrchestrator not initialized');

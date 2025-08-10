@@ -158,21 +158,7 @@ export default function ChatScreen() {
     }, [id]);
 
     const sendMessage = async (content: string | IMMediaEmbedded) => {
-        // Convert IMMediaEmbedded to File if needed, or handle string content
-        let processedContent: string | File;
-        if (typeof content === 'string') {
-            processedContent = content;
-        } else {
-            // For now, we'll need to handle media differently
-            // The messaging service expects File, but we're receiving IMMediaEmbedded
-            // This will be addressed when we implement the camera flow
-            console.warn(
-                'Media content handling not yet implemented for new UI',
-            );
-            return;
-        }
-
-        await smashOrchestrator.sendMessage(id as DIDString, processedContent);
+        await smashOrchestrator.sendMessage(id as DIDString, content);
         // Message will be added to store automatically via event handlers
     };
 

@@ -52,7 +52,7 @@ class MessageService {
     async sendMessage(
         smashUser: SmashUser,
         recipientId: DIDString,
-        content: string | File,
+        content: string | File | IMMediaEmbedded,
     ): Promise<SmashMessage> {
         if (!smashUser) {
             throw new Error('SmashUser is required for sending messages');
@@ -70,12 +70,18 @@ class MessageService {
                     recipientId as DID,
                     textMessage,
                 );
-            } else {
+            } else if (content instanceof File) {
                 // Media message - Handle File object
                 const mediaMessage = await IMMediaEmbedded.fromFile(content);
                 protoMessage = await smashUser.send(
                     recipientId as DID,
                     mediaMessage,
+                );
+            } else {
+                // Media message - Handle IMMediaEmbedded directly
+                protoMessage = await smashUser.send(
+                    recipientId as DID,
+                    content,
                 );
             }
 
