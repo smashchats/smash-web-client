@@ -41,13 +41,13 @@ jobs:
                       smash-node-lib/dist
                   key: ${{ steps.set-cache-key.outputs.cache-key }}
 
-            - name: Install Lib Dependencies
-              if: steps.cache-check.outputs.cache-hit != 'true'
-              run: cd smash-node-lib && npm ci && cd ..
-
             - name: Install Dependencies
               if: steps.cache-check.outputs.cache-hit != 'true'
               run: npm ci
+
+            - name: Install Lib Dependencies
+              if: steps.cache-check.outputs.cache-hit != 'true'
+              run: cd smash-node-lib && npm ci && cd ..
 
             - name: Build Lib
               if: steps.cache-check.outputs.cache-hit != 'true'
