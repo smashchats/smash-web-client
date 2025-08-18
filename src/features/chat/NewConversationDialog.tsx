@@ -71,6 +71,7 @@ function DialogContent({
                         onKeyDown={handleKeyDown}
                         placeholder="Paste the complete DID document JSON here..."
                         rows={8}
+                        data-testid="new-chat-did-input"
                     />
                     {/* <div className="did-input-hint">
                     // TODO: add Ctrl+Enter to create conversation
@@ -86,13 +87,14 @@ function DialogContent({
             </div>
 
             <div className="new-chat-footer">
-                <Button variant="secondary" onClick={onCancel}>
+                <Button variant="secondary" onClick={onCancel} data-testid="new-chat-cancel">
                     Cancel
                 </Button>
                 <Button
                     variant="primary"
                     onClick={onSubmit}
                     disabled={!didInput.trim()}
+                    data-testid="new-chat-start"
                 >
                     Start Chat
                 </Button>
@@ -169,6 +171,7 @@ export function NewConversationDialog({
                 <button
                     className="chat-list-action-button chat-list-action-button--primary"
                     aria-label="Start new chat"
+                    data-testid="new-chat-trigger"
                 >
                     <Plus size={20} />
                 </button>

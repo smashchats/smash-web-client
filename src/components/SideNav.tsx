@@ -41,7 +41,7 @@ export default function SideNav() {
     ];
 
     return (
-        <nav className="side-nav">
+        <nav className="side-nav" data-testid="side-nav">
             <div className="side-nav-header">
                 <div className="side-nav-logo">
                     <MessageCircle className="side-nav-logo-icon" />
@@ -58,6 +58,7 @@ export default function SideNav() {
                             label={item.label}
                             isActive={item.isActive}
                             onClick={() => navigate(item.path)}
+                            testId={`side-nav-${item.id}`}
                         />
                     ))}
                 </ul>
@@ -71,6 +72,7 @@ interface SideNavItemProps {
     label: string;
     isActive: boolean;
     onClick: () => void;
+    testId?: string;
 }
 
 function SideNavItem({
@@ -78,6 +80,7 @@ function SideNavItem({
     label,
     isActive,
     onClick,
+    testId,
 }: Readonly<SideNavItemProps>) {
     return (
         <li className="side-nav-item">
@@ -85,6 +88,7 @@ function SideNavItem({
                 className={`side-nav-button ${isActive ? 'side-nav-button--active' : ''}`}
                 onClick={onClick}
                 aria-label={label}
+                data-testid={testId}
             >
                 <Icon size={20} />
                 <span className="side-nav-button-label">{label}</span>

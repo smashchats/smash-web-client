@@ -136,6 +136,7 @@ export function WelcomeGuide() {
                                         onClick={() => setStep(2)}
                                         size="lg"
                                         isFullWidth
+                                        data-testid="welcome-get-started"
                                     >
                                         Get Started
                                         <ArrowRight size={20} />
@@ -183,6 +184,7 @@ export function WelcomeGuide() {
                                             )}
                                             autoComplete="name"
                                             autoFocus
+                                            data-testid="welcome-display-name-input"
                                         />
                                     </div>
 
@@ -201,6 +203,7 @@ export function WelcomeGuide() {
                                         isLoading={isGenerating}
                                         size="lg"
                                         isFullWidth
+                                        data-testid="welcome-create-identity"
                                     >
                                         {isGenerating
                                             ? t('create-identity.creating')
@@ -214,6 +217,7 @@ export function WelcomeGuide() {
                                         onClick={() => setStep(1)}
                                         disabled={isGenerating}
                                         isFullWidth
+                                        data-testid="welcome-back"
                                     >
                                         Back
                                     </Button>

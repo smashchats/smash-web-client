@@ -13,7 +13,13 @@
         "lint:fix": "eslint . --ext ts,tsx --fix",
         "format": "prettier --write .",
         "prepare": "husky",
-        "lint-staged": "lint-staged"
+        "lint-staged": "lint-staged",
+        "dev:mocks": "tsx tests/mocks/dev.ts",
+        "dev:test": "npm run build:lib && vite --mode test --env-file .env.test",
+        "e2e": "concurrently -k -s first -n Mocks,App,Tests \"npm:dev:mocks\" \"npm:dev:test\" \"playwright test\"",
+        "e2e:headed": "concurrently -k -s first -n Mocks,App,Tests \"npm:dev:mocks\" \"npm:dev:test\" \"playwright test --headed\"",
+        "e2e:ui": "concurrently -k -s first -n Mocks,App,Tests \"npm:dev:mocks\" \"npm:dev:test\" \"playwright test --ui\"",
+        "test:e2e": "playwright test"
     },
     "lint-staged": {
         "*.{ts,tsx}": [
@@ -49,10 +55,12 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.25.0",
+        "@playwright/test": "^1.54.2",
         "@trivago/prettier-plugin-sort-imports": "^5.2.2",
         "@types/react": "^19.1.2",
         "@types/react-dom": "^19.1.2",
         "@vitejs/plugin-react": "^4.4.1",
+        "concurrently": "^9.2.0",
         "eslint": "^9.25.0",
         "eslint-import-resolver-alias": "^1.1.2",
         "eslint-plugin-import": "^2.32.0",
@@ -62,6 +70,8 @@
         "husky": "^9.1.7",
         "lint-staged": "^16.0.0",
         "prettier": "^3.5.3",
+        "socket.io": "^4.8.1",
+        "tsx": "^4.20.4",
         "typescript": "~5.8.3",
         "typescript-eslint": "^8.30.1",
         "vite": "^6.3.5"
