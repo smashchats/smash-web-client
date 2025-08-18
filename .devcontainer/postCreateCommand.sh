@@ -49,6 +49,9 @@ main() {
     print_header "Installing npm dependencies..."
     echo 'source <(npm completion)' >> /home/node/.bashrc
     npm install
+    
+    print_header "Fixing prettier permissions..."
+    chmod +x node_modules/prettier/bin/prettier.cjs 2>/dev/null || echo "Prettier not found or already executable"
 
     print_header "Setting permissions for mounted paths..."
     for path in "${dirs[@]}"; do
