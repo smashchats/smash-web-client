@@ -12,7 +12,7 @@ jobs:
         outputs:
             cache-key: ${{ steps.set-cache-key.outputs.cache-key }}
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
               with:
                   fetch-depth: 0
                   persist-credentials: false
@@ -68,7 +68,7 @@ jobs:
         needs: [install]
         runs-on: ubuntu-24.04
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
               with:
                   fetch-depth: 0
                   persist-credentials: false
@@ -118,7 +118,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Pages
               uses: actions/configure-pages@v5
