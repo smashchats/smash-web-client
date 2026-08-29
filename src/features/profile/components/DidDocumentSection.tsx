@@ -90,6 +90,7 @@ export function DidDocumentSection() {
                                 isFullWidth
                                 onClick={handleCopyDID}
                                 disabled={isLoadingDID || !didDocumentString}
+                                data-testid="copy-did-document"
                             >
                                 {(() => {
                                     if (isLoadingDID) {

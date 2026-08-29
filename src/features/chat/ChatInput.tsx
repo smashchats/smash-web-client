@@ -31,6 +31,7 @@ function SendButton({ isLoading, disabled }: Readonly<SendButtonProps>) {
             disabled={disabled}
             isLoading={isLoading}
             aria-label="Send message"
+            data-testid="chat-send-button"
         >
             <Send size={20} />
         </Button>
@@ -115,6 +116,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                         rows={1}
                         onKeyDown={handleKeyDown}
                         onFocus={onFocus}
+                        data-testid="chat-input"
                     />
                     <SendButton
                         isLoading={isLoading || isProcessing}

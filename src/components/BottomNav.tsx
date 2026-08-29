@@ -41,7 +41,7 @@ export default function BottomNav() {
     ];
 
     return (
-        <nav className="bottom-nav">
+        <nav className="bottom-nav" data-testid="bottom-nav">
             <div className="bottom-nav-container">
                 {navItems.map((item) => (
                     <NavButton
@@ -54,6 +54,7 @@ export default function BottomNav() {
                             item.id === 'chats' ? totalUnreadCount : undefined
                         }
                         onClick={() => navigate(item.path, { replace: true })}
+                        testId={`nav-${item.id}`}
                     />
                 ))}
             </div>
@@ -68,6 +69,7 @@ interface NavButtonProps {
     isCenter?: boolean;
     badge?: number;
     onClick: () => void;
+    testId?: string;
 }
 
 function NavButton({
@@ -77,12 +79,14 @@ function NavButton({
     isCenter = false,
     badge,
     onClick,
+    testId,
 }: Readonly<NavButtonProps>) {
     return (
         <button
             className={`nav-button ${isActive ? 'nav-button--active' : ''} ${isCenter ? 'nav-button--center' : ''}`}
             onClick={onClick}
             aria-label={label}
+            data-testid={testId}
         >
             <div className="nav-button-icon">
                 <Icon

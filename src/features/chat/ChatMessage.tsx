@@ -206,6 +206,7 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
             <div
                 ref={finalRef}
                 data-message-id={message.id}
+                data-testid={`chat-message-${isOwnMessage ? 'outgoing' : 'incoming'}`}
                 className={`message ${isOwnMessage ? 'outgoing' : 'incoming'} ${hasAudioContent ? 'has-audio' : ''} ${!isOwnMessage && message.status !== 'read' ? 'unread' : ''}`}
                 style={hasAudioContent ? { padding: '0.75rem' } : undefined}
             >
